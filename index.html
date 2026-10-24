@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Teacher</title>
+  <meta name="description" content="প্রশ্ন করুন, AI Teacher সহজ ভাষায় বুঝিয়ে দেবে। Ask anything and learn step by step.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">🎓</span>
+        <div>
+          <h1>AI Teacher</h1>
+          <p id="tagline" class="tagline"></p>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="lang" role="group" aria-label="Language">
+          <button id="lang-bn" type="button">বাংলা</button>
+          <button id="lang-en" type="button">English</button>
+        </div>
+        <button id="new-chat" type="button" class="ghost"></button>
+      </div>
+    </header>
+
+    <main id="chat" class="chat" aria-live="polite"></main>
+
+    <section id="suggestions" class="suggestions"></section>
+
+    <form id="form" class="composer" autocomplete="off">
+      <textarea id="input" rows="1" maxlength="3000" required></textarea>
+      <button id="send" type="submit"></button>
+    </form>
+    <p id="note" class="note"></p>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
