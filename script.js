@@ -80,8 +80,48 @@
       .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
   }
 
+  // Gemini sometimes writes math as LaTeX ($\rightarrow$). We don't render LaTeX,
+  // so turn the common bits into plain Unicode instead of showing raw code.
+  var LATEX_MAP = {
+    "\\rightarrow": "→", "\\to": "→", "\\leftarrow": "←", "\\Rightarrow": "⇒", "\\leftrightarrow": "↔",
+    "\\times": "×", "\\cdot": "·", "\\div": "÷", "\\pm": "±",
+    "\\leq": "≤", "\\le": "≤", "\\geq": "≥", "\\ge": "≥", "\\neq": "≠", "\\approx": "≈",
+    "\\pi": "π", "\\theta": "θ", "\\alpha": "α", "\\beta": "β", "\\gamma": "γ", "\\delta": "δ",
+    "\\Delta": "Δ", "\\lambda": "λ", "\\mu": "μ", "\\sigma": "σ", "\\omega": "ω", "\\infty": "∞",
+    "\\degree": "°", "\\circ": "°"
+  };
+  var SUPERSCRIPT = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "+": "⁺" };
+  var SUBSCRIPT = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉" };
+
+  function mapChars(str, table) {
+    var out = "";
+    for (var i = 0; i < str.length; i++) {
+      if (!table[str[i]]) return null; // can't convert everything, leave as is
+      out += table[str[i]];
+    }
+    return out;
+  }
+
+  function latexToText(inner) {
+    var s = inner;
+    s = s.replace(/\\text\{([^{}]*)\}/g, "$1").replace(/\\mathrm\{([^{}]*)\}/g, "$1");
+    s = s.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1)/($2)");
+    s = s.replace(/\\sqrt\{([^{}]*)\}/g, "√($1)");
+    s = s.replace(/\\[a-zA-Z]+/g, function (cmd) { return LATEX_MAP[cmd] || cmd; });
+    s = s.replace(/\^\{?([0-9+-]+)\}?/g, function (m, d) { return mapChars(d, SUPERSCRIPT) || m; });
+    s = s.replace(/_\{?([0-9]+)\}?/g, function (m, d) { return mapChars(d, SUBSCRIPT) || m; });
+    return s.replace(/[{}]/g, "").replace(/\s+/g, " ").trim();
+  }
+
+  function cleanLatex(raw) {
+    // Only touch $...$ spans that really contain a backslash command, so prices like "$5 and $10" stay intact.
+    return raw
+      .replace(/\$\$([^$]*\\[^$]*)\$\$/g, function (m, inner) { return latexToText(inner); })
+      .replace(/\$([^$\n]*\\[^$\n]*)\$/g, function (m, inner) { return latexToText(inner); });
+  }
+
   function renderMarkdown(raw) {
-    var text = escapeHtml(raw).replace(/\r\n/g, "\n");
+    var text = escapeHtml(cleanLatex(raw)).replace(/\r\n/g, "\n");
     var out = [];
     var parts = text.split(/```/);
     for (var i = 0; i < parts.length; i++) {
@@ -104,7 +144,13 @@
         }
       };
       for (var j = 0; j < lines.length; j++) {
-        var line = lines[j];
+        var line = lines[j].replace(/^\s*&gt;\s?/, ""); // drop "> " quote markers
+        var heading = line.match(/^#{1,6}\s+(.*)$/);
+        if (heading) {
+          flushPara(); flushList();
+          out.push("<p><strong>" + inline(heading[1]) + "</strong></p>");
+          continue;
+        }
         var ul = line.match(/^\s*[-*•]\s+(.*)$/);
         var ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
         if (ul || ol) {
