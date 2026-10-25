@@ -1,6 +1,8 @@
 // Cloudflare Pages Function: POST /api/chat
 // The Gemini API key lives only here (as an environment variable), never in the browser.
 
+import { isConfigured, verifySession, getUsage, addUsage } from "../../lib/auth.js";
+
 const DEFAULT_MODEL = "gemini-3.6-flash";
 const MAX_MESSAGES = 20;        // how many recent messages we accept
 const MAX_CHARS_PER_MESSAGE = 3000;
@@ -36,8 +38,20 @@ function json(body, status = 200) {
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  if (!env.GEMINI_API_KEY) {
+  if (!env.GEMINI_API_KEY || !isConfigured(env)) {
     return json({ error: "server_not_configured" }, 500);
+  }
+
+  // Only logged-in members may ask, and each has a daily limit (plus one limit for the whole site).
+  const user = await verifySession(env, request);
+  if (!user) return json({ error: "unauthorized" }, 401);
+
+  const usage = await getUsage(env, user);
+  if (usage.used >= usage.limit) {
+    return json({ error: "daily_limit", used: usage.used, limit: usage.limit }, 429);
+  }
+  if (usage.globalUsed >= usage.globalLimit) {
+    return json({ error: "global_limit" }, 429);
   }
 
   let payload;
@@ -100,7 +114,9 @@ export async function onRequestPost(context) {
   const reply = parts.map((p) => p.text || "").join("").trim();
 
   if (!reply) return json({ error: "empty_reply" }, 502);
-  return json({ reply });
+
+  await addUsage(env, user, usage); // count it only now that the answer succeeded
+  return json({ reply, used: usage.used + 1, limit: usage.limit });
 }
 
 // Any other method gets a clear answer instead of a confusing error.
