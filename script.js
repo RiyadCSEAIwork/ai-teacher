@@ -7,9 +7,17 @@
       placeholder: "এখানে আপনার প্রশ্ন লিখুন…",
       send: "পাঠান",
       newChat: "নতুন চ্যাট",
+      logout: "লগআউট",
       note: "AI ভুল করতে পারে, গুরুত্বপূর্ণ তথ্য যাচাই করে নিন।",
       welcome: "আসসালামু আলাইকুম! আমি AI Teacher। যেকোনো বিষয়ে প্রশ্ন করো, আমি ধাপে ধাপে বুঝিয়ে দেব।",
       thinking: "ভাবছি",
+      usage: function (user, used, limit) { return user + " · আজ " + used + "/" + limit + " প্রশ্ন"; },
+      loginTitle: "লগইন করুন",
+      loginHint: "শুধু অনুমোদিত সদস্যদের জন্য। আপনার নাম ও অ্যাক্সেস কোড দিন।",
+      nameLabel: "নাম",
+      codeLabel: "অ্যাক্সেস কোড",
+      loginBtn: "প্রবেশ করুন",
+      loggingIn: "অপেক্ষা করুন…",
       suggestions: [
         "সালোকসংশ্লেষণ কী?",
         "দ্বিঘাত সমীকরণ কীভাবে সমাধান করব?",
@@ -19,7 +27,12 @@
       errors: {
         rate_limited: "এই মুহূর্তে অনেক অনুরোধ এসেছে। এক মিনিট পরে আবার চেষ্টা করুন।",
         network: "ইন্টারনেট সংযোগে সমস্যা হচ্ছে। সংযোগ দেখে আবার চেষ্টা করুন।",
-        server_not_configured: "সার্ভার এখনো ঠিকমতো সেট করা হয়নি (API key নেই)।",
+        server_not_configured: "সার্ভার এখনো ঠিকমতো সেট করা হয়নি (লগইন বা সংরক্ষণের সেটিং বাকি)।",
+        invalid_login: "নাম বা অ্যাক্সেস কোড ভুল।",
+        too_many_attempts: "অনেকবার ভুল চেষ্টা হয়েছে। এক ঘণ্টা পরে আবার চেষ্টা করুন।",
+        unauthorized: "লগইনের মেয়াদ শেষ। আবার লগইন করুন।",
+        daily_limit: "আজকের প্রশ্নের সীমা শেষ। কাল আবার চেষ্টা করুন।",
+        global_limit: "আজকের জন্য সাইটের মোট সীমা শেষ। কাল আবার চেষ্টা করুন।",
         generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
       }
     },
@@ -28,9 +41,17 @@
       placeholder: "Type your question here…",
       send: "Send",
       newChat: "New chat",
+      logout: "Log out",
       note: "AI can make mistakes. Please double-check important information.",
       welcome: "Hi! I'm AI Teacher. Ask me anything and I'll explain it step by step. You can write in English or বাংলা.",
       thinking: "Thinking",
+      usage: function (user, used, limit) { return user + " · " + used + "/" + limit + " questions today"; },
+      loginTitle: "Log in",
+      loginHint: "For approved members only. Enter your name and access code.",
+      nameLabel: "Name",
+      codeLabel: "Access code",
+      loginBtn: "Enter",
+      loggingIn: "Please wait…",
       suggestions: [
         "What is photosynthesis?",
         "How do I solve a quadratic equation?",
@@ -40,7 +61,12 @@
       errors: {
         rate_limited: "Too many requests right now. Please wait a minute and try again.",
         network: "Network problem. Check your connection and try again.",
-        server_not_configured: "The server isn't configured yet (missing API key).",
+        server_not_configured: "The server isn't fully set up yet (login or storage setting missing).",
+        invalid_login: "Wrong name or access code.",
+        too_many_attempts: "Too many failed attempts. Please try again in an hour.",
+        unauthorized: "Your login has expired. Please log in again.",
+        daily_limit: "You've used all of today's questions. Please try again tomorrow.",
+        global_limit: "The site's total limit for today has been reached. Please try again tomorrow.",
         generic: "Sorry, something went wrong getting the answer. Please try again shortly."
       }
     }
@@ -48,16 +74,29 @@
 
   var MAX_HISTORY = 12;
 
+  var appEl = document.getElementById("app");
   var chatEl = document.getElementById("chat");
   var formEl = document.getElementById("form");
   var inputEl = document.getElementById("input");
   var sendEl = document.getElementById("send");
   var newChatEl = document.getElementById("new-chat");
+  var logoutEl = document.getElementById("logout");
+  var usageEl = document.getElementById("usage");
   var suggestionsEl = document.getElementById("suggestions");
   var taglineEl = document.getElementById("tagline");
   var noteEl = document.getElementById("note");
   var langBn = document.getElementById("lang-bn");
   var langEn = document.getElementById("lang-en");
+
+  var loginForm = document.getElementById("login-form");
+  var loginTitle = document.getElementById("login-title");
+  var loginHint = document.getElementById("login-hint");
+  var loginNameLabel = document.getElementById("login-name-label");
+  var loginCodeLabel = document.getElementById("login-code-label");
+  var loginName = document.getElementById("login-name");
+  var loginCode = document.getElementById("login-code");
+  var loginError = document.getElementById("login-error");
+  var loginBtn = document.getElementById("login-btn");
 
   var lang = "bn";
   try {
@@ -67,6 +106,10 @@
 
   var history = []; // {role: 'user'|'assistant', text}
   var busy = false;
+  var authed = false;
+  var user = "";
+  var usage = { used: 0, limit: 0 };
+  var loginErrorKey = null;
 
   // ---------- safe rendering (escape first, then add a little formatting) ----------
   function escapeHtml(s) {
@@ -192,6 +235,15 @@
     inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + "px";
   }
 
+  function errorText(key) {
+    var errs = TEXT[lang].errors;
+    return errs[key] || errs.generic;
+  }
+
+  function renderUsage() {
+    usageEl.textContent = authed ? TEXT[lang].usage(user, usage.used, usage.limit) : "";
+  }
+
   function applyLanguage() {
     var t = TEXT[lang];
     document.documentElement.lang = lang;
@@ -199,11 +251,19 @@
     inputEl.placeholder = t.placeholder;
     sendEl.textContent = t.send;
     newChatEl.textContent = t.newChat;
+    logoutEl.textContent = t.logout;
     noteEl.textContent = t.note;
+    loginTitle.textContent = t.loginTitle;
+    loginHint.textContent = t.loginHint;
+    loginNameLabel.textContent = t.nameLabel;
+    loginCodeLabel.textContent = t.codeLabel;
+    loginBtn.textContent = t.loginBtn;
+    loginError.textContent = loginErrorKey ? errorText(loginErrorKey) : "";
     langBn.classList.toggle("active", lang === "bn");
     langEn.classList.toggle("active", lang === "en");
     langBn.setAttribute("aria-pressed", lang === "bn");
     langEn.setAttribute("aria-pressed", lang === "en");
+    renderUsage();
 
     suggestionsEl.innerHTML = "";
     t.suggestions.forEach(function (q) {
@@ -226,13 +286,84 @@
     lang = next;
     try { localStorage.setItem("aiteacher_lang", lang); } catch (e) { /* ignore */ }
     applyLanguage();
-    if (history.length === 0) resetChat(); // only refresh the welcome text if no conversation yet
+    if (authed && history.length === 0) resetChat(); // only refresh the welcome text if no conversation yet
+  }
+
+  // ---------- login state ----------
+  function showApp(data) {
+    authed = true;
+    user = data.user || "";
+    usage = { used: data.used || 0, limit: data.limit || 0 };
+    loginErrorKey = null;
+    appEl.classList.remove("logged-out");
+    applyLanguage();
+    resetChat();
+    inputEl.focus();
+  }
+
+  function showLogin(errorKey) {
+    authed = false;
+    user = "";
+    history = [];
+    chatEl.innerHTML = "";
+    appEl.classList.add("logged-out");
+    loginErrorKey = errorKey || null;
+    loginCode.value = "";
+    applyLanguage();
+  }
+
+  async function checkSession() {
+    try {
+      var res = await fetch("/api/me");
+      var data = null;
+      try { data = await res.json(); } catch (e) { /* ignore */ }
+      if (res.ok && data && data.ok) showApp(data);
+      else showLogin(data && data.error === "server_not_configured" ? "server_not_configured" : null);
+    } catch (e) {
+      showLogin("network");
+    }
+  }
+
+  async function doLogin(e) {
+    e.preventDefault();
+    if (loginBtn.disabled) return;
+    loginBtn.disabled = true;
+    loginBtn.textContent = TEXT[lang].loggingIn;
+    loginError.textContent = "";
+    try {
+      var res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: loginName.value, code: loginCode.value })
+      });
+      var data = null;
+      try { data = await res.json(); } catch (err) { /* ignore */ }
+      if (res.ok && data && data.ok) {
+        loginCode.value = "";
+        showApp(data);
+      } else {
+        loginErrorKey = (data && data.error) || "generic";
+        loginCode.value = "";
+        loginError.textContent = errorText(loginErrorKey);
+      }
+    } catch (err) {
+      loginErrorKey = "network";
+      loginError.textContent = errorText("network");
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = TEXT[lang].loginBtn;
+    }
+  }
+
+  async function doLogout() {
+    try { await fetch("/api/logout", { method: "POST" }); } catch (e) { /* ignore */ }
+    showLogin(null);
   }
 
   // ---------- talking to the backend ----------
   async function ask(question) {
     var q = (question || "").trim();
-    if (!q || busy) return;
+    if (!q || busy || !authed) return;
 
     suggestionsEl.classList.add("hidden");
     addMessage("user", q);
@@ -258,15 +389,27 @@
       if (res.ok && data && data.reply) {
         addMessage("bot", data.reply);
         history.push({ role: "assistant", text: data.reply });
+        if (typeof data.used === "number") {
+          usage = { used: data.used, limit: data.limit || usage.limit };
+          renderUsage();
+        }
       } else {
         var key = data && data.error;
-        var msg = TEXT[lang].errors[key] || TEXT[lang].errors.generic;
-        addMessage("error", msg);
         history.pop(); // let the user retry the same question without a dangling turn
+        if (key === "unauthorized") {
+          setBusy(false);
+          showLogin("unauthorized");
+          return;
+        }
+        if (key === "daily_limit") {
+          usage = { used: data.limit || usage.limit, limit: data.limit || usage.limit };
+          renderUsage();
+        }
+        addMessage("error", errorText(key));
       }
     } catch (e) {
       typing.remove();
-      addMessage("error", TEXT[lang].errors.network);
+      addMessage("error", errorText("network"));
       history.pop();
     } finally {
       setBusy(false);
@@ -287,11 +430,13 @@
     }
   });
 
-  newChatEl.addEventListener("click", function () { if (!busy) resetChat(); });
+  loginForm.addEventListener("submit", doLogin);
+  logoutEl.addEventListener("click", function () { if (!busy) doLogout(); });
+  newChatEl.addEventListener("click", function () { if (!busy && authed) resetChat(); });
   langBn.addEventListener("click", function () { setLanguage("bn"); });
   langEn.addEventListener("click", function () { setLanguage("en"); });
 
   applyLanguage();
-  resetChat();
   autosize();
+  checkSession();
 })();

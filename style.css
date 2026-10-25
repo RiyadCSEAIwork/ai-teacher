@@ -209,3 +209,58 @@ button:focus-visible, textarea:focus-visible {
 @media (max-width: 520px) {
   .msg { max-width: 94%; }
 }
+
+/* ---------- login + usage ---------- */
+.usage {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.login-wrap { display: none; flex: 1; align-items: center; justify-content: center; padding: 24px 0; }
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.login-card h2 { margin: 0 0 2px; font-size: 20px; }
+.login-hint { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+.login-card label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.login-card input {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+.login-card input:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.login-error { min-height: 20px; margin: 6px 0 0; font-size: 13px; color: var(--danger); }
+.login-card button {
+  border: 0;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font: inherit;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+.login-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* When nobody is logged in, show only the header (with language switch) and the login card. */
+.app.logged-out .login-wrap { display: flex; }
+.app.logged-out .chat,
+.app.logged-out .suggestions,
+.app.logged-out .composer,
+.app.logged-out .note,
+.app.logged-out .usage,
+.app.logged-out #new-chat,
+.app.logged-out #logout { display: none; }

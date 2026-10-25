@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI Teacher</title>
   <meta name="description" content="প্রশ্ন করুন, AI Teacher সহজ ভাষায় বুঝিয়ে দেবে। Ask anything and learn step by step.">
+  <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app">
+  <div id="app" class="app logged-out">
     <header class="top">
       <div class="brand">
         <span class="logo" aria-hidden="true">🎓</span>
@@ -21,13 +22,28 @@
         </div>
       </div>
       <div class="controls">
+        <span id="usage" class="usage"></span>
         <div class="lang" role="group" aria-label="Language">
           <button id="lang-bn" type="button">বাংলা</button>
           <button id="lang-en" type="button">English</button>
         </div>
         <button id="new-chat" type="button" class="ghost"></button>
+        <button id="logout" type="button" class="ghost"></button>
       </div>
     </header>
+
+    <section class="login-wrap">
+      <form id="login-form" class="login-card" autocomplete="on">
+        <h2 id="login-title"></h2>
+        <p id="login-hint" class="login-hint"></p>
+        <label for="login-name" id="login-name-label"></label>
+        <input id="login-name" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required maxlength="32">
+        <label for="login-code" id="login-code-label"></label>
+        <input id="login-code" name="password" type="password" autocomplete="current-password" required maxlength="128">
+        <p id="login-error" class="login-error" role="alert"></p>
+        <button id="login-btn" type="submit"></button>
+      </form>
+    </section>
 
     <main id="chat" class="chat" aria-live="polite"></main>
 
