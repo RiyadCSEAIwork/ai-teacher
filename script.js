@@ -11,6 +11,10 @@
       note: "AI ভুল করতে পারে, গুরুত্বপূর্ণ তথ্য যাচাই করে নিন।",
       welcome: "আসসালামু আলাইকুম! আমি AI Teacher। যেকোনো বিষয়ে প্রশ্ন করো, আমি ধাপে ধাপে বুঝিয়ে দেব।",
       thinking: "ভাবছি",
+      attach: "গ্যালারি থেকে ছবি দিন",
+      removeImage: "ছবি সরান",
+      imageReading: "ছবি প্রস্তুত হচ্ছে…",
+      imageOnly: "(ছবি)",
       usage: function (user, used, limit) { return user + " · আজ " + used + "/" + limit + " প্রশ্ন"; },
       loginTitle: "লগইন করুন",
       loginHint: "শুধু অনুমোদিত সদস্যদের জন্য। আপনার নাম ও অ্যাক্সেস কোড দিন।",
@@ -33,6 +37,10 @@
         unauthorized: "লগইনের মেয়াদ শেষ। আবার লগইন করুন।",
         daily_limit: "আজকের প্রশ্নের সীমা শেষ। কাল আবার চেষ্টা করুন।",
         global_limit: "আজকের জন্য সাইটের মোট সীমা শেষ। কাল আবার চেষ্টা করুন।",
+        bad_image: "ছবিটা পাঠানো যায়নি। অন্য একটা ছবি দিয়ে আবার চেষ্টা করুন।",
+        image_type: "এই ধরনের ফাইল চলবে না। JPG, PNG, WebP, GIF বা HEIC ছবি দিন।",
+        image_too_big: "ছবিটা অনেক বড় (সর্বোচ্চ ২০ MB)। ছোট একটা ছবি দিন।",
+        image_failed: "ছবিটা খুলতে পারিনি। অন্য ছবি বা JPG/PNG ফরম্যাটে চেষ্টা করুন।",
         generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
       }
     },
@@ -45,6 +53,10 @@
       note: "AI can make mistakes. Please double-check important information.",
       welcome: "Hi! I'm AI Teacher. Ask me anything and I'll explain it step by step. You can write in English or বাংলা.",
       thinking: "Thinking",
+      attach: "Add a picture from your gallery",
+      removeImage: "Remove picture",
+      imageReading: "Preparing picture…",
+      imageOnly: "(picture)",
       usage: function (user, used, limit) { return user + " · " + used + "/" + limit + " questions today"; },
       loginTitle: "Log in",
       loginHint: "For approved members only. Enter your name and access code.",
@@ -67,12 +79,23 @@
         unauthorized: "Your login has expired. Please log in again.",
         daily_limit: "You've used all of today's questions. Please try again tomorrow.",
         global_limit: "The site's total limit for today has been reached. Please try again tomorrow.",
+        bad_image: "The picture couldn't be sent. Please try a different picture.",
+        image_type: "That file type isn't supported. Please choose a JPG, PNG, WebP, GIF or HEIC picture.",
+        image_too_big: "That picture is too large (max 20 MB). Please choose a smaller one.",
+        image_failed: "Couldn't open that picture. Try another one, or a JPG/PNG version.",
         generic: "Sorry, something went wrong getting the answer. Please try again shortly."
       }
     }
   };
 
   var MAX_HISTORY = 12;
+
+  // Picture settings. Photos are shrunk in the browser first so uploads are quick and fit the server limits.
+  var MAX_IMAGE_FILE_BYTES = 20 * 1024 * 1024; // refuse files above 20 MB before even opening them
+  var MAX_IMAGE_SIDE = 2048;                    // longest side in pixels; keeps small print readable
+  var MAX_IMAGE_BASE64 = 5000000;               // must stay under the server's 5.5 million limit
+  var KEEP_IMAGES_IN_REQUEST = 2;               // only the newest pictures are sent along with the chat
+  var IMAGE_EXT = /\.(jpe?g|png|webp|gif|heic|heif)$/i;
 
   var appEl = document.getElementById("app");
   var chatEl = document.getElementById("chat");
@@ -87,6 +110,12 @@
   var noteEl = document.getElementById("note");
   var langBn = document.getElementById("lang-bn");
   var langEn = document.getElementById("lang-en");
+  var attachEl = document.getElementById("attach");
+  var fileEl = document.getElementById("file");
+  var previewEl = document.getElementById("preview");
+  var previewImgEl = document.getElementById("preview-img");
+  var previewStatusEl = document.getElementById("preview-status");
+  var previewRemoveEl = document.getElementById("preview-remove");
 
   var loginForm = document.getElementById("login-form");
   var loginTitle = document.getElementById("login-title");
@@ -110,6 +139,8 @@
   var user = "";
   var usage = { used: 0, limit: 0 };
   var loginErrorKey = null;
+  var pendingImage = null; // {mime, data (base64), url (data: URL for the preview)} chosen but not sent yet
+  var preparing = false;   // true while a chosen picture is being shrunk
 
   // ---------- safe rendering (escape first, then add a little formatting) ----------
   function escapeHtml(s) {
@@ -223,11 +254,151 @@
     return el;
   }
 
+  // A question bubble that can also show the picture that was sent with it.
+  function addUserMessage(text, image) {
+    var el = document.createElement("div");
+    el.className = "msg user";
+    if (image && image.url) {
+      var img = document.createElement("img");
+      img.className = "msg-img";
+      img.alt = "";
+      img.src = image.url;
+      el.appendChild(img);
+    }
+    if (text) {
+      var span = document.createElement("div");
+      span.textContent = text;
+      el.appendChild(span);
+    }
+    chatEl.appendChild(el);
+    chatEl.scrollTop = chatEl.scrollHeight;
+    return el;
+  }
+
   function setBusy(state) {
     busy = state;
     sendEl.disabled = state;
     inputEl.disabled = state;
+    attachEl.disabled = state;
+    previewRemoveEl.disabled = state;
     if (!state) inputEl.focus();
+  }
+
+  // ---------- picture from the gallery ----------
+  function showPreview(statusText) {
+    previewEl.classList.remove("hidden");
+    previewStatusEl.textContent = statusText || "";
+    previewRemoveEl.title = TEXT[lang].removeImage;
+    previewRemoveEl.setAttribute("aria-label", TEXT[lang].removeImage);
+    if (pendingImage && pendingImage.url) previewImgEl.src = pendingImage.url;
+    else previewImgEl.removeAttribute("src");
+  }
+
+  function clearPendingImage() {
+    pendingImage = null;
+    preparing = false;
+    previewImgEl.removeAttribute("src");
+    previewEl.classList.add("hidden");
+    previewStatusEl.textContent = "";
+    fileEl.value = ""; // so choosing the same picture again still triggers "change"
+  }
+
+  function loadImageElement(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () { resolve({ img: img, url: url }); };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
+  }
+
+  function readAsDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(String(r.result)); };
+      r.onerror = function () { reject(new Error("read")); };
+      r.readAsDataURL(file);
+    });
+  }
+
+  // Turns the chosen file into {mime, data, url}. Normal pictures are redrawn on a canvas, which also
+  // fixes phone-camera rotation and shrinks very large photos. Throws an error key (see TEXT.errors).
+  async function prepareImage(file) {
+    var type = (file.type || "").toLowerCase();
+    var looksLikeImage = type.indexOf("image/") === 0 || IMAGE_EXT.test(file.name || "");
+    if (!looksLikeImage) throw new Error("image_type");
+    if (file.size > MAX_IMAGE_FILE_BYTES) throw new Error("image_too_big");
+
+    var loaded = null;
+    try {
+      loaded = await loadImageElement(file);
+    } catch (e) {
+      // Some browsers can't open HEIC. Gemini can read it directly, so send the original if it is small enough.
+      var isHeic = /heic|heif/.test(type) || /\.(heic|heif)$/i.test(file.name || "");
+      if (isHeic && file.size <= 3.5 * 1024 * 1024) {
+        var rawUrl = await readAsDataUrl(file);
+        return { mime: /heif$/.test(type) ? "image/heif" : "image/heic", data: rawUrl.split(",")[1], url: "" };
+      }
+      throw new Error("image_failed");
+    }
+
+    try {
+      var img = loaded.img;
+      var w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) throw new Error("image_failed");
+
+      var scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(w, h));
+      var cw = Math.max(1, Math.round(w * scale));
+      var ch = Math.max(1, Math.round(h * scale));
+
+      var canvas = document.createElement("canvas");
+      canvas.width = cw;
+      canvas.height = ch;
+      var ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff"; // transparent PNGs would turn black as JPEG, so paint white first
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.drawImage(img, 0, 0, cw, ch);
+
+      // JPEG at high quality keeps handwriting and small print sharp; lower it only if the result is still too big.
+      var qualities = [0.92, 0.85, 0.75, 0.6];
+      var dataUrl = "";
+      for (var i = 0; i < qualities.length; i++) {
+        dataUrl = canvas.toDataURL("image/jpeg", qualities[i]);
+        if (dataUrl.length - 23 <= MAX_IMAGE_BASE64) break;
+      }
+      var base64 = dataUrl.split(",")[1] || "";
+      if (!base64 || base64.length > MAX_IMAGE_BASE64) throw new Error("image_too_big");
+      return { mime: "image/jpeg", data: base64, url: dataUrl };
+    } finally {
+      URL.revokeObjectURL(loaded.url);
+    }
+  }
+
+  async function handleFileChosen() {
+    var file = fileEl.files && fileEl.files[0];
+    if (!file || busy || !authed) return;
+
+    clearPendingImage();
+    preparing = true;
+    sendEl.disabled = true;
+    showPreview(TEXT[lang].imageReading);
+
+    try {
+      var prepared = await prepareImage(file);
+      if (!preparing) return; // the user removed it while it was being prepared
+      // A HEIC picture sent as is has no preview image (the browser can't draw it); the file name is shown instead.
+      pendingImage = prepared;
+      preparing = false;
+      showPreview(file.name || "");
+    } catch (e) {
+      var key = e && e.message && TEXT[lang].errors[e.message] ? e.message : "image_failed";
+      clearPendingImage();
+      addMessage("error", errorText(key));
+    } finally {
+      preparing = false;
+      if (!busy) sendEl.disabled = false;
+    }
   }
 
   function autosize() {
@@ -252,6 +423,11 @@
     sendEl.textContent = t.send;
     newChatEl.textContent = t.newChat;
     logoutEl.textContent = t.logout;
+    attachEl.title = t.attach;
+    attachEl.setAttribute("aria-label", t.attach);
+    previewRemoveEl.title = t.removeImage;
+    previewRemoveEl.setAttribute("aria-label", t.removeImage);
+    if (preparing) previewStatusEl.textContent = t.imageReading;
     noteEl.textContent = t.note;
     loginTitle.textContent = t.loginTitle;
     loginHint.textContent = t.loginHint;
@@ -277,6 +453,7 @@
 
   function resetChat() {
     history = [];
+    clearPendingImage();
     chatEl.innerHTML = "";
     suggestionsEl.classList.remove("hidden");
     addMessage("bot", TEXT[lang].welcome);
@@ -305,6 +482,7 @@
     authed = false;
     user = "";
     history = [];
+    clearPendingImage();
     chatEl.innerHTML = "";
     appEl.classList.add("logged-out");
     loginErrorKey = errorKey || null;
@@ -361,13 +539,34 @@
   }
 
   // ---------- talking to the backend ----------
+  // Recent chat for the server. Pictures stay attached only for the newest few; older ones become a short note.
+  function buildMessages() {
+    var recent = history.slice(-MAX_HISTORY);
+    var imagesLeft = KEEP_IMAGES_IN_REQUEST;
+    var out = [];
+    for (var i = recent.length - 1; i >= 0; i--) {
+      var m = recent[i];
+      var item = { role: m.role, text: m.text };
+      if (m.image && imagesLeft > 0) {
+        item.image = { mime: m.image.mime, data: m.image.data };
+        imagesLeft--;
+      }
+      // A picture-only question gets its default wording from the server; earlier ones need some text.
+      if (!item.text && i !== recent.length - 1) item.text = TEXT[lang].imageOnly;
+      out.unshift(item);
+    }
+    return out;
+  }
+
   async function ask(question) {
     var q = (question || "").trim();
-    if (!q || busy || !authed) return;
+    var image = pendingImage;
+    if ((!q && !image) || busy || preparing || !authed) return;
 
     suggestionsEl.classList.add("hidden");
-    addMessage("user", q);
-    history.push({ role: "user", text: q });
+    addUserMessage(q, image);
+    history.push({ role: "user", text: q, image: image });
+    clearPendingImage();
     inputEl.value = "";
     autosize();
     setBusy(true);
@@ -380,7 +579,7 @@
       var res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lang: lang, messages: history.slice(-MAX_HISTORY) })
+        body: JSON.stringify({ lang: lang, messages: buildMessages() })
       });
       var type = res.headers.get("Content-Type") || "";
 
@@ -516,6 +715,10 @@
       formEl.requestSubmit();
     }
   });
+
+  attachEl.addEventListener("click", function () { if (!busy && !preparing && authed) fileEl.click(); });
+  fileEl.addEventListener("change", handleFileChosen);
+  previewRemoveEl.addEventListener("click", function () { if (!busy) clearPendingImage(); });
 
   loginForm.addEventListener("submit", doLogin);
   logoutEl.addEventListener("click", function () { if (!busy) doLogout(); });
