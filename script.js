@@ -382,30 +382,16 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lang: lang, messages: history.slice(-MAX_HISTORY) })
       });
-      var data = null;
-      try { data = await res.json(); } catch (e) { /* non-JSON response */ }
-      typing.remove();
+      var type = res.headers.get("Content-Type") || "";
 
-      if (res.ok && data && data.reply) {
-        addMessage("bot", data.reply);
-        history.push({ role: "assistant", text: data.reply });
-        if (typeof data.used === "number") {
-          usage = { used: data.used, limit: data.limit || usage.limit };
-          renderUsage();
-        }
+      if (res.ok && res.body && type.indexOf("text/event-stream") !== -1) {
+        await readStream(res, typing);
       } else {
-        var key = data && data.error;
-        history.pop(); // let the user retry the same question without a dangling turn
-        if (key === "unauthorized") {
-          setBusy(false);
-          showLogin("unauthorized");
-          return;
-        }
-        if (key === "daily_limit") {
-          usage = { used: data.limit || usage.limit, limit: data.limit || usage.limit };
-          renderUsage();
-        }
-        addMessage("error", errorText(key));
+        // Errors (login expired, daily limit, ...) still arrive as plain JSON.
+        var data = null;
+        try { data = await res.json(); } catch (e) { /* non-JSON response */ }
+        typing.remove();
+        handleFailure(data && data.error, data);
       }
     } catch (e) {
       typing.remove();
@@ -413,6 +399,107 @@
       history.pop();
     } finally {
       setBusy(false);
+    }
+  }
+
+  // Shared handling for any failed question: undo the dangling turn and show a clear message.
+  function handleFailure(key, data) {
+    history.pop(); // let the user retry the same question without a dangling turn
+    if (key === "unauthorized") {
+      showLogin("unauthorized");
+      return;
+    }
+    if (key === "daily_limit" && data) {
+      usage = { used: data.limit || usage.limit, limit: data.limit || usage.limit };
+      renderUsage();
+    }
+    addMessage("error", errorText(key));
+  }
+
+  // Reads the answer piece by piece and shows it as it grows.
+  async function readStream(res, typing) {
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder("utf-8");
+    var buffer = "";
+    var answer = "";
+    var botEl = null;
+    var finished = false;
+    var failKey = null;
+    var paintQueued = false;
+
+    function paint() {
+      paintQueued = false;
+      if (!botEl) return;
+      var nearBottom = chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 80;
+      botEl.innerHTML = renderMarkdown(answer);
+      if (nearBottom) chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function queuePaint() {
+      if (paintQueued) return;
+      paintQueued = true;
+      requestAnimationFrame(paint);
+    }
+
+    function handleEvent(raw) {
+      var lines = raw.split(/\r?\n/);
+      var payload = "";
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].indexOf("data:") === 0) payload += lines[i].slice(5).trim();
+      }
+      if (!payload) return;
+      var ev;
+      try { ev = JSON.parse(payload); } catch (e) { return; }
+
+      if (typeof ev.t === "string" && ev.t) {
+        if (!botEl) {
+          typing.remove();
+          botEl = addMessage("bot", "");
+          botEl.classList.add("streaming");
+        }
+        answer += ev.t;
+        queuePaint();
+      } else if (ev.done) {
+        finished = true;
+        if (typeof ev.used === "number") {
+          usage = { used: ev.used, limit: ev.limit || usage.limit };
+          renderUsage();
+        }
+      } else if (ev.e) {
+        failKey = ev.e;
+      }
+    }
+
+    try {
+      while (true) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, { stream: true });
+        var m;
+        while ((m = /\r?\n\r?\n/.exec(buffer))) {
+          var raw = buffer.slice(0, m.index);
+          buffer = buffer.slice(m.index + m[0].length);
+          handleEvent(raw);
+        }
+      }
+      if (buffer.trim()) handleEvent(buffer);
+    } catch (e) {
+      failKey = failKey || "network";
+    }
+
+    if (botEl) {
+      botEl.classList.remove("streaming");
+      paint();
+    } else {
+      typing.remove();
+    }
+
+    if (answer) {
+      // Show whatever arrived. It counts as a question already, so keep it in the history.
+      history.push({ role: "assistant", text: answer });
+      if (!finished) addMessage("error", errorText(failKey || "network"));
+    } else {
+      handleFailure(failKey || "generic", null);
     }
   }
 
