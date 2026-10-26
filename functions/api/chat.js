@@ -8,6 +8,18 @@ const DEFAULT_THINKING_LEVEL = "low"; // faster first words; "medium" is the mod
 const MAX_MESSAGES = 20;       // how many recent messages we accept
 const MAX_CHARS_PER_MESSAGE = 3000;
 
+// Image upload limits. The browser already shrinks photos before sending, so these are just a safety net.
+const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
+const MAX_IMAGE_BASE64_CHARS = 5500000; // about 4 MB of image data per picture
+const MAX_IMAGES_PER_REQUEST = 2;       // only the newest pictures are sent, older ones are dropped
+const DEFAULT_IMAGE_THINKING_LEVEL = "medium"; // reading a picture carefully is worth a little more thinking
+const DEFAULT_MEDIA_RESOLUTION = "high";       // lets the model see fine print and handwriting
+const DEFAULT_IMAGE_QUESTION = {
+  bn: "এই ছবিতে কী আছে মনোযোগ দিয়ে দেখে বুঝিয়ে দাও। প্রশ্ন থাকলে সমাধান করে দাও।",
+  en: "Look carefully at this image and explain it. If it contains a question, solve it.",
+};
+const OLD_IMAGE_NOTE = { bn: "(আগে একটি ছবি পাঠানো হয়েছিল)", en: "(an image was sent earlier)" };
+
 const SYSTEM_PROMPTS = {
   bn: `তুমি "AI Teacher" — একজন ধৈর্যশীল, বন্ধুসুলভ শিক্ষক।
 - ব্যবহারকারী বাংলায় লিখলে সহজ, স্পষ্ট বাংলায় উত্তর দাও। ইংরেজিতে লিখলে ইংরেজিতে উত্তর দাও।
@@ -17,7 +29,10 @@ const SYSTEM_PROMPTS = {
 - উত্তর সংক্ষিপ্ত ও গোছানো রাখো। শেষে প্রয়োজন হলে একটা ছোট প্রশ্ন করে বুঝে নেওয়ার সুযোগ দাও।
 - চিকিৎসা, আইন বা আর্থিক বিষয়ে সাধারণ শিক্ষামূলক ব্যাখ্যা দাও এবং বিশেষজ্ঞের পরামর্শ নিতে বলো।
 - গাণিতিক বা রাসায়নিক লেখায় LaTeX বা ডলার ($) চিহ্ন ব্যবহার করবে না। সাধারণ অক্ষর ও ইউনিকোড চিহ্ন (→, ×, ², ₂, √) ব্যবহার করো, যেমন: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂।
-- উদ্ধৃতি চিহ্ন (>) ব্যবহার না করে সমীকরণ আলাদা লাইনে লেখো।`,
+- উদ্ধৃতি চিহ্ন (>) ব্যবহার না করে সমীকরণ আলাদা লাইনে লেখো।
+- ব্যবহারকারী ছবি দিলে প্রথমে ছবির লেখা, সংখ্যা, চিহ্ন, সমীকরণ, টেবিল ও ডায়াগ্রাম খুব মনোযোগ দিয়ে পড়ো (হাতের লেখা হলেও)। যা পড়তে পেরেছ তা সংক্ষেপে লিখে দেখাও, তারপর প্রশ্নের উত্তর বা সমাধান ধাপে ধাপে দাও।
+- ছবির কোনো অংশ ঝাপসা, কাটা বা অস্পষ্ট হলে সেটা সৎভাবে বলো। অনুমান করে সংখ্যা বা শব্দ বসিয়ো না। দরকার হলে আরও স্পষ্ট ছবি দিতে বলো।
+- ছবিতে একাধিক প্রশ্ন থাকলে ক্রমানুসারে একটা একটা করে উত্তর দাও। সাথে কোনো প্রশ্ন না থাকলে ছবিতে কী আছে তা ব্যাখ্যা করো এবং পড়াশোনার দিক থেকে কী শেখার আছে তা বলো।`,
   en: `You are "AI Teacher", a patient and friendly tutor.
 - Reply in the language the student writes in: English for English, simple clear Bengali (বাংলা) for Bengali.
 - Explain hard topics step by step and use short examples when they help.
@@ -26,7 +41,10 @@ const SYSTEM_PROMPTS = {
 - Keep answers concise and well organized. When useful, end with a short question to check understanding.
 - For medical, legal or financial topics, give general educational explanations and suggest consulting a professional.
 - Do not use LaTeX or dollar signs ($) for math or chemistry. Use plain text and Unicode symbols (→, ×, ², ₂, √), e.g. 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂.
-- Do not use ">" quote markers; put equations on their own line instead.`,
+- Do not use ">" quote markers; put equations on their own line instead.
+- When the student attaches an image, first read all text, numbers, symbols, equations, tables and diagrams in it very carefully (handwriting too). Briefly show what you could read, then answer or solve step by step.
+- If part of the image is blurry, cut off or unclear, say so honestly. Never guess digits or words; ask for a clearer picture if needed.
+- If the image has several questions, answer them one at a time in order. If there is no question with it, explain what the image shows and what the student can learn from it.`,
 };
 
 function json(body, status = 200) {
@@ -65,12 +83,36 @@ export async function onRequestPost(context) {
   const lang = payload && payload.lang === "en" ? "en" : "bn";
   const incoming = Array.isArray(payload && payload.messages) ? payload.messages : [];
 
-  // Keep only valid user/assistant text messages, trim size, keep the most recent ones.
+  // Keep only valid user/assistant messages, trim size, keep the most recent ones.
+  // A user message may carry one picture: { mime, data } where data is base64 without the "data:" prefix.
+  let badImage = false;
   const cleaned = incoming
     .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.text === "string")
-    .map((m) => ({ role: m.role, text: m.text.trim().slice(0, MAX_CHARS_PER_MESSAGE) }))
-    .filter((m) => m.text.length > 0)
+    .map((m) => {
+      let image = null;
+      if (m.image) {
+        const img = m.image;
+        const ok = m.role === "user" && typeof img.mime === "string" && typeof img.data === "string"
+          && ALLOWED_IMAGE_MIMES.has(img.mime) && img.data.length > 0
+          && img.data.length <= MAX_IMAGE_BASE64_CHARS && /^[A-Za-z0-9+/]+={0,2}$/.test(img.data);
+        if (ok) image = { mime: img.mime, data: img.data };
+        else badImage = true;
+      }
+      return { role: m.role, text: m.text.trim().slice(0, MAX_CHARS_PER_MESSAGE), image };
+    })
+    .filter((m) => m.text.length > 0 || m.image)
     .slice(-MAX_MESSAGES);
+
+  if (badImage) return json({ error: "bad_image" }, 400);
+
+  // Send only the newest pictures; for older ones keep just a short note so the chat still makes sense.
+  let imagesLeft = MAX_IMAGES_PER_REQUEST;
+  for (let i = cleaned.length - 1; i >= 0; i--) {
+    if (!cleaned[i].image) continue;
+    if (imagesLeft > 0) { imagesLeft--; continue; }
+    cleaned[i].image = null;
+    if (!cleaned[i].text) cleaned[i].text = OLD_IMAGE_NOTE[lang];
+  }
 
   // The conversation must start with and end on a user message.
   while (cleaned.length && cleaned[0].role !== "user") cleaned.shift();
@@ -78,40 +120,61 @@ export async function onRequestPost(context) {
     return json({ error: "bad_request" }, 400);
   }
 
+  // A picture sent without any words still gets a sensible question.
+  const lastMsg = cleaned[cleaned.length - 1];
+  if (!lastMsg.text) lastMsg.text = DEFAULT_IMAGE_QUESTION[lang];
+  const hasImage = cleaned.some((m) => m.image);
+
   const model = (env.GEMINI_MODEL || DEFAULT_MODEL).trim();
   // alt=sse makes Gemini send the answer piece by piece instead of all at once.
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
 
   // Lower "thinking" makes the first words arrive much sooner. Set GEMINI_THINKING_LEVEL
   // (minimal | low | medium | high) in Cloudflare to change it, or "off" to leave the model default.
-  const thinkingLevel = (env.GEMINI_THINKING_LEVEL || DEFAULT_THINKING_LEVEL).trim().toLowerCase();
+  // Questions with a picture use GEMINI_THINKING_LEVEL_IMAGE (default "medium") for more careful reading.
+  const thinkingLevel = (hasImage
+    ? (env.GEMINI_THINKING_LEVEL_IMAGE || DEFAULT_IMAGE_THINKING_LEVEL)
+    : (env.GEMINI_THINKING_LEVEL || DEFAULT_THINKING_LEVEL)).trim().toLowerCase();
 
-  const baseBody = {
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[lang] }] },
-    contents: cleaned.map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.text }],
-    })),
-    generationConfig: { maxOutputTokens: 2048 },
-  };
+  // GEMINI_MEDIA_RESOLUTION (low | medium | high | off) controls how much detail the model takes from a picture.
+  const mediaLevel = (env.GEMINI_MEDIA_RESOLUTION || DEFAULT_MEDIA_RESOLUTION).trim().toLowerCase();
 
-  function callGemini(withThinking) {
-    const body = JSON.parse(JSON.stringify(baseBody));
-    if (withThinking) body.generationConfig.thinkingConfig = { thinkingLevel };
+  const contents = cleaned.map((m) => {
+    // Words first, then the picture (Google's advice for one image plus a question).
+    const parts = [];
+    if (m.text) parts.push({ text: m.text });
+    if (m.image) parts.push({ inlineData: { mimeType: m.image.mime, data: m.image.data } });
+    return { role: m.role === "assistant" ? "model" : "user", parts };
+  });
+
+  // Picture answers need more room because thinking tokens count towards the limit too.
+  const baseConfig = { maxOutputTokens: hasImage ? 4096 : 2048 };
+
+  function callGemini(withExtras) {
+    const generationConfig = Object.assign({}, baseConfig);
+    if (withExtras) {
+      if (thinkingLevel !== "off" && thinkingLevel !== "") generationConfig.thinkingConfig = { thinkingLevel };
+      if (hasImage && mediaLevel !== "off" && mediaLevel !== "") {
+        generationConfig.mediaResolution = "MEDIA_RESOLUTION_" + mediaLevel.toUpperCase();
+      }
+    }
     return fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[lang] }] },
+        contents,
+        generationConfig,
+      }),
     });
   }
 
-  const useThinking = thinkingLevel !== "off" && thinkingLevel !== "";
   let upstream;
   try {
-    upstream = await callGemini(useThinking);
-    if (useThinking && upstream.status === 400) {
-      // This model may not accept that thinking setting; log it and retry once without it.
-      console.log("Gemini 400 with thinkingLevel, retrying without:", (await upstream.text()).slice(0, 300));
+    upstream = await callGemini(true);
+    if (upstream.status === 400) {
+      // The model may not accept the thinking or picture-detail setting; log it and retry once without them.
+      console.log("Gemini 400 with extra settings, retrying without:", (await upstream.text()).slice(0, 300));
       upstream = await callGemini(false);
     }
   } catch {
