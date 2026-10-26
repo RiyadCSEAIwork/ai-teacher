@@ -4,7 +4,8 @@
 import { isConfigured, verifySession, getUsage, addUsage } from "../../lib/auth.js";
 
 const DEFAULT_MODEL = "gemini-3.6-flash";
-const MAX_MESSAGES = 20;        // how many recent messages we accept
+const DEFAULT_THINKING_LEVEL = "low"; // faster first words; "medium" is the model default
+const MAX_MESSAGES = 20;       // how many recent messages we accept
 const MAX_CHARS_PER_MESSAGE = 3000;
 
 const SYSTEM_PROMPTS = {
@@ -78,9 +79,14 @@ export async function onRequestPost(context) {
   }
 
   const model = (env.GEMINI_MODEL || DEFAULT_MODEL).trim();
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  // alt=sse makes Gemini send the answer piece by piece instead of all at once.
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
 
-  const body = {
+  // Lower "thinking" makes the first words arrive much sooner. Set GEMINI_THINKING_LEVEL
+  // (minimal | low | medium | high) in Cloudflare to change it, or "off" to leave the model default.
+  const thinkingLevel = (env.GEMINI_THINKING_LEVEL || DEFAULT_THINKING_LEVEL).trim().toLowerCase();
+
+  const baseBody = {
     systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[lang] }] },
     contents: cleaned.map((m) => ({
       role: m.role === "assistant" ? "model" : "user",
@@ -89,34 +95,103 @@ export async function onRequestPost(context) {
     generationConfig: { maxOutputTokens: 2048 },
   };
 
-  let upstream;
-  try {
-    upstream = await fetch(url, {
+  function callGemini(withThinking) {
+    const body = JSON.parse(JSON.stringify(baseBody));
+    if (withThinking) body.generationConfig.thinkingConfig = { thinkingLevel };
+    return fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
       body: JSON.stringify(body),
     });
+  }
+
+  const useThinking = thinkingLevel !== "off" && thinkingLevel !== "";
+  let upstream;
+  try {
+    upstream = await callGemini(useThinking);
+    if (useThinking && upstream.status === 400) {
+      // This model may not accept that thinking setting; log it and retry once without it.
+      console.log("Gemini 400 with thinkingLevel, retrying without:", (await upstream.text()).slice(0, 300));
+      upstream = await callGemini(false);
+    }
   } catch {
     return json({ error: "network" }, 502);
   }
 
   if (upstream.status === 429) return json({ error: "rate_limited" }, 429);
-  if (!upstream.ok) {
+  if (!upstream.ok || !upstream.body) {
     // Log details for you (visible in Cloudflare logs), but never send raw upstream errors to the browser.
     console.log("Gemini error", upstream.status, (await upstream.text()).slice(0, 500));
     return json({ error: "upstream_error" }, 502);
   }
 
-  const data = await upstream.json();
-  const parts = data && data.candidates && data.candidates[0] && data.candidates[0].content
-    ? data.candidates[0].content.parts || []
-    : [];
-  const reply = parts.map((p) => p.text || "").join("").trim();
+  // From here on we answer with a stream of small events: {"t": "text piece"}, then {"done": true, used, limit}
+  // (or {"e": "error_key"} if something fails midway).
+  const encoder = new TextEncoder();
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+  const send = (obj) => writer.write(encoder.encode("data: " + JSON.stringify(obj) + "\n\n"));
 
-  if (!reply) return json({ error: "empty_reply" }, 502);
+  const pump = (async () => {
+    const reader = upstream.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let counted = false;
+    let gotText = false;
 
-  await addUsage(env, user, usage); // count it only now that the answer succeeded
-  return json({ reply, used: usage.used + 1, limit: usage.limit });
+    async function handleEvent(raw) {
+      const dataLines = raw.split(/\r?\n/).filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim());
+      if (!dataLines.length) return;
+      let chunk;
+      try { chunk = JSON.parse(dataLines.join("\n")); } catch { return; }
+      const cand = chunk && chunk.candidates && chunk.candidates[0];
+      const parts = cand && cand.content && cand.content.parts ? cand.content.parts : [];
+      const text = parts.filter((p) => !p.thought).map((p) => p.text || "").join("");
+      if (!text) return;
+      if (!counted) {
+        counted = true; // count the question once the first words of a real answer arrive
+        try { await addUsage(env, user, usage); } catch (err) { console.log("addUsage failed", String(err)); }
+      }
+      gotText = true;
+      await send({ t: text });
+    }
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let m;
+        while ((m = /\r?\n\r?\n/.exec(buffer))) {
+          const raw = buffer.slice(0, m.index);
+          buffer = buffer.slice(m.index + m[0].length);
+          await handleEvent(raw);
+        }
+      }
+      if (buffer.trim()) await handleEvent(buffer);
+
+      if (!gotText) await send({ e: "empty_reply" });
+      else await send({ done: true, used: usage.used + 1, limit: usage.limit });
+    } catch (err) {
+      console.log("stream error", String(err));
+      try { await send({ e: "network" }); } catch { /* browser already left */ }
+      try { await reader.cancel(); } catch { /* ignore */ }
+    } finally {
+      try { await writer.close(); } catch { /* ignore */ }
+    }
+  })();
+
+  // Keep the function alive until the whole answer has been sent.
+  context.waitUntil(pump);
+
+  return new Response(readable, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-store, no-transform",
+      "X-Accel-Buffering": "no",
+    },
+  });
 }
 
 // Any other method gets a clear answer instead of a confusing error.
