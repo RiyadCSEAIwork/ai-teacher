@@ -115,6 +115,7 @@
   var previewEl = document.getElementById("preview");
   var previewImgEl = document.getElementById("preview-img");
   var previewStatusEl = document.getElementById("preview-status");
+  var previewNameEl = document.getElementById("preview-name");
   var previewRemoveEl = document.getElementById("preview-remove");
 
   var loginForm = document.getElementById("login-form");
@@ -263,6 +264,7 @@
       img.className = "msg-img";
       img.alt = "";
       img.src = image.url;
+      img.addEventListener("click", function () { openLightbox(image.url); });
       el.appendChild(img);
     }
     if (text) {
@@ -285,8 +287,10 @@
   }
 
   // ---------- picture from the gallery ----------
-  function showPreview(statusText) {
+  function showPreview(nameText, statusText) {
     previewEl.classList.remove("hidden");
+    previewEl.classList.toggle("loading", preparing);
+    previewNameEl.textContent = nameText || "";
     previewStatusEl.textContent = statusText || "";
     previewRemoveEl.title = TEXT[lang].removeImage;
     previewRemoveEl.setAttribute("aria-label", TEXT[lang].removeImage);
@@ -294,11 +298,35 @@
     else previewImgEl.removeAttribute("src");
   }
 
+  function sizeLabel(image) {
+    var kb = (image.data.length * 0.75) / 1024;
+    return kb < 1024 ? Math.max(1, Math.round(kb)) + " KB" : (kb / 1024).toFixed(1) + " MB";
+  }
+
+  // Click a picture in the chat to see it large; click again or press Esc to close.
+  function openLightbox(src) {
+    var box = document.createElement("div");
+    box.className = "lightbox";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    var big = document.createElement("img");
+    big.src = src;
+    big.alt = "";
+    box.appendChild(big);
+    function close() { document.removeEventListener("keydown", onKey); box.remove(); }
+    function onKey(e) { if (e.key === "Escape") close(); }
+    box.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(box);
+  }
+
   function clearPendingImage() {
     pendingImage = null;
     preparing = false;
     previewImgEl.removeAttribute("src");
     previewEl.classList.add("hidden");
+    previewEl.classList.remove("loading");
+    previewNameEl.textContent = "";
     previewStatusEl.textContent = "";
     fileEl.value = ""; // so choosing the same picture again still triggers "change"
   }
@@ -382,7 +410,7 @@
     clearPendingImage();
     preparing = true;
     sendEl.disabled = true;
-    showPreview(TEXT[lang].imageReading);
+    showPreview(file.name || "", TEXT[lang].imageReading);
 
     try {
       var prepared = await prepareImage(file);
@@ -390,7 +418,7 @@
       // A HEIC picture sent as is has no preview image (the browser can't draw it); the file name is shown instead.
       pendingImage = prepared;
       preparing = false;
-      showPreview(file.name || "");
+      showPreview(file.name || "", sizeLabel(prepared));
     } catch (e) {
       var key = e && e.message && TEXT[lang].errors[e.message] ? e.message : "image_failed";
       clearPendingImage();
