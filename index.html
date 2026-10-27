@@ -27,6 +27,7 @@
           <button id="lang-bn" type="button">বাংলা</button>
           <button id="lang-en" type="button">English</button>
         </div>
+        <button id="history-btn" type="button" class="ghost"></button>
         <button id="new-chat" type="button" class="ghost"></button>
         <button id="logout" type="button" class="ghost"></button>
       </div>
@@ -74,6 +75,20 @@
       <button id="send" type="submit"></button>
     </form>
     <p id="note" class="note"></p>
+
+    <!-- Chat history: slides in from the left. -->
+    <div id="backdrop" class="backdrop"></div>
+    <aside id="drawer" class="drawer" aria-hidden="true">
+      <div class="drawer-head">
+        <h2 id="drawer-title"></h2>
+        <button id="drawer-close" type="button" class="drawer-x">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <button id="drawer-new" type="button" class="drawer-new"></button>
+      <p id="drawer-msg" class="drawer-msg"></p>
+      <ul id="chat-list" class="chat-list"></ul>
+    </aside>
   </div>
   <script src="script.js"></script>
 </body>
