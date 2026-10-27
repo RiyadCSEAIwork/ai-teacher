@@ -49,16 +49,26 @@
 
     <section id="suggestions" class="suggestions"></section>
 
-    <!-- The chosen picture waits here (small preview) until the question is sent. -->
+    <!-- The chosen picture waits here (as a small card) until the question is sent. -->
     <div id="preview" class="preview hidden">
-      <img id="preview-img" alt="">
-      <span id="preview-status" class="preview-status"></span>
-      <button id="preview-remove" type="button" class="preview-remove">✕</button>
+      <div class="preview-thumb">
+        <img id="preview-img" alt="">
+        <span class="spinner" aria-hidden="true"></span>
+      </div>
+      <div class="preview-info">
+        <span id="preview-name" class="preview-name"></span>
+        <span id="preview-status" class="preview-status"></span>
+      </div>
+      <button id="preview-remove" type="button" class="preview-remove">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
     </div>
 
     <form id="form" class="composer" autocomplete="off">
       <!-- Gallery only: no "capture" attribute, so the camera is not opened directly. -->
-      <button id="attach" type="button" class="attach">🖼️</button>
+      <button id="attach" type="button" class="attach">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 9"/></svg>
+      </button>
       <input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden>
       <textarea id="input" rows="1" maxlength="3000"></textarea>
       <button id="send" type="submit"></button>
