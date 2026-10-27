@@ -511,6 +511,35 @@
     }
   }
 
+  // A small JPEG copy (about 900 px, under ~190 KB) that is saved with the chat for the history.
+  async function makeThumb(dataUrl) {
+    if (!dataUrl) return "";
+    try {
+      var img = await new Promise(function (resolve, reject) {
+        var i = new Image();
+        i.onload = function () { resolve(i); };
+        i.onerror = function () { reject(new Error("thumb")); };
+        i.src = dataUrl;
+      });
+      var w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) return "";
+      var scale = Math.min(1, 900 / Math.max(w, h));
+      var canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(w * scale));
+      canvas.height = Math.max(1, Math.round(h * scale));
+      var ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      var qualities = [0.72, 0.58, 0.45, 0.35];
+      for (var q = 0; q < qualities.length; q++) {
+        var out = (canvas.toDataURL("image/jpeg", qualities[q]).split(",")[1]) || "";
+        if (out && out.length <= 250000) return out;
+      }
+    } catch (e) { /* no copy: the history just shows a picture marker */ }
+    return "";
+  }
+
   async function handleFileChosen() {
     var file = fileEl.files && fileEl.files[0];
     if (!file || busy || !authed) return;
@@ -522,6 +551,7 @@
 
     try {
       var prepared = await prepareImage(file);
+      prepared.thumb = await makeThumb(prepared.url);
       if (!preparing) return; // the user removed it while it was being prepared
       // A HEIC picture sent as is has no preview image (the browser can't draw it); the file name is shown instead.
       pendingImage = prepared;
@@ -867,25 +897,84 @@
   async function saveChat() {
     if (!authed || !history.length) return;
     if (!chatId) chatId = newChatId();
+    var needTitle = false;
     if (!chatTitle) {
       var first = null;
       for (var i = 0; i < history.length; i++) {
         if (history[i].role === "user") { first = history[i]; break; }
       }
       chatTitle = titleFrom(first && first.text);
+      // A first question that came with a picture gets a topic title made from the answer.
+      needTitle = !!(first && first.image);
     }
-    // Pictures are not stored, only a small marker that one was sent.
+    var id = chatId;
+
+    // New pictures: save a small copy first, so the history can show them again later.
+    for (var k = 0; k < history.length; k++) {
+      var im = history[k].image;
+      if (im && im.thumb && !im.imgId) {
+        var newId = newChatId();
+        if (await uploadImage(id, newId, im.thumb)) im.imgId = newId;
+        else im.thumb = ""; // limit reached or offline: this picture stays a plain marker
+      }
+    }
+
     var msgs = history.slice(-MAX_SAVED_MESSAGES).map(function (m) {
-      return { role: m.role, text: m.text || "", img: !!(m.image || m.img) };
+      return {
+        role: m.role,
+        text: m.text || "",
+        img: !!(m.image || m.img),
+        imgId: (m.image && m.image.imgId) || m.imgId || undefined
+      };
     });
+    var ok = false;
     try {
       var res = await fetch("/api/chats", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: chatId, title: chatTitle, messages: msgs })
+        body: JSON.stringify({ id: id, title: chatTitle, messages: msgs })
       });
       if (res.status === 401) showLogin("unauthorized");
+      ok = res.ok;
     } catch (e) { /* ignore */ }
+    if (ok && needTitle) improveTitle(id);
+  }
+
+  async function uploadImage(chat, imgId, base64) {
+    try {
+      var res = await fetch("/api/chats?img=" + encodeURIComponent(imgId) + "&chat=" + encodeURIComponent(chat), {
+        method: "PUT",
+        headers: { "Content-Type": "text/plain" },
+        body: base64
+      });
+      if (res.status === 401) showLogin("unauthorized");
+      return res.ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Asks the server for a 2-5 word topic title (e.g. "সালোকসংশ্লেষণ") and saves the chat again with it.
+  async function improveTitle(id) {
+    var question = "";
+    var answer = "";
+    for (var i = 0; i < history.length; i++) {
+      if (history[i].role === "user" && !question) question = history[i].text || "";
+      if (history[i].role === "assistant" && !answer) answer = history[i].text || "";
+    }
+    if (!answer) return;
+    try {
+      var res = await fetch("/api/title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang: lang, question: question, answer: answer })
+      });
+      var data = await readJson(res);
+      if (!res.ok || !data || !data.ok || !data.title) return;
+      if (id !== chatId) return; // the student already moved to another chat
+      chatTitle = data.title;
+      if (!busy) saveChat(); // otherwise the next save (after the answer) carries the new title
+    } catch (e) { /* keep the first title */ }
   }
 
   function openDrawer() {
@@ -957,12 +1046,17 @@
     suggestionsEl.classList.add("hidden");
     chatId = chat.id;
     chatTitle = chat.title || "";
-    var msgs = chat.messages || [];
-    msgs.forEach(function (m) {
-      var shown = m.text || (m.img ? TEXT[lang].imageOnly : "");
+    var placeholders = [TEXT.bn.imageOnly, TEXT.en.imageOnly];
+    (chat.messages || []).forEach(function (m) {
       if (m.role === "user") {
-        addUserMessage((m.img ? "🖼 " : "") + shown, null);
-        history.push({ role: "user", text: shown, image: null, img: !!m.img });
+        var raw = (m.img && placeholders.indexOf(m.text) !== -1) ? "" : (m.text || "");
+        if (m.img && m.imgId) {
+          // the saved small copy of the picture is loaded from the server
+          addUserMessage(raw, { url: "/api/chats?img=" + encodeURIComponent(m.imgId) });
+        } else {
+          addUserMessage((m.img ? "🖼 " : "") + (raw || (m.img ? TEXT[lang].imageOnly : "")), null);
+        }
+        history.push({ role: "user", text: raw, image: null, img: !!m.img, imgId: m.imgId || "" });
       } else {
         addMessage("bot", m.text || "");
         history.push({ role: "assistant", text: m.text || "" });
@@ -971,6 +1065,8 @@
     var last = history[history.length - 1];
     if (last && last.role === "assistant") addAnswerActions(last.text);
     chatEl.scrollTop = chatEl.scrollHeight;
+    // Older chats that were saved with the plain "(ছবি)" title get a proper topic title now.
+    if (placeholders.indexOf(chatTitle) !== -1) improveTitle(chatId);
   }
 
   async function openChat(id) {
