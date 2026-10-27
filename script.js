@@ -17,6 +17,13 @@
       imageOnly: "(ছবি)",
       copy: "কপি",
       copied: "কপি হয়েছে",
+      historyBtn: "ইতিহাস",
+      historyTitle: "চ্যাটের ইতিহাস",
+      noChats: "এখনো কোনো চ্যাট সেভ হয়নি।",
+      loadingChats: "লোড হচ্ছে…",
+      deleteChat: "চ্যাট মুছুন",
+      deleteAsk: "এই চ্যাটটা মুছে ফেলবেন?",
+      untitled: "চ্যাট",
       followups: ["আরও সহজ করে বলো", "একটা উদাহরণ দাও", "আমাকে একটা প্রশ্ন করো"],
       usage: function (user, used, limit) { return user + " · আজ " + used + "/" + limit + " প্রশ্ন"; },
       loginTitle: "লগইন করুন",
@@ -44,6 +51,8 @@
         image_type: "এই ধরনের ফাইল চলবে না। JPG, PNG, WebP, GIF বা HEIC ছবি দিন।",
         image_too_big: "ছবিটা অনেক বড় (সর্বোচ্চ ২০ MB)। ছোট একটা ছবি দিন।",
         image_failed: "ছবিটা খুলতে পারিনি। অন্য ছবি বা JPG/PNG ফরম্যাটে চেষ্টা করুন।",
+        history_not_configured: "ইতিহাস সংরক্ষণ এখনো চালু করা হয়নি (Cloudflare-এ D1 ডাটাবেস যুক্ত করা বাকি)।",
+        history_failed: "ইতিহাস লোড করতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।",
         generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
       }
     },
@@ -62,6 +71,13 @@
       imageOnly: "(picture)",
       copy: "Copy",
       copied: "Copied",
+      historyBtn: "History",
+      historyTitle: "Chat history",
+      noChats: "No saved chats yet.",
+      loadingChats: "Loading…",
+      deleteChat: "Delete chat",
+      deleteAsk: "Delete this chat?",
+      untitled: "Chat",
       followups: ["Explain it more simply", "Give me an example", "Quiz me on this"],
       usage: function (user, used, limit) { return user + " · " + used + "/" + limit + " questions today"; },
       loginTitle: "Log in",
@@ -89,6 +105,8 @@
         image_type: "That file type isn't supported. Please choose a JPG, PNG, WebP, GIF or HEIC picture.",
         image_too_big: "That picture is too large (max 20 MB). Please choose a smaller one.",
         image_failed: "Couldn't open that picture. Try another one, or a JPG/PNG version.",
+        history_not_configured: "Chat history isn't switched on yet (the D1 database still needs to be connected in Cloudflare).",
+        history_failed: "Couldn't load the chat history. Please try again shortly.",
         generic: "Sorry, something went wrong getting the answer. Please try again shortly."
       }
     }
@@ -124,6 +142,15 @@
   var previewNameEl = document.getElementById("preview-name");
   var previewRemoveEl = document.getElementById("preview-remove");
 
+  var historyBtn = document.getElementById("history-btn");
+  var drawerEl = document.getElementById("drawer");
+  var backdropEl = document.getElementById("backdrop");
+  var drawerTitleEl = document.getElementById("drawer-title");
+  var drawerCloseEl = document.getElementById("drawer-close");
+  var drawerNewEl = document.getElementById("drawer-new");
+  var drawerMsgEl = document.getElementById("drawer-msg");
+  var chatListEl = document.getElementById("chat-list");
+
   var loginForm = document.getElementById("login-form");
   var loginTitle = document.getElementById("login-title");
   var loginHint = document.getElementById("login-hint");
@@ -148,6 +175,8 @@
   var loginErrorKey = null;
   var pendingImage = null; // {mime, data (base64), url (data: URL for the preview)} chosen but not sent yet
   var preparing = false;   // true while a chosen picture is being shrunk
+  var chatId = null;       // id of the chat being saved (null until the first answer arrives)
+  var chatTitle = "";      // short title shown in the history list
 
   // ---------- safe rendering (escape first, then add a little formatting) ----------
   function escapeHtml(s) {
@@ -530,6 +559,9 @@
     sendEl.textContent = t.send;
     newChatEl.textContent = t.newChat;
     logoutEl.textContent = t.logout;
+    historyBtn.textContent = t.historyBtn;
+    drawerTitleEl.textContent = t.historyTitle;
+    drawerNewEl.textContent = "+ " + t.newChat;
     attachEl.title = t.attach;
     attachEl.setAttribute("aria-label", t.attach);
     previewRemoveEl.title = t.removeImage;
@@ -560,6 +592,8 @@
 
   function resetChat() {
     history = [];
+    chatId = null;
+    chatTitle = "";
     clearPendingImage();
     chatEl.innerHTML = "";
     suggestionsEl.classList.remove("hidden");
@@ -592,6 +626,9 @@
     history = [];
     clearPendingImage();
     chatEl.innerHTML = "";
+    chatId = null;
+    chatTitle = "";
+    closeDrawer();
     appEl.classList.add("logged-out");
     loginErrorKey = errorKey || null;
     loginCode.value = "";
@@ -805,10 +842,167 @@
     if (answer) {
       // Show whatever arrived. It counts as a question already, so keep it in the history.
       history.push({ role: "assistant", text: answer });
+      saveChat();
       if (!finished) addMessage("error", errorText(failKey || "network"));
       else addAnswerActions(answer);
     } else {
       handleFailure(failKey || "generic", null);
+    }
+  }
+
+// ---------- chat history (saved on the server for each login) ----------
+  var MAX_SAVED_MESSAGES = 40;
+
+  function newChatId() {
+    return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function titleFrom(text) {
+    var t = (text || "").replace(/\s+/g, " ").trim();
+    if (!t) t = TEXT[lang].imageOnly;
+    return t.length > 50 ? t.slice(0, 50) + "…" : t;
+  }
+
+  // Saves the whole conversation after each answer. Best effort: a failure never disturbs the chat.
+  async function saveChat() {
+    if (!authed || !history.length) return;
+    if (!chatId) chatId = newChatId();
+    if (!chatTitle) {
+      var first = null;
+      for (var i = 0; i < history.length; i++) {
+        if (history[i].role === "user") { first = history[i]; break; }
+      }
+      chatTitle = titleFrom(first && first.text);
+    }
+    // Pictures are not stored, only a small marker that one was sent.
+    var msgs = history.slice(-MAX_SAVED_MESSAGES).map(function (m) {
+      return { role: m.role, text: m.text || "", img: !!(m.image || m.img) };
+    });
+    try {
+      var res = await fetch("/api/chats", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: chatId, title: chatTitle, messages: msgs })
+      });
+      if (res.status === 401) showLogin("unauthorized");
+    } catch (e) { /* ignore */ }
+  }
+
+  function openDrawer() {
+    if (!authed) return;
+    drawerEl.classList.add("open");
+    backdropEl.classList.add("show");
+    drawerEl.setAttribute("aria-hidden", "false");
+    loadChatList();
+  }
+
+  function closeDrawer() {
+    drawerEl.classList.remove("open");
+    backdropEl.classList.remove("show");
+    drawerEl.setAttribute("aria-hidden", "true");
+  }
+
+  async function readJson(res) {
+    try { return await res.json(); } catch (e) { return null; }
+  }
+
+  async function loadChatList() {
+    drawerMsgEl.textContent = TEXT[lang].loadingChats;
+    chatListEl.innerHTML = "";
+    try {
+      var res = await fetch("/api/chats");
+      var data = await readJson(res);
+      if (res.status === 401) { showLogin("unauthorized"); return; }
+      if (!res.ok || !data || !data.ok) {
+        drawerMsgEl.textContent = errorText(data && data.error === "history_not_configured" ? "history_not_configured" : "history_failed");
+        return;
+      }
+      renderChatList(data.chats || []);
+    } catch (e) {
+      drawerMsgEl.textContent = errorText("network");
+    }
+  }
+
+  function renderChatList(chats) {
+    chatListEl.innerHTML = "";
+    drawerMsgEl.textContent = chats.length ? "" : TEXT[lang].noChats;
+    chats.forEach(function (c) {
+      var li = document.createElement("li");
+      li.className = "chat-item" + (c.id === chatId ? " active" : "");
+
+      var open = document.createElement("button");
+      open.type = "button";
+      open.className = "chat-open";
+      open.textContent = c.title || TEXT[lang].untitled;
+      open.addEventListener("click", function () { openChat(c.id); });
+
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "chat-del";
+      del.title = TEXT[lang].deleteChat;
+      del.setAttribute("aria-label", TEXT[lang].deleteChat);
+      del.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
+      del.addEventListener("click", function () { deleteChatById(c.id); });
+
+      li.appendChild(open);
+      li.appendChild(del);
+      chatListEl.appendChild(li);
+    });
+  }
+
+  // Shows a saved chat and lets the student carry on from where it stopped.
+  function showChat(chat) {
+    resetChat();
+    chatEl.innerHTML = ""; // drop the welcome bubble
+    suggestionsEl.classList.add("hidden");
+    chatId = chat.id;
+    chatTitle = chat.title || "";
+    var msgs = chat.messages || [];
+    msgs.forEach(function (m) {
+      var shown = m.text || (m.img ? TEXT[lang].imageOnly : "");
+      if (m.role === "user") {
+        addUserMessage((m.img ? "🖼 " : "") + shown, null);
+        history.push({ role: "user", text: shown, image: null, img: !!m.img });
+      } else {
+        addMessage("bot", m.text || "");
+        history.push({ role: "assistant", text: m.text || "" });
+      }
+    });
+    var last = history[history.length - 1];
+    if (last && last.role === "assistant") addAnswerActions(last.text);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  async function openChat(id) {
+    if (busy || !authed) return;
+    if (id === chatId) { closeDrawer(); return; }
+    drawerMsgEl.textContent = TEXT[lang].loadingChats;
+    try {
+      var res = await fetch("/api/chats?id=" + encodeURIComponent(id));
+      var data = await readJson(res);
+      if (res.status === 401) { showLogin("unauthorized"); return; }
+      if (!res.ok || !data || !data.ok || !data.chat) {
+        drawerMsgEl.textContent = errorText("history_failed");
+        return;
+      }
+      showChat(data.chat);
+      closeDrawer();
+    } catch (e) {
+      drawerMsgEl.textContent = errorText("network");
+    }
+  }
+
+  async function deleteChatById(id) {
+    if (busy || !authed) return;
+    if (!window.confirm(TEXT[lang].deleteAsk)) return;
+    try {
+      var res = await fetch("/api/chats?id=" + encodeURIComponent(id), { method: "DELETE" });
+      if (res.status === 401) { showLogin("unauthorized"); return; }
+      if (!res.ok) { drawerMsgEl.textContent = errorText("history_failed"); return; }
+      if (id === chatId) resetChat();
+      loadChatList();
+    } catch (e) {
+      drawerMsgEl.textContent = errorText("network");
     }
   }
 
@@ -835,6 +1029,12 @@
   newChatEl.addEventListener("click", function () { if (!busy && authed) resetChat(); });
   langBn.addEventListener("click", function () { setLanguage("bn"); });
   langEn.addEventListener("click", function () { setLanguage("en"); });
+
+historyBtn.addEventListener("click", openDrawer);
+  drawerCloseEl.addEventListener("click", closeDrawer);
+  backdropEl.addEventListener("click", closeDrawer);
+  drawerNewEl.addEventListener("click", function () { if (!busy && authed) { resetChat(); closeDrawer(); } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
 
   applyLanguage();
   autosize();
