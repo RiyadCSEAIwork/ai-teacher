@@ -413,3 +413,124 @@ button:focus-visible, textarea:focus-visible {
 }
 .action-btn:hover { color: var(--brand); border-color: var(--brand); }
 .app.logged-out .actions { display: none; }
+
+/* ---------- chat history drawer ---------- */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: rgba(8, 10, 18, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.backdrop.show { opacity: 1; pointer-events: auto; }
+
+.drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  width: min(320px, 86vw);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform 0.22s ease, visibility 0s linear 0.22s;
+}
+.drawer.open {
+  transform: none;
+  visibility: visible;
+  transition: transform 0.22s ease;
+}
+
+.drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.drawer-head h2 { margin: 0; font-size: 17px; }
+.drawer-x {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bot);
+  color: var(--muted);
+  cursor: pointer;
+}
+.drawer-x:hover { color: var(--brand); }
+
+.drawer-new {
+  border: 1px solid var(--brand);
+  background: transparent;
+  color: var(--brand);
+  font: inherit;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.drawer-new:hover { background: var(--brand); color: var(--brand-ink); }
+
+.drawer-msg { margin: 0; font-size: 13px; color: var(--muted); }
+.drawer-msg:empty { display: none; }
+
+.chat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.chat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 10px;
+}
+.chat-item:hover, .chat-item.active { background: var(--bot); }
+.chat-item.active .chat-open { font-weight: 600; color: var(--brand); }
+.chat-open {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-del {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.chat-del:hover { color: var(--danger); }
+
+/* nothing of this shows while logged out */
+.app.logged-out #history-btn,
+.app.logged-out .drawer,
+.app.logged-out .backdrop { display: none; }
