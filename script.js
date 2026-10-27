@@ -15,6 +15,9 @@
       removeImage: "ছবি সরান",
       imageReading: "ছবি প্রস্তুত হচ্ছে…",
       imageOnly: "(ছবি)",
+      copy: "কপি",
+      copied: "কপি হয়েছে",
+      followups: ["আরও সহজ করে বলো", "একটা উদাহরণ দাও", "আমাকে একটা প্রশ্ন করো"],
       usage: function (user, used, limit) { return user + " · আজ " + used + "/" + limit + " প্রশ্ন"; },
       loginTitle: "লগইন করুন",
       loginHint: "শুধু অনুমোদিত সদস্যদের জন্য। আপনার নাম ও অ্যাক্সেস কোড দিন।",
@@ -57,6 +60,9 @@
       removeImage: "Remove picture",
       imageReading: "Preparing picture…",
       imageOnly: "(picture)",
+      copy: "Copy",
+      copied: "Copied",
+      followups: ["Explain it more simply", "Give me an example", "Quiz me on this"],
       usage: function (user, used, limit) { return user + " · " + used + "/" + limit + " questions today"; },
       loginTitle: "Log in",
       loginHint: "For approved members only. Enter your name and access code.",
@@ -220,6 +226,11 @@
       };
       for (var j = 0; j < lines.length; j++) {
         var line = lines[j].replace(/^\s*&gt;\s?/, ""); // drop "> " quote markers
+        if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) { // ---  ***  ___  become a thin divider line
+          flushPara(); flushList();
+          out.push("<hr>");
+          continue;
+        }
         var heading = line.match(/^#{1,6}\s+(.*)$/);
         if (heading) {
           flushPara(); flushList();
@@ -275,6 +286,74 @@
     chatEl.appendChild(el);
     chatEl.scrollTop = chatEl.scrollHeight;
     return el;
+  }
+
+  // ---------- actions under the latest answer: copy + quick follow-ups ----------
+  function removeActions() {
+    var old = chatEl.querySelectorAll(".actions");
+    for (var i = 0; i < old.length; i++) old[i].remove();
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand("copy");
+        ta.remove();
+        ok ? resolve() : reject(new Error("copy"));
+      } catch (e) { reject(e); }
+    });
+  }
+
+  // What gets copied: the answer without markdown marks (**bold**, ## headings, --- dividers).
+  function plainAnswer(text) {
+    return cleanLatex(text)
+      .replace(/\*\*([^*\n]+)\*\*/g, "$1")
+      .replace(/`([^`\n]+)`/g, "$1")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/^\s*([-*_])(\s*\1){2,}\s*$/gm, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+
+  function addAnswerActions(answerText) {
+    removeActions();
+    var t = TEXT[lang];
+    var bar = document.createElement("div");
+    bar.className = "actions";
+
+    var copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "action-btn";
+    copyBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span></span>';
+    copyBtn.lastChild.textContent = t.copy;
+    copyBtn.addEventListener("click", function () {
+      copyText(plainAnswer(answerText)).then(function () {
+        copyBtn.lastChild.textContent = TEXT[lang].copied;
+        setTimeout(function () { copyBtn.lastChild.textContent = TEXT[lang].copy; }, 1600);
+      }, function () { /* clipboard blocked: nothing to do */ });
+    });
+    bar.appendChild(copyBtn);
+
+    t.followups.forEach(function (label) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "action-btn";
+      b.textContent = label;
+      b.addEventListener("click", function () { ask(label); });
+      bar.appendChild(b);
+    });
+
+    chatEl.appendChild(bar);
+    chatEl.scrollTop = chatEl.scrollHeight;
   }
 
   function setBusy(state) {
@@ -489,6 +568,7 @@
 
   function setLanguage(next) {
     lang = next;
+    removeActions();
     try { localStorage.setItem("aiteacher_lang", lang); } catch (e) { /* ignore */ }
     applyLanguage();
     if (authed && history.length === 0) resetChat(); // only refresh the welcome text if no conversation yet
@@ -592,6 +672,7 @@
     if ((!q && !image) || busy || preparing || !authed) return;
 
     suggestionsEl.classList.add("hidden");
+    removeActions();
     addUserMessage(q, image);
     history.push({ role: "user", text: q, image: image });
     clearPendingImage();
@@ -725,6 +806,7 @@
       // Show whatever arrived. It counts as a question already, so keep it in the history.
       history.push({ role: "assistant", text: answer });
       if (!finished) addMessage("error", errorText(failKey || "network"));
+      else addAnswerActions(answer);
     } else {
       handleFailure(failKey || "generic", null);
     }
