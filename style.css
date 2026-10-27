@@ -381,3 +381,35 @@ button:focus-visible, textarea:focus-visible {
 
 /* nothing of this shows while logged out */
 .app.logged-out .preview { display: none; }
+
+/* ---------- answer polish: divider + actions ---------- */
+.msg.bot hr {
+  border: 0;
+  border-top: 1px solid rgba(127, 127, 127, 0.35);
+  margin: 10px 0;
+}
+
+.actions {
+  align-self: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: -4px;
+  max-width: 94%;
+}
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.action-btn:hover { color: var(--brand); border-color: var(--brand); }
+.app.logged-out .actions { display: none; }
