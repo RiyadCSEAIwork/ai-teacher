@@ -18,6 +18,28 @@
       copy: "কপি",
       copied: "কপি হয়েছে",
       historyBtn: "ইতিহাস",
+      navHome: "হোম",
+      navAsk: "প্রশ্ন করুন",
+      heroTitle1: "প্রশ্ন করুন,",
+      heroTitle2: "উত্তর পান",
+      heroSub: "যে কোনো বিষয়ে আপনার প্রশ্ন করুন, AI দেবে সহজ ও নির্ভুল উত্তর।",
+      homePlaceholder: "আপনার প্রশ্ন লিখুন…",
+      homeAsk: "প্রশ্ন করুন",
+      askTitle: "প্রশ্ন করুন",
+      answerTitle: "AI-এর উত্তর",
+      addImage: "ছবি যোগ করুন",
+      getAnswer: "উত্তর দেখুন",
+      classLabel: "শ্রেণি নির্বাচন",
+      subjectLabel: "বিষয় নির্বাচন",
+      classes: ["ষষ্ঠ শ্রেণি", "সপ্তম শ্রেণি", "অষ্টম শ্রেণি", "নবম শ্রেণি", "দশম শ্রেণি (SSC)", "একাদশ শ্রেণি", "দ্বাদশ শ্রেণি (HSC)", "ভর্তি পরীক্ষা"],
+      subjects: { math: "গণিত", physics: "পদার্থবিজ্ঞান", chemistry: "রসায়ন", biology: "জীববিজ্ঞান", ict: "ICT" },
+      context: function (cls, subj) {
+        var parts = [];
+        if (cls) parts.push("শ্রেণি: " + cls);
+        if (subj) parts.push("বিষয়: " + subj);
+        return "[প্রসঙ্গ — " + parts.join("; ") + "। এই স্তর অনুযায়ী উত্তর দাও, প্রসঙ্গটা উত্তরে আবার লিখো না।]\n";
+      },
+      defaultImageQuestion: "এই ছবিতে কী আছে মনোযোগ দিয়ে দেখে বুঝিয়ে দাও। প্রশ্ন থাকলে সমাধান করে দাও।",
       historyTitle: "চ্যাটের ইতিহাস",
       noChats: "এখনো কোনো চ্যাট সেভ হয়নি।",
       loadingChats: "লোড হচ্ছে…",
@@ -72,6 +94,28 @@
       copy: "Copy",
       copied: "Copied",
       historyBtn: "History",
+      navHome: "Home",
+      navAsk: "Ask Question",
+      heroTitle1: "Ask a question,",
+      heroTitle2: "get an answer",
+      heroSub: "Ask about any subject and the AI gives a simple, accurate answer.",
+      homePlaceholder: "Type your question…",
+      homeAsk: "Ask",
+      askTitle: "Ask a question",
+      answerTitle: "AI's answer",
+      addImage: "Add picture",
+      getAnswer: "Get answer",
+      classLabel: "Choose class",
+      subjectLabel: "Choose subject",
+      classes: ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10 (SSC)", "Class 11", "Class 12 (HSC)", "Admission test"],
+      subjects: { math: "Math", physics: "Physics", chemistry: "Chemistry", biology: "Biology", ict: "ICT" },
+      context: function (cls, subj) {
+        var parts = [];
+        if (cls) parts.push("Class: " + cls);
+        if (subj) parts.push("Subject: " + subj);
+        return "[Context — " + parts.join("; ") + ". Answer at this level and do not repeat this context in your reply.]\n";
+      },
+      defaultImageQuestion: "Look carefully at this image and explain it. If it contains a question, solve it.",
       historyTitle: "Chat history",
       noChats: "No saved chats yet.",
       loadingChats: "Loading…",
@@ -130,7 +174,6 @@
   var logoutEl = document.getElementById("logout");
   var usageEl = document.getElementById("usage");
   var suggestionsEl = document.getElementById("suggestions");
-  var taglineEl = document.getElementById("tagline");
   var noteEl = document.getElementById("note");
   var langBn = document.getElementById("lang-bn");
   var langEn = document.getElementById("lang-en");
@@ -150,6 +193,33 @@
   var drawerNewEl = document.getElementById("drawer-new");
   var drawerMsgEl = document.getElementById("drawer-msg");
   var chatListEl = document.getElementById("chat-list");
+
+  // new layout: home page + ask page
+  var navHome = document.getElementById("nav-home");
+  var navAsk = document.getElementById("nav-ask");
+  var navHomeLabel = document.getElementById("nav-home-label");
+  var navAskLabel = document.getElementById("nav-ask-label");
+  var historyLabelEl = document.getElementById("history-label");
+  var logoutLabelEl = document.getElementById("logout-label");
+  var heroT1 = document.getElementById("hero-t1");
+  var heroT2 = document.getElementById("hero-t2");
+  var heroSub = document.getElementById("hero-sub");
+  var homeForm = document.getElementById("home-form");
+  var homeInput = document.getElementById("home-input");
+  var homeAttach = document.getElementById("home-attach");
+  var homeSend = document.getElementById("home-send");
+  var homeSendLabel = document.getElementById("home-send-label");
+  var homeChipsEl = document.getElementById("home-chips");
+  var subjectListEl = document.getElementById("subject-list");
+  var askTitleEl = document.getElementById("ask-title");
+  var answerTitleEl = document.getElementById("answer-title");
+  var attachLabelEl = document.getElementById("attach-label");
+  var sendLabelEl = document.getElementById("send-label");
+  var classSel = document.getElementById("class-sel");
+  var subjectSel = document.getElementById("subject-sel");
+  var counterEl = document.getElementById("counter");
+  var askMainEl = document.querySelector(".ask-main");
+  var answerCardEl = document.querySelector(".answer-card");
 
   var loginForm = document.getElementById("login-form");
   var loginTitle = document.getElementById("login-title");
@@ -175,6 +245,7 @@
   var loginErrorKey = null;
   var pendingImage = null; // {mime, data (base64), url (data: URL for the preview)} chosen but not sent yet
   var preparing = false;   // true while a chosen picture is being shrunk
+  var view = "home";       // "home" or "ask"
   var chatId = null;       // id of the chat being saved (null until the first answer arrives)
   var chatTitle = "";      // short title shown in the history list
 
@@ -390,8 +461,13 @@
     sendEl.disabled = state;
     inputEl.disabled = state;
     attachEl.disabled = state;
+    homeInput.disabled = state;
+    homeSend.disabled = state;
+    homeAttach.disabled = state;
+    classSel.disabled = state;
+    subjectSel.disabled = state;
     previewRemoveEl.disabled = state;
-    if (!state) inputEl.focus();
+    if (!state && view === "ask") inputEl.focus();
   }
 
   // ---------- picture from the gallery ----------
@@ -569,7 +645,103 @@
 
   function autosize() {
     inputEl.style.height = "auto";
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + "px";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, window.innerWidth <= 720 ? 120 : 200) + "px";
+    counterEl.textContent = inputEl.value.length + "/" + inputEl.maxLength;
+  }
+
+  // ---------- pages (home / ask), subjects, class ----------
+  var SUBJECT_IDS = ["math", "physics", "chemistry", "biology", "ict"];
+  var SVG_OPEN = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  var SUBJECT_ICONS = {
+    math: SVG_OPEN + '<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8 7.5h8"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 15.5h.01M12 15.5h.01M15.5 15.5h.01"/></svg>',
+    physics: SVG_OPEN + '<circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>',
+    chemistry: SVG_OPEN + '<path d="M9 3h6M10 3v6l-5.2 9.2A2 2 0 0 0 6.5 21h11a2 2 0 0 0 1.7-2.8L14 9V3"/><path d="M7.5 15h9"/></svg>',
+    biology: SVG_OPEN + '<path d="M20 4C10 4 5 9 5 15c0 2 .8 3.6.8 3.6S7.6 20 10 20c6.5 0 10-5.5 10-16z"/><path d="M5 21c3-5.5 6-8.5 10.5-11"/></svg>',
+    ict: SVG_OPEN + '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>'
+  };
+
+  function setView(next) {
+    view = next;
+    appEl.setAttribute("data-view", next);
+    navHome.classList.toggle("active", next === "home");
+    navAsk.classList.toggle("active", next === "ask");
+    if (next === "ask") autosize();
+  }
+
+  function option(value, label) {
+    var o = document.createElement("option");
+    o.value = value;
+    o.textContent = label;
+    return o;
+  }
+
+  function fillSelects() {
+    var t = TEXT[lang];
+    var cv = classSel.value;
+    var sv = subjectSel.value;
+    classSel.innerHTML = "";
+    classSel.appendChild(option("", t.classLabel));
+    t.classes.forEach(function (c, i) { classSel.appendChild(option(String(i), c)); });
+    subjectSel.innerHTML = "";
+    subjectSel.appendChild(option("", t.subjectLabel));
+    SUBJECT_IDS.forEach(function (id) { subjectSel.appendChild(option(id, t.subjects[id])); });
+    classSel.value = cv;
+    subjectSel.value = sv;
+    if (classSel.value !== cv) classSel.value = "";
+    if (subjectSel.value !== sv) subjectSel.value = "";
+  }
+
+  function markSubject() {
+    var items = subjectListEl.children;
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].getAttribute("data-id") === subjectSel.value);
+    }
+  }
+
+  function pickSubject(id) {
+    subjectSel.value = id;
+    markSubject();
+  }
+
+  // The subject list on the ask page and the subject chips on the home page.
+  function renderSubjects() {
+    var t = TEXT[lang];
+    subjectListEl.innerHTML = "";
+    homeChipsEl.innerHTML = "";
+    SUBJECT_IDS.forEach(function (id) {
+      var li = document.createElement("li");
+      li.className = "subject-item sub-" + id;
+      li.setAttribute("data-id", id);
+      var b = document.createElement("button");
+      b.type = "button";
+      b.innerHTML = SUBJECT_ICONS[id] + "<span></span>";
+      b.lastChild.textContent = t.subjects[id];
+      b.addEventListener("click", function () { pickSubject(subjectSel.value === id ? "" : id); });
+      li.appendChild(b);
+      subjectListEl.appendChild(li);
+
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip sub-" + id;
+      chip.innerHTML = SUBJECT_ICONS[id] + "<span></span>";
+      chip.lastChild.textContent = t.subjects[id];
+      chip.addEventListener("click", function () {
+        if (!authed) return;
+        pickSubject(id);
+        setView("ask");
+        inputEl.focus();
+      });
+      homeChipsEl.appendChild(chip);
+    });
+    markSubject();
+  }
+
+  // The chosen class and subject, as readable words. Sent with the question so the answer fits the level.
+  function currentContext() {
+    var t = TEXT[lang];
+    var cls = classSel.value === "" ? "" : (t.classes[Number(classSel.value)] || "");
+    var subj = subjectSel.value === "" ? "" : (t.subjects[subjectSel.value] || "");
+    return (cls || subj) ? { cls: cls, subj: subj } : null;
   }
 
   function errorText(key) {
@@ -584,12 +756,27 @@
   function applyLanguage() {
     var t = TEXT[lang];
     document.documentElement.lang = lang;
-    taglineEl.textContent = t.tagline;
     inputEl.placeholder = t.placeholder;
-    sendEl.textContent = t.send;
+    sendLabelEl.textContent = t.getAnswer;
     newChatEl.textContent = t.newChat;
-    logoutEl.textContent = t.logout;
-    historyBtn.textContent = t.historyBtn;
+    logoutLabelEl.textContent = t.logout;
+    logoutEl.title = t.logout;
+    logoutEl.setAttribute("aria-label", t.logout);
+    historyLabelEl.textContent = t.historyBtn;
+    navHomeLabel.textContent = t.navHome;
+    navAskLabel.textContent = t.navAsk;
+    heroT1.textContent = t.heroTitle1;
+    heroT2.textContent = t.heroTitle2;
+    heroSub.textContent = t.heroSub;
+    homeInput.placeholder = t.homePlaceholder;
+    homeSendLabel.textContent = t.homeAsk;
+    homeAttach.title = t.attach;
+    homeAttach.setAttribute("aria-label", t.attach);
+    askTitleEl.textContent = t.askTitle;
+    answerTitleEl.textContent = t.answerTitle;
+    attachLabelEl.textContent = t.addImage;
+    fillSelects();
+    renderSubjects();
     drawerTitleEl.textContent = t.historyTitle;
     drawerNewEl.textContent = "+ " + t.newChat;
     attachEl.title = t.attach;
@@ -647,7 +834,7 @@
     appEl.classList.remove("logged-out");
     applyLanguage();
     resetChat();
-    inputEl.focus();
+    setView("home");
   }
 
   function showLogin(errorKey) {
@@ -722,6 +909,10 @@
     for (var i = recent.length - 1; i >= 0; i--) {
       var m = recent[i];
       var item = { role: m.role, text: m.text };
+      // The newest question carries the chosen class and subject as a short hint for the AI.
+      if (m.role === "user" && m.ctx && i === recent.length - 1) {
+        item.text = TEXT[lang].context(m.ctx.cls, m.ctx.subj) + (m.text || TEXT[lang].defaultImageQuestion);
+      }
       if (m.image && imagesLeft > 0) {
         item.image = { mime: m.image.mime, data: m.image.data };
         imagesLeft--;
@@ -737,11 +928,14 @@
     var q = (question || "").trim();
     var image = pendingImage;
     if ((!q && !image) || busy || preparing || !authed) return;
+    setView("ask");
+    // On very small screens the question card and the answer share one scroll area: bring the answer into view.
+    if (askMainEl.scrollHeight > askMainEl.clientHeight + 4) answerCardEl.scrollIntoView({ block: "start" });
 
     suggestionsEl.classList.add("hidden");
     removeActions();
     addUserMessage(q, image);
-    history.push({ role: "user", text: q, image: image });
+    history.push({ role: "user", text: q, image: image, ctx: currentContext() });
     clearPendingImage();
     inputEl.value = "";
     autosize();
@@ -1071,7 +1265,7 @@
 
   async function openChat(id) {
     if (busy || !authed) return;
-    if (id === chatId) { closeDrawer(); return; }
+    if (id === chatId) { setView("ask"); closeDrawer(); return; }
     drawerMsgEl.textContent = TEXT[lang].loadingChats;
     try {
       var res = await fetch("/api/chats?id=" + encodeURIComponent(id));
@@ -1082,6 +1276,7 @@
         return;
       }
       showChat(data.chat);
+      setView("ask");
       closeDrawer();
     } catch (e) {
       drawerMsgEl.textContent = errorText("network");
@@ -1129,10 +1324,40 @@
 historyBtn.addEventListener("click", openDrawer);
   drawerCloseEl.addEventListener("click", closeDrawer);
   backdropEl.addEventListener("click", closeDrawer);
-  drawerNewEl.addEventListener("click", function () { if (!busy && authed) { resetChat(); closeDrawer(); } });
+  drawerNewEl.addEventListener("click", function () { if (!busy && authed) { resetChat(); setView("ask"); closeDrawer(); } });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
 
+  // top navigation
+  navHome.addEventListener("click", function () { if (authed) setView("home"); });
+  navAsk.addEventListener("click", function () { if (authed) { setView("ask"); inputEl.focus(); } });
+
+  // home page: ask bar and picture button
+  homeForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var q = homeInput.value.trim();
+    if (!q || busy || !authed) return;
+    homeInput.value = "";
+    ask(q);
+  });
+  homeAttach.addEventListener("click", function () {
+    if (busy || preparing || !authed) return;
+    setView("ask");
+    fileEl.click();
+  });
+
+  // class and subject choices
+  subjectSel.addEventListener("change", markSubject);
+  classSel.addEventListener("change", function () {
+    try { localStorage.setItem("aiteacher_class", classSel.value); } catch (e) { /* ignore */ }
+  });
+
   applyLanguage();
+  try {
+    var savedClass = localStorage.getItem("aiteacher_class");
+    if (savedClass !== null && /^[0-9]*$/.test(savedClass) && classSel.querySelector('option[value="' + savedClass + '"]')) {
+      classSel.value = savedClass;
+    }
+  } catch (e) { /* storage may be blocked; ignore */ }
   autosize();
   checkSession();
 })();
