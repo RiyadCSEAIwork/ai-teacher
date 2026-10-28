@@ -17,7 +17,7 @@
       imageOnly: "(ছবি)",
       copy: "কপি",
       copied: "কপি হয়েছে",
-      historyBtn: "ইতিহাস",
+      historyBtn: "পূর্ববর্তী আলোচনা",
       navHome: "হোম",
       navAsk: "প্রশ্ন করুন",
       heroTitle1: "পড়াশোনা হোক আরও সহজ ও স্মার্ট",
