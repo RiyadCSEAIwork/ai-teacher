@@ -12,27 +12,51 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app" class="app logged-out">
+  <div id="app" class="app logged-out" data-view="home">
+
+    <!-- ===== top bar ===== -->
     <header class="top">
       <div class="brand">
-        <span class="logo" aria-hidden="true">🎓</span>
-        <div>
-          <h1>AI Teacher</h1>
-          <p id="tagline" class="tagline"></p>
+        <svg class="logo" viewBox="0 0 48 48" width="40" height="40" aria-hidden="true">
+          <path d="M24 5 2 16.5 24 28l22-11.5z" fill="#0b63f6"/>
+          <path d="M11 24v9.5c0 3.3 5.8 6.5 13 6.5s13-3.2 13-6.5V24L24 30.5z" fill="#1c3f9e"/>
+          <path d="M43 18v11" stroke="#0b63f6" stroke-width="2.6" stroke-linecap="round"/>
+          <circle cx="43" cy="31" r="2.2" fill="#0b63f6"/>
+        </svg>
+        <div class="brand-text">
+          <h1 class="brand-name"><span class="brand-ai">AI</span> Teacher</h1>
+          <span id="usage" class="usage"></span>
         </div>
       </div>
-      <div class="controls">
-        <span id="usage" class="usage"></span>
+
+      <nav class="nav" aria-label="Main">
+        <button id="nav-home" type="button" class="nav-item active">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
+          <span id="nav-home-label"></span>
+        </button>
+        <button id="nav-ask" type="button" class="nav-item">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <span id="nav-ask-label"></span>
+        </button>
+        <button id="history-btn" type="button" class="nav-item">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <span id="history-label"></span>
+        </button>
+      </nav>
+
+      <div class="top-right">
         <div class="lang" role="group" aria-label="Language">
           <button id="lang-bn" type="button">বাংলা</button>
           <button id="lang-en" type="button">English</button>
         </div>
-        <button id="history-btn" type="button" class="ghost"></button>
-        <button id="new-chat" type="button" class="ghost"></button>
-        <button id="logout" type="button" class="ghost"></button>
+        <button id="logout" type="button" class="btn-soft">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M16 8l4 4-4 4M20 12H10"/></svg>
+          <span id="logout-label"></span>
+        </button>
       </div>
     </header>
 
+    <!-- ===== login ===== -->
     <section class="login-wrap">
       <form id="login-form" class="login-card" autocomplete="on">
         <h2 id="login-title"></h2>
@@ -46,37 +70,121 @@
       </form>
     </section>
 
-    <main id="chat" class="chat" aria-live="polite"></main>
-
-    <section id="suggestions" class="suggestions"></section>
-
-    <!-- The chosen picture waits here (as a small card) until the question is sent. -->
-    <div id="preview" class="preview hidden">
-      <div class="preview-thumb">
-        <img id="preview-img" alt="">
-        <span class="spinner" aria-hidden="true"></span>
+    <!-- ===== home page ===== -->
+    <section id="home-view" class="view home-view">
+      <div class="hero">
+        <div class="hero-text">
+          <h2 class="hero-title"><span id="hero-t1"></span><br><span id="hero-t2"></span></h2>
+          <p id="hero-sub" class="hero-sub"></p>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <svg viewBox="0 0 380 260" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="205" cy="140" rx="165" ry="105" fill="#e3edff"/>
+            <ellipse cx="120" cy="80" rx="60" ry="40" fill="#edf3ff"/>
+            <!-- light bulb -->
+            <g transform="translate(150 22)">
+              <circle cx="22" cy="22" r="20" fill="#ffd34d"/>
+              <rect x="14" y="40" width="16" height="9" rx="3" fill="#7d8aa6"/>
+              <path d="M22 -8v-8M2 0l-6-6M42 0l6-6M-8 22h-8M52 22h8" stroke="#ffc233" stroke-width="3" stroke-linecap="round"/>
+            </g>
+            <!-- laptop -->
+            <rect x="100" y="92" width="190" height="118" rx="10" fill="#2a4bb8"/>
+            <rect x="108" y="100" width="174" height="102" rx="6" fill="#3c63da"/>
+            <g transform="translate(195 151)">
+              <path d="M0 -20 -26 -7 0 6 26 -7z" fill="#fff"/>
+              <path d="M-14 1v11c0 3 6 6 14 6s14-3 14-6V1L0 9z" fill="#dbe6ff"/>
+              <path d="M28 -5v13" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+            </g>
+            <path d="M70 210h250l-14 20H84z" fill="#c6d3ee"/>
+            <rect x="170" y="210" width="50" height="6" rx="3" fill="#a9b9dc"/>
+            <!-- books -->
+            <rect x="30" y="198" width="86" height="16" rx="3" fill="#1d4ed8"/>
+            <rect x="38" y="182" width="78" height="16" rx="3" fill="#f59e0b"/>
+            <rect x="26" y="166" width="82" height="16" rx="3" fill="#ef4444"/>
+            <rect x="34" y="170" width="60" height="3" rx="1.5" fill="#fff" opacity=".6"/>
+            <!-- plant -->
+            <rect x="308" y="190" width="42" height="40" rx="7" fill="#e8edf7"/>
+            <path d="M329 190c-14-14-18-32-8-52 14 14 14 34 8 52z" fill="#3aa86b"/>
+            <path d="M329 190c10-12 26-20 32-38-18 4-30 18-32 38z" fill="#2f9460"/>
+            <path d="M329 190c-2-18-12-30-30-36 0 18 12 30 30 36z" fill="#4cc283"/>
+          </svg>
+        </div>
       </div>
-      <div class="preview-info">
-        <span id="preview-name" class="preview-name"></span>
-        <span id="preview-status" class="preview-status"></span>
+
+      <form id="home-form" class="home-ask" autocomplete="off">
+        <button id="home-attach" type="button" class="home-attach">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 9"/></svg>
+        </button>
+        <input id="home-input" type="text" maxlength="3000" enterkeyhint="send">
+        <button id="home-send" type="submit" class="btn-primary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5.5 18-3.8-7.3z"/></svg>
+          <span id="home-send-label"></span>
+        </button>
+      </form>
+
+      <div id="home-chips" class="home-chips"></div>
+    </section>
+
+    <!-- ===== ask page ===== -->
+    <section id="ask-view" class="view ask-view">
+      <aside class="side">
+        <ul id="subject-list" class="subject-list"></ul>
+      </aside>
+
+      <div class="ask-main">
+        <form id="form" class="ask-card" autocomplete="off">
+          <h2 id="ask-title"></h2>
+
+          <!-- The chosen picture waits here (as a small card) until the question is sent. -->
+          <div id="preview" class="preview hidden">
+            <div class="preview-thumb">
+              <img id="preview-img" alt="">
+              <span class="spinner" aria-hidden="true"></span>
+            </div>
+            <div class="preview-info">
+              <span id="preview-name" class="preview-name"></span>
+              <span id="preview-status" class="preview-status"></span>
+            </div>
+            <button id="preview-remove" type="button" class="preview-remove">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+
+          <div class="ta-wrap">
+            <textarea id="input" rows="3" maxlength="3000"></textarea>
+            <span id="counter" class="counter">0/3000</span>
+          </div>
+
+          <div class="ask-controls">
+            <!-- Gallery only: no "capture" attribute, so the camera is not opened directly. -->
+            <button id="attach" type="button" class="pill-btn">
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 9"/></svg>
+              <span id="attach-label"></span>
+            </button>
+            <input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden>
+            <select id="class-sel" class="pill-select"></select>
+            <select id="subject-sel" class="pill-select"></select>
+            <button id="send" type="submit" class="btn-primary send-main">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5.5 18-3.8-7.3z"/></svg>
+              <span id="send-label"></span>
+            </button>
+          </div>
+        </form>
+
+        <section class="answer-card">
+          <div class="answer-head">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z"/><path d="M19 15l.9 2.6 2.6.9-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9z" opacity=".7"/></svg>
+            <h3 id="answer-title"></h3>
+            <button id="new-chat" type="button" class="ghost"></button>
+          </div>
+          <div id="chat" class="chat" aria-live="polite"></div>
+          <section id="suggestions" class="suggestions"></section>
+          <p id="note" class="note"></p>
+        </section>
       </div>
-      <button id="preview-remove" type="button" class="preview-remove">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </div>
+    </section>
 
-    <form id="form" class="composer" autocomplete="off">
-      <!-- Gallery only: no "capture" attribute, so the camera is not opened directly. -->
-      <button id="attach" type="button" class="attach">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 9"/></svg>
-      </button>
-      <input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden>
-      <textarea id="input" rows="1" maxlength="3000"></textarea>
-      <button id="send" type="submit"></button>
-    </form>
-    <p id="note" class="note"></p>
-
-    <!-- Chat history: slides in from the left. -->
+    <!-- ===== chat history: slides in from the left ===== -->
     <div id="backdrop" class="backdrop"></div>
     <aside id="drawer" class="drawer" aria-hidden="true">
       <div class="drawer-head">
