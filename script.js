@@ -48,6 +48,7 @@
       followups: ["আরও সহজ করে বলো", "একটা উদাহরণ দাও", "আমাকে একটা প্রশ্ন করো"],
       usage: function (user, used, limit) { return user + " · আজ " + used + "/" + limit + " প্রশ্ন"; },
       loginTitle: "লগইন করুন",
+      loginOpen: "লগইন",
       loginHint: "শুধু অনুমোদিত সদস্যদের জন্য। আপনার নাম ও অ্যাক্সেস কোড দিন।",
       nameLabel: "নাম",
       codeLabel: "অ্যাক্সেস কোড",
@@ -124,6 +125,7 @@
       followups: ["Explain it more simply", "Give me an example", "Quiz me on this"],
       usage: function (user, used, limit) { return user + " · " + used + "/" + limit + " questions today"; },
       loginTitle: "Log in",
+      loginOpen: "Log in",
       loginHint: "For approved members only. Enter your name and access code.",
       nameLabel: "Name",
       codeLabel: "Access code",
@@ -200,6 +202,8 @@
   var navAskLabel = document.getElementById("nav-ask-label");
   var historyLabelEl = document.getElementById("history-label");
   var logoutLabelEl = document.getElementById("logout-label");
+  var loginOpenEl = document.getElementById("login-open");
+  var loginOpenLabelEl = document.getElementById("login-open-label");
   var heroT1 = document.getElementById("hero-t1");
   var heroT2 = document.getElementById("hero-t2");
   var heroSub = document.getElementById("hero-sub");
@@ -244,7 +248,8 @@
   var loginErrorKey = null;
   var pendingImage = null; // {mime, data (base64), url (data: URL for the preview)} chosen but not sent yet
   var preparing = false;   // true while a chosen picture is being shrunk
-  var view = "home";       // "home" or "ask"
+  var view = "home";       // "home", "ask" or "login"
+  var afterLogin = null;   // what to do once a visitor has logged in: {view, question, subject}
   var chatId = null;       // id of the chat being saved (null until the first answer arrives)
   var chatTitle = "";      // short title shown in the history list
 
@@ -725,7 +730,7 @@
       chip.innerHTML = SUBJECT_ICONS[id] + "<span></span>";
       chip.lastChild.textContent = t.subjects[id];
       chip.addEventListener("click", function () {
-        if (!authed) return;
+        if (!authed) { goToLogin({ view: "ask", subject: id }); return; }
         pickSubject(id);
         setView("ask");
         inputEl.focus();
@@ -761,6 +766,7 @@
     logoutLabelEl.textContent = t.logout;
     logoutEl.title = t.logout;
     logoutEl.setAttribute("aria-label", t.logout);
+    loginOpenLabelEl.textContent = t.loginOpen;
     historyLabelEl.textContent = t.historyBtn;
     navHomeLabel.textContent = t.navHome;
     navAskLabel.textContent = t.navAsk;
@@ -825,6 +831,30 @@
   }
 
   // ---------- login state ----------
+  // A visitor who is not logged in sees the home page. Asking a question sends them to the login card,
+  // and after logging in we carry on with what they wanted to do.
+  function goToLogin(after) {
+    afterLogin = after || null;
+    loginErrorKey = null;
+    loginError.textContent = "";
+    setView("login");
+    loginName.focus();
+  }
+
+  function continueAfterLogin() {
+    var next = afterLogin;
+    afterLogin = null;
+    if (!next || next.view !== "ask") return;
+    if (next.subject) pickSubject(next.subject);
+    if (next.question) {
+      homeInput.value = "";
+      ask(next.question);
+    } else {
+      setView("ask");
+      inputEl.focus();
+    }
+  }
+
   function showApp(data) {
     authed = true;
     user = data.user || "";
@@ -834,12 +864,15 @@
     applyLanguage();
     resetChat();
     setView("home");
+    continueAfterLogin();
   }
 
-  function showLogin(errorKey) {
+  // Not logged in. goLogin = true opens the login card (used for errors and expired logins); false shows the home page.
+  function showGuest(errorKey, goLogin) {
     authed = false;
     user = "";
     history = [];
+    afterLogin = null;
     clearPendingImage();
     chatEl.innerHTML = "";
     chatId = null;
@@ -849,7 +882,10 @@
     loginErrorKey = errorKey || null;
     loginCode.value = "";
     applyLanguage();
+    setView(goLogin ? "login" : "home");
   }
+
+  function showLogin(errorKey) { showGuest(errorKey, true); }
 
   async function checkSession() {
     try {
@@ -857,9 +893,12 @@
       var data = null;
       try { data = await res.json(); } catch (e) { /* ignore */ }
       if (res.ok && data && data.ok) showApp(data);
-      else showLogin(data && data.error === "server_not_configured" ? "server_not_configured" : null);
+      else if (data && data.error === "server_not_configured") showLogin("server_not_configured");
+      else showGuest(null, false); // not logged in: the visitor sees the home page first
     } catch (e) {
       showLogin("network");
+    } finally {
+      appEl.classList.remove("checking");
     }
   }
 
@@ -896,7 +935,7 @@
 
   async function doLogout() {
     try { await fetch("/api/logout", { method: "POST" }); } catch (e) { /* ignore */ }
-    showLogin(null);
+    showGuest(null, false);
   }
 
   // ---------- talking to the backend ----------
@@ -1327,19 +1366,26 @@ historyBtn.addEventListener("click", openDrawer);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
 
   // top navigation
-  navHome.addEventListener("click", function () { if (authed) setView("home"); });
-  navAsk.addEventListener("click", function () { if (authed) { setView("ask"); inputEl.focus(); } });
+  navHome.addEventListener("click", function () { setView("home"); });
+  navAsk.addEventListener("click", function () {
+    if (!authed) { goToLogin({ view: "ask" }); return; }
+    setView("ask");
+    inputEl.focus();
+  });
+  loginOpenEl.addEventListener("click", function () { goToLogin({ view: "home" }); });
 
   // home page: ask bar and picture button
   homeForm.addEventListener("submit", function (e) {
     e.preventDefault();
     var q = homeInput.value.trim();
-    if (!q || busy || !authed) return;
+    if (!q || busy) return;
+    if (!authed) { goToLogin({ view: "ask", question: q }); return; }
     homeInput.value = "";
     ask(q);
   });
   homeAttach.addEventListener("click", function () {
-    if (busy || preparing || !authed) return;
+    if (busy || preparing) return;
+    if (!authed) { goToLogin({ view: "ask" }); return; }
     setView("ask");
     fileEl.click();
   });
