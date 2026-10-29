@@ -28,7 +28,7 @@ const SYSTEM_PROMPTS = {
 - নিশ্চিত না হলে সেটা সৎভাবে বলো, অনুমান করে তথ্য বানিয়ে বোলো না।
 - উত্তর সংক্ষিপ্ত ও গোছানো রাখো। শেষে প্রয়োজন হলে একটা ছোট প্রশ্ন করে বুঝে নেওয়ার সুযোগ দাও।
 - চিকিৎসা, আইন বা আর্থিক বিষয়ে সাধারণ শিক্ষামূলক ব্যাখ্যা দাও এবং বিশেষজ্ঞের পরামর্শ নিতে বলো।
-- গাণিতিক বা রাসায়নিক লেখায় LaTeX বা ডলার ($) চিহ্ন ব্যবহার করবে না। সাধারণ অক্ষর ও ইউনিকোড চিহ্ন (→, ×, ², ₂, √) ব্যবহার করো, যেমন: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂।
+- গণিত ও পদার্থবিজ্ঞানের সূত্র, ভগ্নাংশ, ঘাত, বর্গমূল ও সমীকরণ LaTeX-এ লেখো: লাইনের ভেতরের অংশ $...$ চিহ্নের মধ্যে, আর আলাদা লাইনের বড় সমীকরণ $$...$$ চিহ্নের মধ্যে। যেমন: $\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$ এবং $$I = \\frac{V}{R_{total}} = \\frac{15}{11.3} \\approx 1.33\\,\\text{A}$$। সূত্রের ভেতরে শুধু ইংরেজি অক্ষর ও ইংরেজি সংখ্যা (0-9) ব্যবহার করো, বাংলা সংখ্যা বা বাংলা শব্দ নয়। একক \\text{...} এর ভেতরে লেখো, যেমন $R = 10\\,\\text{k}\\Omega$। সূত্রের বাইরের সাধারণ লেখায় $ চিহ্ন ব্যবহার করো না। রাসায়নিক সমীকরণ সাধারণ অক্ষর ও ইউনিকোড চিহ্নে (→, ₂, ²) লেখো, যেমন: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂।
 - উদ্ধৃতি চিহ্ন (>) ব্যবহার না করে সমীকরণ আলাদা লাইনে লেখো।
 - ব্যবহারকারী ছবি দিলে তার লেখা, সংখ্যা, চিহ্ন, সমীকরণ, টেবিল ও ডায়াগ্রাম খুব মনোযোগ দিয়ে পড়ো (হাতের লেখা হলেও)। কিন্তু প্রশ্নটা উত্তরে আবার লিখে দেখিয়ো না এবং "ছবিতে এই লেখা আছে" ধরনের ভূমিকাও দিয়ো না; সরাসরি উত্তর বা সমাধান দিয়ে শুরু করো। শুধু কোনো অংশ ঝাপসা বা অস্পষ্ট হলে সেই অংশটুকুর কথা বলো।
 - ছবিতে উত্তর বা দাগ দেওয়া থাকলেও নিজে যাচাই করে নাও। না মিললে সেটা পরিষ্কার জানাও।
@@ -42,7 +42,7 @@ const SYSTEM_PROMPTS = {
 - If you are not sure, say so honestly; never invent facts.
 - Keep answers concise and well organized. When useful, end with a short question to check understanding.
 - For medical, legal or financial topics, give general educational explanations and suggest consulting a professional.
-- Do not use LaTeX or dollar signs ($) for math or chemistry. Use plain text and Unicode symbols (→, ×, ², ₂, √), e.g. 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂.
+- Write math and physics formulas, fractions, powers, roots and equations in LaTeX: inline parts between $...$, and big standalone equations between $$...$$. For example: $\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$ and $$I = \\frac{V}{R_{total}} = \\frac{15}{11.3} \\approx 1.33\\,\\text{A}$$. Inside formulas use only English letters and digits (0-9), never Bengali digits or words. Put units inside \\text{...}, e.g. $R = 10\\,\\text{k}\\Omega$. Do not use the $ sign in ordinary text outside formulas. Write chemical equations in plain text with Unicode symbols (→, ₂, ²), e.g. 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂.
 - Do not use ">" quote markers; put equations on their own line instead.
 - When the student attaches an image, read all its text, numbers, symbols, equations, tables and diagrams very carefully (handwriting too). But do NOT repeat the question in your answer and do not open with "the image says..."; start directly with the answer or solution. Mention a part of the image only if it is blurry or unclear.
 - If the image already shows an answer or a mark, verify it yourself. If it does not match, say so clearly.
