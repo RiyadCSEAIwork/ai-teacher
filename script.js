@@ -40,7 +40,6 @@
         return "[প্রসঙ্গ — " + parts.join("; ") + "। এই স্তর অনুযায়ী উত্তর দাও, প্রসঙ্গটা উত্তরে আবার লিখো না।]\n";
       },
       defaultImageQuestion: "এই ছবিতে কী আছে মনোযোগ দিয়ে দেখে বুঝিয়ে দাও। প্রশ্ন থাকলে সমাধান করে দাও।",
-      mathHint: "[গণিত ও বিজ্ঞানের সূত্র, ভগ্নাংশ ও সমীকরণ LaTeX-এ লেখো: লাইনের ভেতরে $...$, আলাদা লাইনে $$...$$ (যেমন $\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$)। এই নির্দেশ উত্তরে আবার লিখো না।]\n",
       historyTitle: "চ্যাটের ইতিহাস",
       noChats: "এখনো কোনো চ্যাট সেভ হয়নি।",
       loadingChats: "লোড হচ্ছে…",
@@ -119,7 +118,6 @@
         return "[Context — " + parts.join("; ") + ". Answer at this level and do not repeat this context in your reply.]\n";
       },
       defaultImageQuestion: "Look carefully at this image and explain it. If it contains a question, solve it.",
-      mathHint: "[Write math and science formulas in LaTeX: inline $...$, on its own line $$...$$ (e.g. $\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$). Do not repeat this note in your reply.]\n",
       historyTitle: "Chat history",
       noChats: "No saved chats yet.",
       loadingChats: "Loading…",
@@ -1010,8 +1008,8 @@
       var m = recent[i];
       var item = { role: m.role, text: m.text };
       // The newest question carries the chosen class and subject as a short hint for the AI.
-      if (m.role === "user" && i === recent.length - 1) {
-        item.text = (m.ctx ? TEXT[lang].context(m.ctx.cls, m.ctx.subj) : "") + TEXT[lang].mathHint + (m.text || TEXT[lang].defaultImageQuestion);
+      if (m.role === "user" && m.ctx && i === recent.length - 1) {
+        item.text = TEXT[lang].context(m.ctx.cls, m.ctx.subj) + (m.text || TEXT[lang].defaultImageQuestion);
       }
       if (m.image && imagesLeft > 0) {
         item.image = { mime: m.image.mime, data: m.image.data };
