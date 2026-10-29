@@ -451,8 +451,21 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
 .ask-main:not(.has-chat) .answer-card { display: none; }
 .ask-main.has-chat .welcome,
 .ask-main.has-chat .suggestions { display: none; }
-.ask-main.has-chat .ask-card { padding-bottom: 14px; }
-.ask-main.has-chat .ask-card h2 { margin-bottom: 8px; }
+/* After the first question the box for typing moves below the answer and stays on screen,
+   so a follow-up question can be typed right after reading the answer. */
+.ask-main.has-chat .answer-card { order: 1; }
+.ask-main.has-chat .ask-card {
+  order: 2;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding: 10px 12px 12px;
+  box-shadow: 0 -8px 24px rgba(30, 64, 140, 0.14);
+}
+.ask-main.has-chat .note { order: 3; }
+.ask-main.has-chat .ask-card h2 { display: none; }
+.ask-main.has-chat .ta-wrap textarea { min-height: 56px; padding: 10px 14px 22px; }
+.ask-main.has-chat .ask-controls { margin-top: 8px; }
 .msg.bot { max-width: 100%; }
 .msg { scroll-margin-top: 12px; }
 
@@ -729,5 +742,7 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
   .pill-btn span { display: none; }
   .ask-controls .pill-select { flex: 1 1 0; max-width: none; min-width: 0; padding-left: 10px; }
   .send-main { flex: 1 1 100%; margin-left: 0; }
+  .ask-main.has-chat .ask-controls .pill-select { display: none; }
+  .ask-main.has-chat .send-main { flex: 1 1 0; }
   .msg { max-width: 94%; }
 }
