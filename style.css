@@ -420,6 +420,8 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
   margin: 0 0 8px;
 }
 .msg.bot pre code { background: transparent; padding: 0; }
+.msg .katex { font-size: 1.08em; }
+.msg .katex-display { margin: 0.7em 0; padding: 2px 0; overflow-x: auto; overflow-y: hidden; }
 .msg.bot hr { border: 0; border-top: 1px solid rgba(127, 127, 127, 0.35); margin: 10px 0; }
 
 .typing { color: var(--muted); }
