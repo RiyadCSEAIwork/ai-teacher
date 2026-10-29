@@ -109,6 +109,7 @@
       <div class="ask-main">
         <form id="form" class="ask-card" autocomplete="off">
           <h2 id="ask-title"></h2>
+          <p id="welcome" class="welcome"></p>
 
           <!-- The chosen picture waits here (as a small card) until the question is sent. -->
           <div id="preview" class="preview hidden">
@@ -144,6 +145,8 @@
               <span id="send-label"></span>
             </button>
           </div>
+
+          <section id="suggestions" class="suggestions"></section>
         </form>
 
         <section class="answer-card">
@@ -153,9 +156,8 @@
             <button id="new-chat" type="button" class="ghost"></button>
           </div>
           <div id="chat" class="chat" aria-live="polite"></div>
-          <section id="suggestions" class="suggestions"></section>
-          <p id="note" class="note"></p>
         </section>
+        <p id="note" class="note"></p>
       </div>
     </section>
 
