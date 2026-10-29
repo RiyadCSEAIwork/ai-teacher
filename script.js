@@ -5,6 +5,7 @@
     bn: {
       tagline: "প্রশ্ন করুন, সহজ ভাষায় বুঝে নিন",
       placeholder: "এখানে আপনার প্রশ্ন লিখুন…",
+      followPlaceholder: "উত্তর নিয়ে আরও কিছু জানতে চাইলে এখানে লিখুন…",
       send: "পাঠান",
       newChat: "নতুন চ্যাট",
       logout: "লগআউট",
@@ -81,6 +82,7 @@
     en: {
       tagline: "Ask a question and learn step by step",
       placeholder: "Type your question here…",
+      followPlaceholder: "Ask a follow-up question…",
       send: "Send",
       newChat: "New chat",
       logout: "Log out",
@@ -226,7 +228,18 @@
   var welcomeEl = document.getElementById("welcome");
 
   // The answer box shows only once the chat has something in it; the page (not the box) scrolls.
-  function syncHasChat() { askMainEl.classList.toggle("has-chat", chatEl.children.length > 0); }
+  function syncHasChat() {
+    var has = chatEl.children.length > 0;
+    if (askMainEl.classList.contains("has-chat") === has) return;
+    askMainEl.classList.toggle("has-chat", has);
+    inputEl.rows = has ? 1 : 3; // a slim box for follow-up questions
+    updatePlaceholder();
+    autosize();
+  }
+  function updatePlaceholder() {
+    var t = TEXT[lang];
+    inputEl.placeholder = askMainEl.classList.contains("has-chat") ? t.followPlaceholder : t.placeholder;
+  }
   new MutationObserver(syncHasChat).observe(chatEl, { childList: true });
   function scrollChat() { askMainEl.scrollTop = askMainEl.scrollHeight; }
 
@@ -476,7 +489,7 @@
     classSel.disabled = state;
     subjectSel.disabled = state;
     previewRemoveEl.disabled = state;
-    if (!state && view === "ask") inputEl.focus();
+    if (!state && view === "ask") inputEl.focus({ preventScroll: true });
   }
 
   // ---------- picture from the gallery ----------
@@ -765,7 +778,7 @@
   function applyLanguage() {
     var t = TEXT[lang];
     document.documentElement.lang = lang;
-    inputEl.placeholder = t.placeholder;
+    updatePlaceholder();
     sendLabelEl.textContent = t.getAnswer;
     newChatEl.textContent = t.newChat;
     logoutLabelEl.textContent = t.logout;
