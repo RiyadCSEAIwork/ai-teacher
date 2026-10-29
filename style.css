@@ -355,8 +355,7 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
 
 /* ---------- answer card ---------- */
 .answer-card {
-  flex: 1 1 0;
-  min-height: 240px;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   background: var(--panel);
@@ -376,9 +375,7 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
 .answer-head h3 { margin: 0; margin-right: auto; font-size: 17px; color: var(--heading); }
 
 .chat {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
+  flex: none;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -433,7 +430,7 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
 .msg.streaming::after { content: "▍"; margin-left: 2px; animation: caret 1s steps(2) infinite; }
 @keyframes caret { 50% { opacity: 0; } }
 
-.suggestions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 10px; }
+.suggestions { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 0 0; }
 .suggestions button {
   border: 1px solid var(--border);
   background: var(--panel);
@@ -446,7 +443,18 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
 .suggestions button:hover { color: var(--brand); border-color: var(--brand); }
 .suggestions.hidden { display: none; }
 
-.note { margin: 0; padding: 8px 16px 12px; font-size: 12px; color: var(--muted); text-align: center; }
+.note { flex: 0 0 auto; margin: 0; padding: 0 16px 6px; font-size: 12px; color: var(--muted); text-align: center; }
+
+/* The welcome line sits right under "প্রশ্ন করুন". The answer box appears only after the first question,
+   and the whole page scrolls so a long answer can be read from top to bottom. */
+.welcome { margin: -4px 0 12px; font-size: 16px; color: var(--muted); }
+.ask-main:not(.has-chat) .answer-card { display: none; }
+.ask-main.has-chat .welcome,
+.ask-main.has-chat .suggestions { display: none; }
+.ask-main.has-chat .ask-card { padding-bottom: 14px; }
+.ask-main.has-chat .ask-card h2 { margin-bottom: 8px; }
+.msg.bot { max-width: 100%; }
+.msg { scroll-margin-top: 12px; }
 
 /* copy + quick follow-ups under the latest answer */
 .actions { align-self: flex-start; display: flex; flex-wrap: wrap; gap: 8px; margin-top: -4px; max-width: 94%; }
@@ -722,5 +730,4 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
   .ask-controls .pill-select { flex: 1 1 0; max-width: none; min-width: 0; padding-left: 10px; }
   .send-main { flex: 1 1 100%; margin-left: 0; }
   .msg { max-width: 94%; }
-  .answer-card { min-height: 230px; }
 }
