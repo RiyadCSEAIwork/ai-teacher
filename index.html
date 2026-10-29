@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app" class="app logged-out" data-view="home">
+  <div id="app" class="app logged-out checking" data-view="home">
 
     <!-- ===== top bar ===== -->
     <header class="top">
@@ -49,6 +49,10 @@
           <button id="lang-bn" type="button">বাংলা</button>
           <button id="lang-en" type="button">English</button>
         </div>
+        <button id="login-open" type="button" class="btn-soft">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M8 8l-4 4 4 4M4 12h10"/></svg>
+          <span id="login-open-label"></span>
+        </button>
         <button id="logout" type="button" class="btn-soft">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M16 8l4 4-4 4M20 12H10"/></svg>
           <span id="logout-label"></span>
@@ -78,36 +82,7 @@
           <p id="hero-sub" class="hero-sub"></p>
         </div>
         <div class="hero-art" aria-hidden="true">
-          <svg viewBox="0 0 380 260" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="205" cy="140" rx="165" ry="105" fill="#e3edff"/>
-            <ellipse cx="120" cy="80" rx="60" ry="40" fill="#edf3ff"/>
-            <!-- light bulb -->
-            <g transform="translate(150 22)">
-              <circle cx="22" cy="22" r="20" fill="#ffd34d"/>
-              <rect x="14" y="40" width="16" height="9" rx="3" fill="#7d8aa6"/>
-              <path d="M22 -8v-8M2 0l-6-6M42 0l6-6M-8 22h-8M52 22h8" stroke="#ffc233" stroke-width="3" stroke-linecap="round"/>
-            </g>
-            <!-- laptop -->
-            <rect x="100" y="92" width="190" height="118" rx="10" fill="#2a4bb8"/>
-            <rect x="108" y="100" width="174" height="102" rx="6" fill="#3c63da"/>
-            <g transform="translate(195 151)">
-              <path d="M0 -20 -26 -7 0 6 26 -7z" fill="#fff"/>
-              <path d="M-14 1v11c0 3 6 6 14 6s14-3 14-6V1L0 9z" fill="#dbe6ff"/>
-              <path d="M28 -5v13" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
-            </g>
-            <path d="M70 210h250l-14 20H84z" fill="#c6d3ee"/>
-            <rect x="170" y="210" width="50" height="6" rx="3" fill="#a9b9dc"/>
-            <!-- books -->
-            <rect x="30" y="198" width="86" height="16" rx="3" fill="#1d4ed8"/>
-            <rect x="38" y="182" width="78" height="16" rx="3" fill="#f59e0b"/>
-            <rect x="26" y="166" width="82" height="16" rx="3" fill="#ef4444"/>
-            <rect x="34" y="170" width="60" height="3" rx="1.5" fill="#fff" opacity=".6"/>
-            <!-- plant -->
-            <rect x="308" y="190" width="42" height="40" rx="7" fill="#e8edf7"/>
-            <path d="M329 190c-14-14-18-32-8-52 14 14 14 34 8 52z" fill="#3aa86b"/>
-            <path d="M329 190c10-12 26-20 32-38-18 4-30 18-32 38z" fill="#2f9460"/>
-            <path d="M329 190c-2-18-12-30-30-36 0 18 12 30 30 36z" fill="#4cc283"/>
-          </svg>
+          <img src="hero.webp" alt="" width="1344" height="896" decoding="async">
         </div>
       </div>
 
