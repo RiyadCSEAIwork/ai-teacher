@@ -223,6 +223,12 @@
   var counterEl = document.getElementById("counter");
   var askMainEl = document.querySelector(".ask-main");
   var answerCardEl = document.querySelector(".answer-card");
+  var welcomeEl = document.getElementById("welcome");
+
+  // The answer box shows only once the chat has something in it; the page (not the box) scrolls.
+  function syncHasChat() { askMainEl.classList.toggle("has-chat", chatEl.children.length > 0); }
+  new MutationObserver(syncHasChat).observe(chatEl, { childList: true });
+  function scrollChat() { askMainEl.scrollTop = askMainEl.scrollHeight; }
 
   var loginForm = document.getElementById("login-form");
   var loginTitle = document.getElementById("login-title");
@@ -366,7 +372,7 @@
     if (kind === "bot") el.innerHTML = renderMarkdown(text);
     else el.textContent = text;
     chatEl.appendChild(el);
-    chatEl.scrollTop = chatEl.scrollHeight;
+    scrollChat();
     return el;
   }
 
@@ -388,7 +394,7 @@
       el.appendChild(span);
     }
     chatEl.appendChild(el);
-    chatEl.scrollTop = chatEl.scrollHeight;
+    scrollChat();
     return el;
   }
 
@@ -457,7 +463,6 @@
     });
 
     chatEl.appendChild(bar);
-    chatEl.scrollTop = chatEl.scrollHeight;
   }
 
   function setBusy(state) {
@@ -790,6 +795,7 @@
     previewRemoveEl.setAttribute("aria-label", t.removeImage);
     if (preparing) previewStatusEl.textContent = t.imageReading;
     noteEl.textContent = t.note;
+    welcomeEl.textContent = t.welcome;
     loginTitle.textContent = t.loginTitle;
     loginHint.textContent = t.loginHint;
     loginNameLabel.textContent = t.nameLabel;
@@ -819,7 +825,7 @@
     clearPendingImage();
     chatEl.innerHTML = "";
     suggestionsEl.classList.remove("hidden");
-    addMessage("bot", TEXT[lang].welcome);
+    askMainEl.scrollTop = 0;
   }
 
   function setLanguage(next) {
@@ -967,8 +973,6 @@
     var image = pendingImage;
     if ((!q && !image) || busy || preparing || !authed) return;
     setView("ask");
-    // On very small screens the question card and the answer share one scroll area: bring the answer into view.
-    if (askMainEl.scrollHeight > askMainEl.clientHeight + 4) answerCardEl.scrollIntoView({ block: "start" });
 
     suggestionsEl.classList.add("hidden");
     removeActions();
@@ -1033,13 +1037,13 @@
     var finished = false;
     var failKey = null;
     var paintQueued = false;
+    var needAlign = false; // once, bring the start of a new answer to the top so it can be read from the beginning
 
     function paint() {
       paintQueued = false;
       if (!botEl) return;
-      var nearBottom = chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 80;
       botEl.innerHTML = renderMarkdown(answer);
-      if (nearBottom) chatEl.scrollTop = chatEl.scrollHeight;
+      if (needAlign) { needAlign = false; botEl.scrollIntoView({ block: "start" }); }
     }
 
     function queuePaint() {
@@ -1063,6 +1067,7 @@
           typing.remove();
           botEl = addMessage("bot", "");
           botEl.classList.add("streaming");
+          needAlign = true;
         }
         answer += ev.t;
         queuePaint();
@@ -1296,7 +1301,7 @@
     });
     var last = history[history.length - 1];
     if (last && last.role === "assistant") addAnswerActions(last.text);
-    chatEl.scrollTop = chatEl.scrollHeight;
+    scrollChat();
     // Older chats that were saved with the plain "(ছবি)" title get a proper topic title now.
     if (placeholders.indexOf(chatTitle) !== -1) improveTitle(chatId);
   }
