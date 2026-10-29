@@ -186,7 +186,7 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
   color: var(--heading);
 }
 .hero-sub { margin: 14px 0 0; max-width: 440px; font-size: clamp(15px, 1.9vw, 19px); color: var(--muted); }
-.hero-art svg { display: block; width: 100%; height: auto; max-height: 270px; }
+.hero-art img { display: block; width: 100%; height: auto; max-height: 320px; object-fit: contain; margin-left: auto; border-radius: 24px; background: #fff; box-shadow: var(--shadow); }
 
 .home-ask {
   display: flex;
@@ -578,14 +578,18 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
 }
 .login-card button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* When nobody is logged in, show only the top bar (with language switch) and the login card. */
-.app.logged-out .login-wrap { display: flex; }
-.app.logged-out .view,
-.app.logged-out .nav,
+/* Visitors who are not logged in see the home page first. The login card opens only when they want to ask. */
+.app[data-view="login"] .login-wrap { display: flex; }
+#login-open { display: none; }
+.app.logged-out #login-open { display: inline-flex; }
 .app.logged-out .usage,
 .app.logged-out #logout,
+.app.logged-out #history-btn,
 .app.logged-out .drawer,
 .app.logged-out .backdrop { display: none !important; }
+/* while the saved login is being checked, hide both buttons so they do not flicker */
+.app.checking #login-open,
+.app.checking #logout { visibility: hidden; }
 
 /* ---------- chat history drawer ---------- */
 .backdrop {
@@ -703,7 +707,7 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
   .btn-soft { padding: 8px 10px; }
 
   .hero { grid-template-columns: 1fr; }
-  .hero-art { display: none; }
+  .hero-art img { max-height: 210px; margin: 0 auto; }
   .home-view { justify-content: flex-start; gap: 18px; padding-top: 8px; }
   .home-ask { flex-wrap: wrap; }
   .home-ask input { flex-basis: calc(100% - 64px); }
