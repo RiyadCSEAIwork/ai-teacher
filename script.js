@@ -40,6 +40,7 @@
         return "[প্রসঙ্গ — " + parts.join("; ") + "। এই স্তর অনুযায়ী উত্তর দাও, প্রসঙ্গটা উত্তরে আবার লিখো না।]\n";
       },
       defaultImageQuestion: "এই ছবিতে কী আছে মনোযোগ দিয়ে দেখে বুঝিয়ে দাও। প্রশ্ন থাকলে সমাধান করে দাও।",
+      mathHint: "[গণিত ও বিজ্ঞানের সূত্র, ভগ্নাংশ ও সমীকরণ LaTeX-এ লেখো: লাইনের ভেতরে $...$, আলাদা লাইনে $$...$$ (যেমন $\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$)। এই নির্দেশ উত্তরে আবার লিখো না।]\n",
       historyTitle: "চ্যাটের ইতিহাস",
       noChats: "এখনো কোনো চ্যাট সেভ হয়নি।",
       loadingChats: "লোড হচ্ছে…",
@@ -118,6 +119,7 @@
         return "[Context — " + parts.join("; ") + ". Answer at this level and do not repeat this context in your reply.]\n";
       },
       defaultImageQuestion: "Look carefully at this image and explain it. If it contains a question, solve it.",
+      mathHint: "[Write math and science formulas in LaTeX: inline $...$, on its own line $$...$$ (e.g. $\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$). Do not repeat this note in your reply.]\n",
       historyTitle: "Chat history",
       noChats: "No saved chats yet.",
       loadingChats: "Loading…",
@@ -324,8 +326,45 @@
       .replace(/\$([^$\n]*\\[^$\n]*)\$/g, function (m, inner) { return latexToText(inner); });
   }
 
+  // Maths between $...$ (inside a line) or $$...$$ (own line), also \(...\) and \[...\], is drawn with KaTeX.
+  // Each formula is swapped for a small marker first, so the normal text formatting cannot disturb it.
+  function mathToken(maths, tex, display) {
+    maths.push({ tex: tex.trim(), display: display });
+    return "\uE000" + (maths.length - 1) + "\uE001";
+  }
+
+  function extractMath(raw, maths) {
+    var parts = raw.split("```"); // code blocks (odd parts) are left alone
+    for (var i = 0; i < parts.length; i += 2) {
+      parts[i] = parts[i]
+        .replace(/\$\$([\s\S]+?)\$\$/g, function (m, tex) { return mathToken(maths, tex, true); })
+        .replace(/\\\[([\s\S]+?)\\\]/g, function (m, tex) { return mathToken(maths, tex, true); })
+        .replace(/\\\(([\s\S]+?)\\\)/g, function (m, tex) { return mathToken(maths, tex, false); })
+        // $5 and $10 is money, not maths: the closing $ must follow a non-space and must not be followed by a digit
+        .replace(/\$(?!\s)([^$\n]*?[^\s$])\$(?!\d)/g, function (m, tex) { return mathToken(maths, tex, false); });
+    }
+    return parts.join("```");
+  }
+
+  var mathCache = {};
+  function renderTex(item) {
+    var key = (item.display ? "D:" : "I:") + item.tex;
+    if (mathCache[key]) return mathCache[key];
+    var html;
+    try {
+      html = window.katex.renderToString(item.tex, { displayMode: item.display, throwOnError: false, strict: "ignore", output: "html" });
+    } catch (e) {
+      html = "<code>" + escapeHtml(item.tex) + "</code>";
+    }
+    mathCache[key] = html;
+    return html;
+  }
+
   function renderMarkdown(raw) {
-    var text = escapeHtml(cleanLatex(raw)).replace(/\r\n/g, "\n");
+    var maths = [];
+    var useMath = !!(window.katex && window.katex.renderToString);
+    var source = useMath ? extractMath(raw, maths) : cleanLatex(raw); // no KaTeX: show formulas as plain text
+    var text = escapeHtml(source).replace(/\r\n/g, "\n");
     var out = [];
     var parts = text.split(/```/);
     for (var i = 0; i < parts.length; i++) {
@@ -375,7 +414,11 @@
       }
       flushPara(); flushList();
     }
-    return out.join("");
+    var html = out.join("");
+    if (useMath) {
+      html = html.replace(/\uE000(\d+)\uE001/g, function (m, n) { return maths[Number(n)] ? renderTex(maths[Number(n)]) : ""; });
+    }
+    return html;
   }
 
   // ---------- UI helpers ----------
@@ -967,8 +1010,8 @@
       var m = recent[i];
       var item = { role: m.role, text: m.text };
       // The newest question carries the chosen class and subject as a short hint for the AI.
-      if (m.role === "user" && m.ctx && i === recent.length - 1) {
-        item.text = TEXT[lang].context(m.ctx.cls, m.ctx.subj) + (m.text || TEXT[lang].defaultImageQuestion);
+      if (m.role === "user" && i === recent.length - 1) {
+        item.text = (m.ctx ? TEXT[lang].context(m.ctx.cls, m.ctx.subj) : "") + TEXT[lang].mathHint + (m.text || TEXT[lang].defaultImageQuestion);
       }
       if (m.image && imagesLeft > 0) {
         item.image = { mime: m.image.mime, data: m.image.data };
