@@ -440,6 +440,141 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
   margin: 0 0 8px;
 }
 .msg.bot pre code { background: transparent; padding: 0; }
+.msg.bot em { font-style: italic; }
+.msg.bot a { color: var(--brand); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---------- code blocks ---------- */
+.code-block {
+  margin: 4px 0 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+}
+.code-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #1e293b;
+  color: #94a3b8;
+  font-size: 12px;
+}
+.code-dots { display: inline-flex; gap: 6px; }
+.code-dots i { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: block; }
+.code-dots i:nth-child(2) { background: #f59e0b; }
+.code-dots i:nth-child(3) { background: #22c55e; }
+.code-lang { margin-right: auto; font-weight: 700; letter-spacing: 0.6px; }
+.code-copy {
+  border: 1px solid #334155;
+  background: transparent;
+  color: #cbd5e1;
+  border-radius: 999px;
+  padding: 3px 11px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.code-copy:hover { color: #fff; border-color: #64748b; background: #334155; }
+.msg.bot .code-block pre {
+  margin: 0;
+  padding: 12px 14px;
+  background: transparent;
+  border-radius: 0;
+  color: #e2e8f0;
+  overflow-x: auto;
+}
+.msg.bot .code-block pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre;
+}
+.tk-t { color: #f472b6; }
+.tk-a { color: #fbbf24; }
+.tk-s { color: #86efac; }
+.tk-c { color: #94a3b8; font-style: italic; }
+.tk-p { color: #94a3b8; }
+.tk-k { color: #c084fc; }
+.tk-n { color: #fdba74; }
+
+/* ---------- output preview: a small browser window ---------- */
+.out-card {
+  margin: 0 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+}
+.out-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--heading);
+}
+.out-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2); }
+.out-title { margin-right: auto; }
+.out-run {
+  border: 0;
+  background: var(--brand);
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.browser { margin: 0 12px 12px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #fff; }
+.browser-bar { display: flex; align-items: center; gap: 6px; padding: 7px 10px; background: #eef2f9; border-bottom: 1px solid #dde4f0; }
+.browser-bar i { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; display: block; }
+.browser-url {
+  margin-left: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #fff;
+  color: #64748b;
+  font-size: 11.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.out-frame {
+  display: none;
+  width: 100%;
+  border: 0;
+  background: #fff;
+  color-scheme: light;
+  resize: vertical;
+  overflow: auto;
+}
+.out-frame.show { display: block; }
+
+/* tag structure diagram */
+.dom-diagram { border-top: 1px solid var(--border); padding: 8px 12px 10px; font-size: 13px; }
+.dom-diagram summary { cursor: pointer; font-weight: 600; color: var(--brand); }
+.dom-tree, .dom-tree ul { list-style: none; margin: 6px 0 0; padding-left: 0; }
+.dom-tree ul { margin-left: 8px; padding-left: 16px; border-left: 2px solid var(--border); }
+.dom-tree li { margin: 4px 0; }
+.dom-tree .dt-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: rgba(11, 99, 246, 0.1);
+  color: var(--brand);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+.dom-tree .dt-attr { color: #b7791f; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; }
+.dom-tree .dt-text { color: var(--text); }
+
 .msg .katex { font-size: 1.08em; }
 .msg .katex-display { margin: 0.7em 0; padding: 2px 0; overflow-x: auto; overflow-y: hidden; }
 .msg.bot hr { border: 0; border-top: 1px solid rgba(127, 127, 127, 0.35); margin: 10px 0; }
