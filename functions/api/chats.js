@@ -16,6 +16,7 @@ const MAX_TITLE = 60;
 const MAX_BODY_CHARS = 400000;   // safety limit for one chat save request
 const MAX_IMAGES_PER_CHAT = 6;   // pictures kept per chat
 const MAX_IMAGE_CHARS = 260000;  // base64 characters per saved picture (about 190 KB)
+const SUBJECT_IDS = ["math", "physics", "chemistry", "biology", "ict"];
 const ID_RE = /^[a-z0-9]{6,40}$/;
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
@@ -54,6 +55,15 @@ function cleanMessages(list) {
       const now = Date.now();
       if (Number.isFinite(m.ts) && m.ts > 1.6e12 && m.ts < now + 86400000) out.ts = Math.round(m.ts);
       if (m.role === "assistant" && Number.isFinite(m.dur) && m.dur > 0 && m.dur < 600000) out.dur = Math.round(m.dur);
+      // 👍 / 👎 on an answer
+      if (m.role === "assistant" && (m.fb === "up" || m.fb === "down")) out.fb = m.fb;
+      // the class and subject a question was asked in (subject id from the fixed list, class number 0-7)
+      if (m.role === "user" && m.ctx && typeof m.ctx === "object") {
+        const c = {};
+        if (typeof m.ctx.s === "string" && SUBJECT_IDS.includes(m.ctx.s)) c.s = m.ctx.s;
+        if (Number.isInteger(m.ctx.c) && m.ctx.c >= 0 && m.ctx.c <= 7) c.c = m.ctx.c;
+        if (c.s !== undefined || c.c !== undefined) out.ctx = c;
+      }
       return out;
     })
     .filter((m) => m.text.length > 0 || m.img)
