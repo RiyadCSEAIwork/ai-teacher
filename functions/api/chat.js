@@ -51,6 +51,53 @@ const SYSTEM_PROMPTS = {
 - If the image has several questions, answer them one at a time in order. If there is no question with it, explain what the image shows and what the student can learn from it.`,
 };
 
+// ---- Class / subject matching ----
+// The student picks a class and a subject. The question must belong to them, otherwise the AI does not answer
+// and instead suggests the right subject. The AI starts such a reply with MISMATCH_MARKER so we can recognise it
+// (the marker is never shown, and a mismatch does not use up one of the daily questions).
+const MISMATCH_MARKER = "[[SUBJECT_MISMATCH]]";
+const SUBJECTS = {
+  math: { bn: "গণিত", en: "Math" },
+  physics: { bn: "পদার্থবিজ্ঞান", en: "Physics" },
+  chemistry: { bn: "রসায়ন", en: "Chemistry" },
+  biology: { bn: "জীববিজ্ঞান", en: "Biology" },
+  ict: { bn: "ICT", en: "ICT" },
+};
+const CLASS_NAMES = [
+  { bn: "ষষ্ঠ শ্রেণি", en: "Class 6" },
+  { bn: "সপ্তম শ্রেণি", en: "Class 7" },
+  { bn: "অষ্টম শ্রেণি", en: "Class 8" },
+  { bn: "নবম শ্রেণি", en: "Class 9" },
+  { bn: "দশম শ্রেণি (SSC)", en: "Class 10 (SSC)" },
+  { bn: "একাদশ শ্রেণি", en: "Class 11" },
+  { bn: "দ্বাদশ শ্রেণি (HSC)", en: "Class 12 (HSC)" },
+  { bn: "ভর্তি পরীক্ষা", en: "Admission test" },
+];
+
+function buildMatchGuard(lang, subjectId, classIdx) {
+  const subj = Object.prototype.hasOwnProperty.call(SUBJECTS, subjectId) ? SUBJECTS[subjectId] : null;
+  const cls = Number.isInteger(classIdx) && CLASS_NAMES[classIdx] ? CLASS_NAMES[classIdx] : null;
+  if (!subj && !cls) return "";
+  const chosen = [];
+  if (cls) chosen.push(`Class: ${cls.en} (${cls.bn})`);
+  if (subj) chosen.push(`Subject: ${subj.en} (${subj.bn})`);
+  const rules = [];
+  if (subj) {
+    rules.push(`- Subject: the newest question (and its picture, if any) must be mainly about ${subj.en}. A question whose main topic clearly belongs to another subject does NOT match. Overlaps are fine when the main topic is ${subj.en} (for example a physics problem that needs maths steps still matches Physics; chemistry calculations match Chemistry).`);
+  }
+  if (cls) {
+    rules.push(`- Class: the topic must fit the syllabus of ${cls.en}. Do NOT be strict: a question a little easier or harder than this class still matches. It does NOT match only when the topic clearly belongs to a different class's syllabus (for example calculus for Class 6). "Admission test" accepts any school or college level topic.`);
+  }
+  return `
+
+CLASS AND SUBJECT MATCH CHECK (very important). The student has selected: ${chosen.join("; ")}.
+Before answering, silently decide whether the newest question matches the selection:
+${rules.join("\n")}
+- These always match, never treat them as a mismatch: greetings, thanks, and follow-up messages about your previous answer in this chat (for example "explain more simply", "give an example", "why?", "continue"). Use the earlier conversation to see what a short follow-up refers to.
+- If it matches: answer normally and never mention this check.
+- If it does NOT match: do not answer or solve the question. Your reply MUST begin with exactly ${MISMATCH_MARKER} (nothing before it), followed by a short, friendly message of 2-3 sentences in the student's language. Say which subject or class the question seems to belong to, and ask the student to choose that subject or class from the list and ask again. If the question is not about any of the five subjects (Math, Physics, Chemistry, Biology, ICT), say that this site helps with these five subjects only.`;
+}
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -85,6 +132,11 @@ export async function onRequestPost(context) {
   }
 
   const lang = payload && payload.lang === "en" ? "en" : "bn";
+  const matchGuard = buildMatchGuard(
+    lang,
+    payload && typeof payload.subject === "string" ? payload.subject : "",
+    payload && Number.isInteger(payload.cls) ? payload.cls : null
+  );
   const incoming = Array.isArray(payload && payload.messages) ? payload.messages : [];
 
   // Keep only valid user/assistant messages, trim size, keep the most recent ones.
@@ -166,7 +218,7 @@ export async function onRequestPost(context) {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[lang] }] },
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[lang] + matchGuard }] },
         contents,
         generationConfig,
       }),
@@ -205,6 +257,44 @@ export async function onRequestPost(context) {
     let buffer = "";
     let counted = false;
     let gotText = false;
+    // A reply that starts with MISMATCH_MARKER is a "wrong subject/class" note: hold back the first few
+    // characters until we can tell, strip the marker, and do not count it as a used question.
+    let head = "";
+    let decided = !matchGuard;
+    let mismatch = false;
+
+    async function emit(text) {
+      if (!text) return;
+      if (!counted && !mismatch) {
+        counted = true; // count the question once the first words of a real answer arrive
+        try { await addUsage(env, user, usage); } catch (err) { console.log("addUsage failed", String(err)); }
+      }
+      gotText = true;
+      await send({ t: text });
+    }
+
+    async function onText(text) {
+      if (decided) return emit(text);
+      head += text;
+      if (head.length < MISMATCH_MARKER.length && MISMATCH_MARKER.startsWith(head.trimStart())) return; // still unsure
+      decided = true;
+      const trimmed = head.trimStart();
+      let rest = head;
+      if (trimmed.startsWith(MISMATCH_MARKER)) {
+        mismatch = true;
+        rest = trimmed.slice(MISMATCH_MARKER.length).replace(/^\s+/, "");
+      }
+      head = "";
+      return emit(rest);
+    }
+
+    async function flushHead() {
+      if (decided || !head) return;
+      decided = true;
+      const rest = head;
+      head = "";
+      await emit(rest);
+    }
 
     async function handleEvent(raw) {
       const dataLines = raw.split(/\r?\n/).filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim());
@@ -215,12 +305,7 @@ export async function onRequestPost(context) {
       const parts = cand && cand.content && cand.content.parts ? cand.content.parts : [];
       const text = parts.filter((p) => !p.thought).map((p) => p.text || "").join("");
       if (!text) return;
-      if (!counted) {
-        counted = true; // count the question once the first words of a real answer arrive
-        try { await addUsage(env, user, usage); } catch (err) { console.log("addUsage failed", String(err)); }
-      }
-      gotText = true;
-      await send({ t: text });
+      await onText(text);
     }
 
     try {
@@ -236,8 +321,10 @@ export async function onRequestPost(context) {
         }
       }
       if (buffer.trim()) await handleEvent(buffer);
+      await flushHead();
 
       if (!gotText) await send({ e: "empty_reply" });
+      else if (mismatch) await send({ done: true, mismatch: true, used: usage.used, limit: usage.limit });
       else await send({ done: true, used: usage.used + 1, limit: usage.limit });
     } catch (err) {
       console.log("stream error", String(err));
