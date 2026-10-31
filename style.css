@@ -402,6 +402,26 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
   border-bottom-left-radius: 4px;
 }
 .msg.error { color: var(--danger); border: 1px solid var(--danger); background: transparent; }
+
+/* time record above each bubble, and a date line when the day changes */
+.msg-meta {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--muted);
+  margin: 2px 4px -6px;
+  letter-spacing: 0.1px;
+}
+.msg-meta.from-user { align-self: flex-end; }
+.msg-meta.from-bot { align-self: flex-start; font-weight: 600; color: var(--brand); }
+.day-sep {
+  align-self: center;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--bot);
+  border-radius: 999px;
+  padding: 4px 12px;
+  margin: 2px 0;
+}
 .msg.bot p { margin: 0 0 8px; }
 .msg.bot p:last-child, .msg.bot ul:last-child, .msg.bot ol:last-child { margin-bottom: 0; }
 .msg.bot ul, .msg.bot ol { margin: 0 0 8px; padding-left: 22px; }
