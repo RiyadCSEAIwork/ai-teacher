@@ -29,6 +29,11 @@
       answerTitle: "AI-এর উত্তর",
       addImage: "ছবি যোগ করুন",
       getAnswer: "উত্তর দেখুন",
+      meLabel: "আমি",
+      aiLabel: "AI Teacher",
+      today: "আজ",
+      yesterday: "গতকাল",
+      secondsUnit: "সেকেন্ড",
       classLabel: "শ্রেণি নির্বাচন",
       subjectLabel: "বিষয় নির্বাচন",
       classes: ["ষষ্ঠ শ্রেণি", "সপ্তম শ্রেণি", "অষ্টম শ্রেণি", "নবম শ্রেণি", "দশম শ্রেণি (SSC)", "একাদশ শ্রেণি", "দ্বাদশ শ্রেণি (HSC)", "ভর্তি পরীক্ষা"],
@@ -107,6 +112,11 @@
       answerTitle: "AI's answer",
       addImage: "Add picture",
       getAnswer: "Get answer",
+      meLabel: "Me",
+      aiLabel: "AI Teacher",
+      today: "Today",
+      yesterday: "Yesterday",
+      secondsUnit: "s",
       classLabel: "Choose class",
       subjectLabel: "Choose subject",
       classes: ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10 (SSC)", "Class 11", "Class 12 (HSC)", "Admission test"],
@@ -428,6 +438,81 @@
     chatEl.appendChild(el);
     scrollChat();
     return el;
+  }
+
+  // ---------- time record: "Me · 5:00 PM" above each question, "AI Teacher · 5:00 PM · ⚡ 3.2 s" above each answer ----------
+  var lastMetaDay = ""; // so a date line is added only when the day changes
+
+  function dayKey(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate();
+  }
+
+  function locale() { return lang === "bn" ? "bn-BD" : "en-US"; }
+
+  function fmtTime(ts) {
+    try {
+      return new Date(ts).toLocaleTimeString(locale(), { hour: "numeric", minute: "2-digit", hour12: true });
+    } catch (e) { return ""; }
+  }
+
+  function fmtDay(ts) {
+    var t = TEXT[lang];
+    var key = dayKey(ts);
+    if (key === dayKey(Date.now())) return t.today;
+    if (key === dayKey(Date.now() - 86400000)) return t.yesterday;
+    try {
+      return new Date(ts).toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric" });
+    } catch (e) { return ""; }
+  }
+
+  function fmtDuration(ms) {
+    if (!ms || ms < 0) return "";
+    var s = ms < 10000 ? Math.round(ms / 100) / 10 : Math.round(ms / 1000);
+    var num;
+    try { num = s.toLocaleString(locale(), { minimumFractionDigits: s % 1 ? 1 : 0 }); } catch (e) { num = String(s); }
+    return "⚡ " + num + " " + TEXT[lang].secondsUnit;
+  }
+
+  function renderMeta(el) {
+    var t = TEXT[lang];
+    var who = el.getAttribute("data-role") === "user" ? t.meLabel : t.aiLabel;
+    var parts = [who, fmtTime(Number(el.getAttribute("data-ts")))];
+    var dur = Number(el.getAttribute("data-dur"));
+    if (dur) parts.push(fmtDuration(dur));
+    el.textContent = parts.filter(Boolean).join(" · ");
+  }
+
+  function renderDaySep(el) { el.textContent = fmtDay(Number(el.getAttribute("data-ts"))); }
+
+  // Adds the small label (and, when the day changes, a date line) in front of the next bubble.
+  function addMeta(role, ts, dur) {
+    if (!ts) return null;
+    var key = dayKey(ts);
+    if (key !== lastMetaDay) {
+      lastMetaDay = key;
+      var sep = document.createElement("div");
+      sep.className = "day-sep";
+      sep.setAttribute("data-ts", String(ts));
+      renderDaySep(sep);
+      chatEl.appendChild(sep);
+    }
+    var el = document.createElement("div");
+    el.className = "msg-meta " + (role === "user" ? "from-user" : "from-bot");
+    el.setAttribute("data-role", role);
+    el.setAttribute("data-ts", String(ts));
+    if (dur) el.setAttribute("data-dur", String(dur));
+    renderMeta(el);
+    chatEl.appendChild(el);
+    return el;
+  }
+
+  // When the language is switched, the labels already on screen follow it.
+  function refreshMeta() {
+    var metas = chatEl.querySelectorAll(".msg-meta");
+    for (var i = 0; i < metas.length; i++) renderMeta(metas[i]);
+    var seps = chatEl.querySelectorAll(".day-sep");
+    for (var j = 0; j < seps.length; j++) renderDaySep(seps[j]);
   }
 
   // A question bubble that can also show the picture that was sent with it.
@@ -846,6 +931,7 @@
     attachLabelEl.textContent = t.addImage;
     fillSelects();
     renderSubjects();
+    refreshMeta();
     drawerTitleEl.textContent = t.historyTitle;
     drawerNewEl.textContent = "+ " + t.newChat;
     attachEl.title = t.attach;
@@ -883,6 +969,7 @@
     chatTitle = "";
     clearPendingImage();
     chatEl.innerHTML = "";
+    lastMetaDay = "";
     suggestionsEl.classList.remove("hidden");
     askMainEl.scrollTop = 0;
   }
@@ -1035,8 +1122,10 @@
 
     suggestionsEl.classList.add("hidden");
     removeActions();
+    var askedAt = Date.now();
+    addMeta("user", askedAt);
     addUserMessage(q, image);
-    history.push({ role: "user", text: q, image: image, ctx: currentContext() });
+    history.push({ role: "user", text: q, image: image, ctx: currentContext(), ts: askedAt });
     clearPendingImage();
     inputEl.value = "";
     autosize();
@@ -1060,7 +1149,7 @@
       var type = res.headers.get("Content-Type") || "";
 
       if (res.ok && res.body && type.indexOf("text/event-stream") !== -1) {
-        await readStream(res, typing);
+        await readStream(res, typing, askedAt);
       } else {
         // Errors (login expired, daily limit, ...) still arrive as plain JSON.
         var data = null;
@@ -1092,7 +1181,9 @@
   }
 
   // Reads the answer piece by piece and shows it as it grows.
-  async function readStream(res, typing) {
+  async function readStream(res, typing, askedAt) {
+    var answerTs = 0;     // when the first words of the answer arrived
+    var metaEl = null;    // the "AI Teacher · time" label above the answer
     var reader = res.body.getReader();
     var decoder = new TextDecoder("utf-8");
     var buffer = "";
@@ -1130,6 +1221,8 @@
       if (typeof ev.t === "string" && ev.t) {
         if (!botEl) {
           typing.remove();
+          answerTs = Date.now();
+          metaEl = addMeta("bot", answerTs);
           botEl = addMessage("bot", "");
           botEl.classList.add("streaming");
           needAlign = true;
@@ -1174,7 +1267,10 @@
 
     if (answer) {
       // Show whatever arrived. It counts as a question already, so keep it in the history.
-      history.push({ role: "assistant", text: answer });
+      // How long the answer took, counted from the moment the question was sent until it finished.
+      var took = finished && askedAt ? Date.now() - askedAt : 0;
+      if (metaEl && took) { metaEl.setAttribute("data-dur", String(took)); renderMeta(metaEl); }
+      history.push({ role: "assistant", text: answer, ts: answerTs || Date.now(), dur: took || undefined });
       saveChat();
       if (!finished) addMessage("error", errorText(failKey || "network"));
       else if (!mismatch) addAnswerActions(answer); // a "wrong subject" note has nothing to simplify or copy
@@ -1227,7 +1323,9 @@
         role: m.role,
         text: m.text || "",
         img: !!(m.image || m.img),
-        imgId: (m.image && m.image.imgId) || m.imgId || undefined
+        imgId: (m.image && m.image.imgId) || m.imgId || undefined,
+        ts: m.ts || undefined,
+        dur: m.dur || undefined
       };
     });
     var ok = false;
@@ -1346,6 +1444,7 @@
   function showChat(chat) {
     resetChat();
     chatEl.innerHTML = ""; // drop the welcome bubble
+    lastMetaDay = "";
     suggestionsEl.classList.add("hidden");
     chatId = chat.id;
     chatTitle = chat.title || "";
@@ -1353,16 +1452,18 @@
     (chat.messages || []).forEach(function (m) {
       if (m.role === "user") {
         var raw = (m.img && placeholders.indexOf(m.text) !== -1) ? "" : (m.text || "");
+        addMeta("user", m.ts);
         if (m.img && m.imgId) {
           // the saved small copy of the picture is loaded from the server
           addUserMessage(raw, { url: "/api/chats?img=" + encodeURIComponent(m.imgId) });
         } else {
           addUserMessage((m.img ? "🖼 " : "") + (raw || (m.img ? TEXT[lang].imageOnly : "")), null);
         }
-        history.push({ role: "user", text: raw, image: null, img: !!m.img, imgId: m.imgId || "" });
+        history.push({ role: "user", text: raw, image: null, img: !!m.img, imgId: m.imgId || "", ts: m.ts });
       } else {
+        addMeta("bot", m.ts, m.dur);
         addMessage("bot", m.text || "");
-        history.push({ role: "assistant", text: m.text || "" });
+        history.push({ role: "assistant", text: m.text || "", ts: m.ts, dur: m.dur });
       }
     });
     var last = history[history.length - 1];
