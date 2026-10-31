@@ -29,6 +29,9 @@
       answerTitle: "AI-এর উত্তর",
       addImage: "ছবি যোগ করুন",
       getAnswer: "উত্তর দেখুন",
+      outputTitle: "আউটপুট — ব্রাউজারে যেমন দেখাবে",
+      runOutput: "আউটপুট চালান",
+      treeTitle: "ট্যাগের কাঠামো (ডায়াগ্রাম)",
       likeTip: "উত্তরটি কাজে লেগেছে",
       dislikeTip: "উত্তরটি কাজে লাগেনি",
       meLabel: "আমি",
@@ -114,6 +117,9 @@
       answerTitle: "AI's answer",
       addImage: "Add picture",
       getAnswer: "Get answer",
+      outputTitle: "Output — how it looks in a browser",
+      runOutput: "Run output",
+      treeTitle: "Tag structure (diagram)",
       likeTip: "This answer helped",
       dislikeTip: "This answer did not help",
       meLabel: "Me",
@@ -297,7 +303,11 @@
   function inline(s) {
     return s
       .replace(/`([^`\n]+)`/g, "<code>$1</code>")
-      .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+      .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+      // *italic* (the opening * must touch a word, so "2 * 3 * 4" is left alone)
+      .replace(/(^|[\s(])\*(?!\s)([^*\n]*[^\s*])\*(?![\w*])/g, "$1<em>$2</em>")
+      // [text](https://link): only http(s) links; the text was escaped already, so nothing can break out of the attribute
+      .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   }
 
   // Gemini sometimes writes math as LaTeX ($\rightarrow$). We don't render LaTeX,
@@ -374,7 +384,147 @@
     return html;
   }
 
-  function renderMarkdown(raw) {
+  // ---------- code blocks: coloured code, a copy button, and for HTML a live output preview ----------
+  function unescapeHtml(s) {
+    return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+  }
+
+  function wordSet(list) {
+    var set = {};
+    list.split(" ").forEach(function (w) { set[w] = true; });
+    return set;
+  }
+  var KW_JS = wordSet("const let var function return if else for while do switch case break continue new this class extends import export from default async await try catch finally throw typeof instanceof in of null undefined true false void int float double char long short bool boolean string public private protected static final package using namespace struct enum include");
+  var KW_PY = wordSet("def class return if elif else for while in not and or is None True False import from as with try except finally raise pass break continue lambda yield global print");
+
+  function span(cls, text) { return '<span class="' + cls + '">' + escapeHtml(text) + "</span>"; }
+
+  // Every piece of the code is escaped before it is put back, so code can never turn into real HTML on the page.
+  function highlightAttrs(a) {
+    var out = "", last = 0, m, re = /([\w:@.-]+)(?:(=)("[^"]*"|'[^']*'|[^\s"'>]+))?/g;
+    while ((m = re.exec(a))) {
+      out += escapeHtml(a.slice(last, m.index)) + span("tk-a", m[1]);
+      if (m[2]) out += span("tk-p", "=") + span("tk-s", m[3]);
+      last = re.lastIndex;
+    }
+    return out + escapeHtml(a.slice(last));
+  }
+
+  function highlightHtml(raw) {
+    var out = "", last = 0, m;
+    var re = /(<!--[\s\S]*?-->)|(<\/?)([a-zA-Z!][\w:-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?>)/g;
+    while ((m = re.exec(raw))) {
+      out += escapeHtml(raw.slice(last, m.index));
+      if (m[1]) out += span("tk-c", m[1]);
+      else out += span("tk-p", m[2]) + span("tk-t", m[3]) + highlightAttrs(m[4]) + span("tk-p", m[5]);
+      last = re.lastIndex;
+    }
+    return out + escapeHtml(raw.slice(last));
+  }
+
+  function highlightCode(raw, tag) {
+    var l = (tag || "").toLowerCase();
+    if (l === "html" || l === "htm" || l === "xml" || l === "svg") return highlightHtml(raw);
+    var re, kw = null, css = false;
+    if (/^(js|javascript|ts|typescript|java|c|cpp|c\+\+|cs|csharp|php|go|kotlin|swift)$/.test(l)) {
+      re = /(\/\*[\s\S]*?\*\/|\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)/g;
+      kw = KW_JS;
+    } else if (/^(py|python|bash|sh|shell)$/.test(l)) {
+      re = /(#[^\n]*)|("""[\s\S]*?"""|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)/g;
+      kw = KW_PY;
+    } else if (l === "css") {
+      re = /(\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(#[0-9a-fA-F]{3,8}\b|\b\d+(?:\.\d+)?(?:px|em|rem|%|vh|vw|s)?\b)|([A-Za-z-]+)(?=\s*:)/g;
+      css = true;
+    } else {
+      return escapeHtml(raw);
+    }
+    var out = "", last = 0, m;
+    while ((m = re.exec(raw))) {
+      out += escapeHtml(raw.slice(last, m.index));
+      if (m[1]) out += span("tk-c", m[0]);
+      else if (m[2]) out += span("tk-s", m[0]);
+      else if (m[3]) out += span("tk-n", m[0]);
+      else if (m[4] && ((kw && kw[m[4]]) )) out += span("tk-k", m[0]);
+      else if (m[4] && css) out += span("tk-a", m[0]);
+      else out += escapeHtml(m[0]);
+      last = re.lastIndex;
+      if (m[0] === "") re.lastIndex++;
+    }
+    return out + escapeHtml(raw.slice(last));
+  }
+
+  function isHtmlCode(code, tag) {
+    var l = (tag || "").toLowerCase();
+    if (l === "html" || l === "htm") return true;
+    return !l && /^\s*(<!doctype html|<html[\s>])/i.test(code);
+  }
+
+  // A small tree of the tags, so the structure of the page can be seen at a glance.
+  function domTreeHtml(code) {
+    var doc;
+    try { doc = new DOMParser().parseFromString(code, "text/html"); } catch (e) { return ""; }
+    var count = 0;
+    function node(el, depth) {
+      var tag = el.tagName.toLowerCase();
+      if (count >= 80 || depth > 8) return "";
+      if (tag === "head" && !el.firstChild) return "";
+      count++;
+      var attrs = "";
+      ["id", "class", "href", "src", "type"].forEach(function (a) {
+        if (el.hasAttribute(a)) attrs += ' <span class="dt-attr">' + escapeHtml(a + '="' + el.getAttribute(a).slice(0, 24) + '"') + "</span>";
+      });
+      var own = "", kids = "";
+      for (var c = el.firstChild; c; c = c.nextSibling) {
+        if (c.nodeType === 3 && tag !== "script" && tag !== "style") {
+          var tx = c.nodeValue.replace(/\s+/g, " ").trim();
+          if (tx) own += ' <span class="dt-text">' + escapeHtml('"' + (tx.length > 28 ? tx.slice(0, 28) + "…" : tx) + '"') + "</span>";
+        } else if (c.nodeType === 1) {
+          kids += node(c, depth + 1);
+        }
+      }
+      return '<li><span class="dt-tag">' + escapeHtml("<" + tag + ">") + "</span>" + attrs + own + (kids ? "<ul>" + kids + "</ul>" : "") + "</li>";
+    }
+    var roots = /<html[\s>]/i.test(code) ? [doc.documentElement] : Array.prototype.slice.call(doc.body.children);
+    var items = roots.map(function (r) { return node(r, 0); }).join("");
+    return items ? '<ul class="dom-tree">' + items + "</ul>" : "";
+  }
+
+  // The output as a browser window. Without scripts it is shown straight away; code with scripts waits for a click.
+  // The frame is fully sandboxed: it cannot reach this site, its login or its storage.
+  function previewHtml(code) {
+    var t = TEXT[lang];
+    var doc = /<html[\s>]/i.test(code) ? code : '<!doctype html><html><head><meta charset="utf-8"></head><body>' + code + "</body></html>";
+    var base = '<base target="_blank"><style>body{font-family:system-ui,"Noto Sans Bengali",sans-serif;margin:14px;line-height:1.5;color:#111}</style>';
+    if (/<head[^>]*>/i.test(doc)) doc = doc.replace(/<head[^>]*>/i, function (h) { return h + base; });
+    else if (/<html[^>]*>/i.test(doc)) doc = doc.replace(/<html[^>]*>/i, function (h) { return h + "<head>" + base + "</head>"; });
+    else doc = base + doc;
+
+    var hasScript = /<script[\s>]/i.test(code);
+    var lines = code.split("\n").length;
+    var height = Math.max(150, Math.min(380, 70 + lines * 12));
+    var frame = '<iframe class="out-frame' + (hasScript ? "" : " show") + '" sandbox="" referrerpolicy="no-referrer" title="' + escapeHtml(t.outputTitle) + '" style="height:' + height + 'px"' +
+      (hasScript ? ' data-srcdoc="' + escapeHtml(doc) + '"' : ' srcdoc="' + escapeHtml(doc) + '"') + "></iframe>";
+    var tree = domTreeHtml(code);
+    return '<div class="out-card">' +
+      '<div class="out-head"><span class="out-dot"></span><span class="out-title">' + escapeHtml(t.outputTitle) + "</span>" +
+      (hasScript ? '<button type="button" class="out-run">▶ ' + escapeHtml(t.runOutput) + "</button>" : "") + "</div>" +
+      '<div class="browser"><div class="browser-bar"><i></i><i></i><i></i><span class="browser-url">localhost/index.html</span></div>' + frame + "</div>" +
+      (tree ? '<details class="dom-diagram"><summary>' + escapeHtml(t.treeTitle) + "</summary>" + tree + "</details>" : "") +
+      "</div>";
+  }
+
+  function codeBlockHtml(code, tag, final) {
+    var t = TEXT[lang];
+    var html = '<div class="code-block"><div class="code-head"><span class="code-dots"><i></i><i></i><i></i></span>' +
+      '<span class="code-lang">' + escapeHtml(tag ? tag.toUpperCase() : "CODE") + '</span>' +
+      '<button type="button" class="code-copy">' + escapeHtml(t.copy) + "</button></div>" +
+      "<pre><code>" + highlightCode(code, tag) + "</code></pre></div>";
+    // The preview is added only when the answer is complete, so a half-written page never flickers on screen.
+    if (final && isHtmlCode(code, tag)) html += previewHtml(code);
+    return html;
+  }
+
+  function renderMarkdown(raw, final) {
     var maths = [];
     var useMath = !!(window.katex && window.katex.renderToString);
     var source = useMath ? extractMath(raw, maths) : cleanLatex(raw); // no KaTeX: show formulas as plain text
@@ -383,9 +533,11 @@
     var parts = text.split(/```/);
     for (var i = 0; i < parts.length; i++) {
       if (i % 2 === 1) {
-        // code block: drop an optional language tag on the first line
-        var code = parts[i].replace(/^[a-zA-Z0-9_-]*\n/, "");
-        out.push("<pre><code>" + code.replace(/\n$/, "") + "</code></pre>");
+        // code block: the optional language tag is on the first line
+        var tagMatch = parts[i].match(/^([a-zA-Z0-9_+#-]*)\n/);
+        var codeTag = tagMatch ? tagMatch[1] : "";
+        var codeRaw = unescapeHtml(parts[i].replace(/^[a-zA-Z0-9_+#-]*\n/, "")).replace(/\n$/, "");
+        out.push(codeBlockHtml(codeRaw, codeTag, final));
         continue;
       }
       var lines = parts[i].split("\n");
@@ -439,7 +591,7 @@
   function addMessage(kind, text) {
     var el = document.createElement("div");
     el.className = "msg " + (kind === "user" ? "user" : "bot") + (kind === "error" ? " error" : "");
-    if (kind === "bot") el.innerHTML = renderMarkdown(text);
+    if (kind === "bot") el.innerHTML = renderMarkdown(text, true);
     else el.textContent = text;
     chatEl.appendChild(el);
     scrollChat();
@@ -1256,17 +1408,17 @@
     var paintQueued = false;
     var needAlign = false; // once, bring the start of a new answer to the top so it can be read from the beginning
 
-    function paint() {
+    function paint(final) {
       paintQueued = false;
       if (!botEl) return;
-      botEl.innerHTML = renderMarkdown(answer);
+      botEl.innerHTML = renderMarkdown(answer, final === true); // output previews only once the answer is complete
       if (needAlign) { needAlign = false; botEl.scrollIntoView({ block: "start" }); }
     }
 
     function queuePaint() {
       if (paintQueued) return;
       paintQueued = true;
-      requestAnimationFrame(paint);
+      requestAnimationFrame(function () { paint(false); });
     }
 
     function handleEvent(raw) {
@@ -1321,7 +1473,7 @@
 
     if (botEl) {
       botEl.classList.remove("streaming");
-      paint();
+      paint(finished && !failKey);
     } else {
       typing.remove();
     }
@@ -1636,6 +1788,27 @@ historyBtn.addEventListener("click", openDrawer);
     if (!authed) { goToLogin({ view: "ask" }); return; }
     setView("ask");
     fileEl.click();
+  });
+
+  // buttons inside answers: copy a code block, run an HTML output that contains scripts
+  chatEl.addEventListener("click", function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest(".code-copy, .out-run") : null;
+    if (!btn) return;
+    if (btn.classList.contains("code-copy")) {
+      var codeEl = btn.closest(".code-block").querySelector("code");
+      copyText(codeEl.textContent).then(function () {
+        btn.textContent = TEXT[lang].copied;
+        setTimeout(function () { btn.textContent = TEXT[lang].copy; }, 1600);
+      }, function () { /* clipboard blocked: nothing to do */ });
+    } else {
+      var card = btn.closest(".out-card");
+      var frame = card && card.querySelector(".out-frame");
+      if (!frame) return;
+      frame.setAttribute("sandbox", "allow-scripts"); // scripts may run, but the page stays cut off from this site
+      frame.setAttribute("srcdoc", frame.getAttribute("data-srcdoc") || "");
+      frame.classList.add("show");
+      btn.remove();
+    }
   });
 
   // class and subject choices
