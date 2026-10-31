@@ -508,6 +508,32 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
 }
 .action-btn:hover { color: var(--brand); border-color: var(--brand); }
 
+/* 👍 / 👎 */
+.fb-btn { padding: 5px 9px; }
+.fb-btn.fb-down svg { transform: rotate(180deg); }
+.fb-btn[aria-pressed="true"] { color: #fff; background: var(--brand); border-color: var(--brand); }
+.fb-btn.fb-down[aria-pressed="true"] { background: var(--danger); border-color: var(--danger); }
+.fb-btn.fb-up { margin-left: auto; }
+
+/* class and subject of the open chat: shown as a label, the two boxes are hidden */
+.ctx-chip {
+  display: none;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bot);
+  color: var(--heading);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ask-main.has-chat.ctx-locked .ctx-chip:not(:empty) { display: inline-flex; }
+.ask-main.has-chat.ctx-locked .ask-controls .pill-select { display: none; }
+
 /* ---------- picture upload ---------- */
 .preview {
   max-width: 100%;
@@ -764,7 +790,6 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
   .pill-btn span { display: none; }
   .ask-controls .pill-select { flex: 1 1 0; max-width: none; min-width: 0; padding-left: 10px; }
   .send-main { flex: 1 1 100%; margin-left: 0; }
-  .ask-main.has-chat .ask-controls .pill-select { display: none; }
   .ask-main.has-chat .send-main { flex: 1 1 0; }
   .msg { max-width: 94%; }
 }
