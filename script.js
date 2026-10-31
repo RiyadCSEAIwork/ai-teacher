@@ -804,7 +804,12 @@
     var t = TEXT[lang];
     var cls = classSel.value === "" ? "" : (t.classes[Number(classSel.value)] || "");
     var subj = subjectSel.value === "" ? "" : (t.subjects[subjectSel.value] || "");
-    return (cls || subj) ? { cls: cls, subj: subj } : null;
+    return (cls || subj) ? {
+      cls: cls,
+      subj: subj,
+      subjId: subjectSel.value,                                          // sent to the server so it can check the question matches
+      clsIdx: classSel.value === "" ? null : Number(classSel.value)
+    } : null;
   }
 
   function errorText(key) {
@@ -1045,7 +1050,12 @@
       var res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lang: lang, messages: buildMessages() })
+        body: JSON.stringify({
+          lang: lang,
+          subject: (history[history.length - 1].ctx && history[history.length - 1].ctx.subjId) || "",
+          cls: history[history.length - 1].ctx ? history[history.length - 1].ctx.clsIdx : null,
+          messages: buildMessages()
+        })
       });
       var type = res.headers.get("Content-Type") || "";
 
@@ -1090,6 +1100,7 @@
     var botEl = null;
     var finished = false;
     var failKey = null;
+    var mismatch = false;  // the AI said the question does not fit the chosen class / subject
     var paintQueued = false;
     var needAlign = false; // once, bring the start of a new answer to the top so it can be read from the beginning
 
@@ -1127,6 +1138,7 @@
         queuePaint();
       } else if (ev.done) {
         finished = true;
+        if (ev.mismatch) mismatch = true;
         if (typeof ev.used === "number") {
           usage = { used: ev.used, limit: ev.limit || usage.limit };
           renderUsage();
@@ -1165,7 +1177,7 @@
       history.push({ role: "assistant", text: answer });
       saveChat();
       if (!finished) addMessage("error", errorText(failKey || "network"));
-      else addAnswerActions(answer);
+      else if (!mismatch) addAnswerActions(answer); // a "wrong subject" note has nothing to simplify or copy
     } else {
       handleFailure(failKey || "generic", null);
     }
