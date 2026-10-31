@@ -50,6 +50,10 @@ function cleanMessages(list) {
       };
       // imgId points at a small saved copy of the picture (see the picture endpoints below)
       if (out.img && typeof m.imgId === "string" && ID_RE.test(m.imgId)) out.imgId = m.imgId;
+      // when the message was sent (ms since 1970) and, for answers, how long it took
+      const now = Date.now();
+      if (Number.isFinite(m.ts) && m.ts > 1.6e12 && m.ts < now + 86400000) out.ts = Math.round(m.ts);
+      if (m.role === "assistant" && Number.isFinite(m.dur) && m.dur > 0 && m.dur < 600000) out.dur = Math.round(m.dur);
       return out;
     })
     .filter((m) => m.text.length > 0 || m.img)
