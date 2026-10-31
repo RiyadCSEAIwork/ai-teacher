@@ -29,6 +29,8 @@
       answerTitle: "AI-এর উত্তর",
       addImage: "ছবি যোগ করুন",
       getAnswer: "উত্তর দেখুন",
+      likeTip: "উত্তরটি কাজে লেগেছে",
+      dislikeTip: "উত্তরটি কাজে লাগেনি",
       meLabel: "আমি",
       aiLabel: "AI Teacher",
       today: "আজ",
@@ -112,6 +114,8 @@
       answerTitle: "AI's answer",
       addImage: "Add picture",
       getAnswer: "Get answer",
+      likeTip: "This answer helped",
+      dislikeTip: "This answer did not help",
       meLabel: "Me",
       aiLabel: "AI Teacher",
       today: "Today",
@@ -234,6 +238,7 @@
   var subjectSel = document.getElementById("subject-sel");
   var counterEl = document.getElementById("counter");
   var askMainEl = document.querySelector(".ask-main");
+  var ctxChipEl = document.getElementById("ctx-chip");
   var answerCardEl = document.querySelector(".answer-card");
   var welcomeEl = document.getElementById("welcome");
 
@@ -281,6 +286,7 @@
   var afterLogin = null;   // what to do once a visitor has logged in: {view, question, subject}
   var chatId = null;       // id of the chat being saved (null until the first answer arrives)
   var chatTitle = "";      // short title shown in the history list
+  var chatCtx = null;      // {subjId, clsIdx}: the class and subject this chat started with; follow-ups stay inside it
 
   // ---------- safe rendering (escape first, then add a little formatting) ----------
   function escapeHtml(s) {
@@ -601,6 +607,30 @@
       bar.appendChild(b);
     });
 
+    // 👍 / 👎: only remembered with the chat. It never asks the AI anything and never uses up a question.
+    var entry = history[history.length - 1];
+    if (entry && entry.role === "assistant") {
+      var thumb = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3z"/><path d="M7 11l4-8a2.2 2.2 0 0 1 2.2 2.5L12.6 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>';
+      var fbBtns = [];
+      [["up", t.likeTip], ["down", t.dislikeTip]].forEach(function (pair) {
+        var kind = pair[0];
+        var fb = document.createElement("button");
+        fb.type = "button";
+        fb.className = "action-btn fb-btn fb-" + kind;
+        fb.innerHTML = thumb;
+        fb.title = pair[1];
+        fb.setAttribute("aria-label", pair[1]);
+        fb.addEventListener("click", function () {
+          entry.fb = entry.fb === kind ? undefined : kind; // tap again to take it back
+          fbBtns.forEach(function (x) { x.btn.setAttribute("aria-pressed", entry.fb === x.kind ? "true" : "false"); });
+          saveChat();
+        });
+        fbBtns.push({ kind: kind, btn: fb });
+        bar.appendChild(fb);
+      });
+      fbBtns.forEach(function (x) { x.btn.setAttribute("aria-pressed", entry.fb === x.kind ? "true" : "false"); });
+    }
+
     chatEl.appendChild(bar);
   }
 
@@ -847,6 +877,8 @@
   }
 
   function pickSubject(id) {
+    // Choosing another subject while a chat is open starts a new chat (the old one stays in the history).
+    if (history.length && !busy && chatCtx && chatCtx.subjId !== id) resetChat();
     subjectSel.value = id;
     markSubject();
   }
@@ -864,7 +896,10 @@
       b.type = "button";
       b.innerHTML = SUBJECT_ICONS[id] + "<span></span>";
       b.lastChild.textContent = t.subjects[id];
-      b.addEventListener("click", function () { pickSubject(subjectSel.value === id ? "" : id); });
+      b.addEventListener("click", function () {
+        if (history.length && chatCtx && subjectSel.value === id) return; // already this chat's subject
+        pickSubject(subjectSel.value === id ? "" : id);
+      });
       li.appendChild(b);
       subjectListEl.appendChild(li);
 
@@ -885,16 +920,27 @@
   }
 
   // The chosen class and subject, as readable words. Sent with the question so the answer fits the level.
-  function currentContext() {
+  function ctxFromIds(subjId, clsIdx) {
     var t = TEXT[lang];
-    var cls = classSel.value === "" ? "" : (t.classes[Number(classSel.value)] || "");
-    var subj = subjectSel.value === "" ? "" : (t.subjects[subjectSel.value] || "");
+    var cls = (clsIdx === null || clsIdx === undefined || clsIdx === "") ? "" : (t.classes[Number(clsIdx)] || "");
+    var subj = subjId ? (t.subjects[subjId] || "") : "";
     return (cls || subj) ? {
       cls: cls,
       subj: subj,
-      subjId: subjectSel.value,                                          // sent to the server so it can check the question matches
-      clsIdx: classSel.value === "" ? null : Number(classSel.value)
+      subjId: subj ? subjId : "",                                        // sent to the server so it can check the question matches
+      clsIdx: cls ? Number(clsIdx) : null
     } : null;
+  }
+
+  function currentContext() {
+    return ctxFromIds(subjectSel.value, classSel.value === "" ? null : Number(classSel.value));
+  }
+
+  // The class and subject this chat is about. Shown as a small label once the chat has started.
+  function updateCtxChip() {
+    var c = chatCtx ? ctxFromIds(chatCtx.subjId, chatCtx.clsIdx) : null;
+    ctxChipEl.textContent = c ? [c.cls, c.subj].filter(Boolean).join(" · ") : "";
+    askMainEl.classList.toggle("ctx-locked", !!c); // while locked, the class and subject boxes stay hidden
   }
 
   function errorText(key) {
@@ -932,6 +978,7 @@
     fillSelects();
     renderSubjects();
     refreshMeta();
+    updateCtxChip();
     drawerTitleEl.textContent = t.historyTitle;
     drawerNewEl.textContent = "+ " + t.newChat;
     attachEl.title = t.attach;
@@ -967,6 +1014,8 @@
     history = [];
     chatId = null;
     chatTitle = "";
+    chatCtx = null;
+    updateCtxChip();
     clearPendingImage();
     chatEl.innerHTML = "";
     lastMetaDay = "";
@@ -1029,6 +1078,7 @@
     chatEl.innerHTML = "";
     chatId = null;
     chatTitle = "";
+    chatCtx = null;
     closeDrawer();
     appEl.classList.add("logged-out");
     loginErrorKey = errorKey || null;
@@ -1125,7 +1175,18 @@
     var askedAt = Date.now();
     addMeta("user", askedAt);
     addUserMessage(q, image);
-    history.push({ role: "user", text: q, image: image, ctx: currentContext(), ts: askedAt });
+    // The first question fixes the class and subject; follow-ups in the same chat keep them.
+    var ctx;
+    if (chatCtx) {
+      ctx = ctxFromIds(chatCtx.subjId, chatCtx.clsIdx);
+    } else {
+      ctx = currentContext();
+      if (ctx) {
+        chatCtx = { subjId: ctx.subjId, clsIdx: ctx.clsIdx };
+        updateCtxChip();
+      }
+    }
+    history.push({ role: "user", text: q, image: image, ctx: ctx, ts: askedAt });
     clearPendingImage();
     inputEl.value = "";
     autosize();
@@ -1271,6 +1332,8 @@
       var took = finished && askedAt ? Date.now() - askedAt : 0;
       if (metaEl && took) { metaEl.setAttribute("data-dur", String(took)); renderMeta(metaEl); }
       history.push({ role: "assistant", text: answer, ts: answerTs || Date.now(), dur: took || undefined });
+      // The very first question did not fit the chosen class/subject: don't lock it in, so it can be chosen again.
+      if (mismatch && history.length === 2 && chatCtx) { chatCtx = null; history[0].ctx = null; updateCtxChip(); }
       saveChat();
       if (!finished) addMessage("error", errorText(failKey || "network"));
       else if (!mismatch) addAnswerActions(answer); // a "wrong subject" note has nothing to simplify or copy
@@ -1325,7 +1388,11 @@
         img: !!(m.image || m.img),
         imgId: (m.image && m.image.imgId) || m.imgId || undefined,
         ts: m.ts || undefined,
-        dur: m.dur || undefined
+        dur: m.dur || undefined,
+        fb: m.fb || undefined,
+        ctx: (m.role === "user" && m.ctx && (m.ctx.subjId || m.ctx.clsIdx !== null && m.ctx.clsIdx !== undefined))
+          ? { s: m.ctx.subjId || "", c: (m.ctx.clsIdx === null || m.ctx.clsIdx === undefined) ? undefined : m.ctx.clsIdx }
+          : undefined
       };
     });
     var ok = false;
@@ -1459,13 +1526,22 @@
         } else {
           addUserMessage((m.img ? "🖼 " : "") + (raw || (m.img ? TEXT[lang].imageOnly : "")), null);
         }
-        history.push({ role: "user", text: raw, image: null, img: !!m.img, imgId: m.imgId || "", ts: m.ts });
+        var sctx = m.ctx ? { cls: "", subj: "", subjId: m.ctx.s || "", clsIdx: Number.isInteger(m.ctx.c) ? m.ctx.c : null } : null;
+        history.push({ role: "user", text: raw, image: null, img: !!m.img, imgId: m.imgId || "", ts: m.ts, ctx: sctx });
+        if (sctx && !chatCtx) chatCtx = { subjId: sctx.subjId, clsIdx: sctx.clsIdx };
       } else {
         addMeta("bot", m.ts, m.dur);
         addMessage("bot", m.text || "");
-        history.push({ role: "assistant", text: m.text || "", ts: m.ts, dur: m.dur });
+        history.push({ role: "assistant", text: m.text || "", ts: m.ts, dur: m.dur, fb: m.fb });
       }
     });
+    // Follow-ups in an opened chat stay in its class and subject.
+    updateCtxChip();
+    if (chatCtx) {
+      classSel.value = chatCtx.clsIdx === null ? "" : String(chatCtx.clsIdx);
+      subjectSel.value = chatCtx.subjId || "";
+      markSubject();
+    }
     var last = history[history.length - 1];
     if (last && last.role === "assistant") addAnswerActions(last.text);
     scrollChat();
