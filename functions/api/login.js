@@ -1,7 +1,9 @@
 // POST /api/login  { name, code }  ->  sets a login cookie
+// Works for members listed in USERS and for students who signed up (stored in D1).
 import {
   json, isConfigured, parseUsers, codesMatch, signSession, sessionCookie,
   SESSION_SECONDS, getUsage, tooManyFailedLogins, recordFailedLogin,
+  getDbUser, dbPasswordMatches, dummyPasswordWork,
 } from "../../lib/auth.js";
 
 export async function onRequestPost({ request, env }) {
@@ -14,11 +16,25 @@ export async function onRequestPost({ request, env }) {
 
   const name = String((body && body.name) || "").trim().toLowerCase();
   const code = String((body && body.code) || "").trim();
-  const expected = parseUsers(env).get(name);
 
-  // Always do one comparison, even for unknown names, so response time doesn't reveal which names exist.
-  const same = await codesMatch(code, expected === undefined ? "\u0000no-such-user" : expected);
-  if (expected === undefined || !same) {
+  let ok = false;
+  if (code.length <= 128) {
+    const expected = parseUsers(env).get(name);
+    if (expected !== undefined) {
+      ok = await codesMatch(code, expected);
+    } else {
+      const row = await getDbUser(env, name);
+      if (row) {
+        ok = await dbPasswordMatches(row, code);
+      } else {
+        // Unknown name: do the same amount of work anyway, so response time doesn't reveal which names exist.
+        await dummyPasswordWork(env, code);
+        await codesMatch(code, "\u0000no-such-user");
+      }
+    }
+  }
+
+  if (!ok) {
     await recordFailedLogin(env, request);
     return json({ error: "invalid_login" }, 401);
   }
