@@ -74,6 +74,24 @@
         <input id="login-code" name="password" type="password" autocomplete="current-password" required maxlength="128">
         <p id="login-error" class="login-error" role="alert"></p>
         <button id="login-btn" type="submit"></button>
+        <a href="#" id="to-signup" class="login-switch" role="button"></a>
+      </form>
+
+      <!-- sign-up: a student makes their own ID (needs the invite code; only a few places) -->
+      <form id="signup-form" class="login-card" autocomplete="on" hidden>
+        <h2 id="signup-title"></h2>
+        <p id="signup-hint" class="login-hint"></p>
+        <label for="signup-name" id="signup-name-label"></label>
+        <input id="signup-name" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required minlength="3" maxlength="20">
+        <label for="signup-pass" id="signup-pass-label"></label>
+        <input id="signup-pass" name="new-password" type="password" autocomplete="new-password" required minlength="8" maxlength="128">
+        <label for="signup-pass2" id="signup-pass2-label"></label>
+        <input id="signup-pass2" name="new-password-again" type="password" autocomplete="new-password" required minlength="8" maxlength="128">
+        <label for="signup-invite" id="signup-invite-label"></label>
+        <input id="signup-invite" name="invite" type="password" autocomplete="off" required maxlength="128">
+        <p id="signup-error" class="login-error" role="alert"></p>
+        <button id="signup-btn" type="submit"></button>
+        <a href="#" id="to-login" class="login-switch" role="button"></a>
       </form>
     </section>
 
