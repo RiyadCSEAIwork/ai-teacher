@@ -781,6 +781,9 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
   cursor: pointer;
 }
 .login-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-card[hidden] { display: none; }
+.login-switch { align-self: center; margin-top: 6px; font-size: 14px; color: var(--brand); text-decoration: none; cursor: pointer; }
+.login-switch:hover { text-decoration: underline; }
 
 /* Visitors who are not logged in see the home page first. The login card opens only when they want to ask. */
 .app[data-view="login"] .login-wrap { display: flex; }
