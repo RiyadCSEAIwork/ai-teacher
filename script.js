@@ -60,9 +60,19 @@
       usage: function (user, used, limit) { return user + " · আজ " + used + "/" + limit + " প্রশ্ন"; },
       loginTitle: "লগইন করুন",
       loginOpen: "লগইন",
-      loginHint: "শুধু অনুমোদিত সদস্যদের জন্য। আপনার নাম ও অ্যাক্সেস কোড দিন।",
+      loginHint: "শুধু অনুমোদিত সদস্যদের জন্য। আপনার নাম ও পাসওয়ার্ড দিন।",
       nameLabel: "নাম",
-      codeLabel: "অ্যাক্সেস কোড",
+      codeLabel: "পাসওয়ার্ড",
+      toSignup: "নতুন আইডি খুলুন",
+      toLogin: "আগে থেকেই আইডি আছে? লগইন করুন",
+      signupTitle: "নতুন আইডি খুলুন",
+      signupHint: "ইনভাইট কোড লাগবে, যা শিক্ষক বা অ্যাডমিন দেবেন। আইডির সংখ্যা খুব সীমিত।",
+      signupNameLabel: "ইউজারনেম (৩–২০ অক্ষর: a-z, ০-৯, _ বা -)",
+      signupPassLabel: "পাসওয়ার্ড (কমপক্ষে ৮ অক্ষর)",
+      signupPass2Label: "পাসওয়ার্ড আবার লিখুন",
+      signupInviteLabel: "ইনভাইট কোড",
+      signupBtn: "আইডি খুলুন",
+      signingUp: "অপেক্ষা করুন…",
       loginBtn: "প্রবেশ করুন",
       loggingIn: "অপেক্ষা করুন…",
       suggestions: [
@@ -75,7 +85,14 @@
         rate_limited: "এই মুহূর্তে অনেক অনুরোধ এসেছে। এক মিনিট পরে আবার চেষ্টা করুন।",
         network: "ইন্টারনেট সংযোগে সমস্যা হচ্ছে। সংযোগ দেখে আবার চেষ্টা করুন।",
         server_not_configured: "সার্ভার এখনো ঠিকমতো সেট করা হয়নি (লগইন বা সংরক্ষণের সেটিং বাকি)।",
-        invalid_login: "নাম বা অ্যাক্সেস কোড ভুল।",
+        invalid_login: "নাম বা পাসওয়ার্ড ভুল।",
+        signup_closed: "এখন নতুন আইডি খোলা বন্ধ আছে। অ্যাডমিনের সঙ্গে কথা বলুন।",
+        signup_full: "আইডি খোলার সব জায়গা ভরে গেছে।",
+        invalid_invite: "ইনভাইট কোড ভুল।",
+        name_taken: "এই ইউজারনেম আগেই নেওয়া হয়েছে। অন্য একটা বেছে নিন।",
+        bad_name: "ইউজারনেম ৩–২০ অক্ষরের হতে হবে, শুধু a-z, ০-৯, _ বা - চলবে।",
+        weak_password: "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।",
+        password_mismatch: "দুইবার লেখা পাসওয়ার্ড মিলছে না।",
         too_many_attempts: "অনেকবার ভুল চেষ্টা হয়েছে। এক ঘণ্টা পরে আবার চেষ্টা করুন।",
         unauthorized: "লগইনের মেয়াদ শেষ। আবার লগইন করুন।",
         daily_limit: "আজকের প্রশ্নের সীমা শেষ। কাল আবার চেষ্টা করুন।",
@@ -148,9 +165,19 @@
       usage: function (user, used, limit) { return user + " · " + used + "/" + limit + " questions today"; },
       loginTitle: "Log in",
       loginOpen: "Log in",
-      loginHint: "For approved members only. Enter your name and access code.",
+      loginHint: "For approved members only. Enter your name and password.",
+      toSignup: "Create a new ID",
+      toLogin: "Already have an ID? Log in",
+      signupTitle: "Create a new ID",
+      signupHint: "You need the invite code from your teacher or admin. Only a few IDs are available.",
+      signupNameLabel: "Username (3-20 characters: a-z, 0-9, _ or -)",
+      signupPassLabel: "Password (at least 8 characters)",
+      signupPass2Label: "Repeat the password",
+      signupInviteLabel: "Invite code",
+      signupBtn: "Create ID",
+      signingUp: "Please wait…",
       nameLabel: "Name",
-      codeLabel: "Access code",
+      codeLabel: "Password",
       loginBtn: "Enter",
       loggingIn: "Please wait…",
       suggestions: [
@@ -163,7 +190,14 @@
         rate_limited: "Too many requests right now. Please wait a minute and try again.",
         network: "Network problem. Check your connection and try again.",
         server_not_configured: "The server isn't fully set up yet (login or storage setting missing).",
-        invalid_login: "Wrong name or access code.",
+        invalid_login: "Wrong name or password.",
+        signup_closed: "Creating new IDs is closed right now. Please ask the admin.",
+        signup_full: "All the places for new IDs are taken.",
+        invalid_invite: "The invite code is wrong.",
+        name_taken: "That username is already taken. Please choose another.",
+        bad_name: "The username must be 3-20 characters: only a-z, 0-9, _ or -.",
+        weak_password: "The password must be at least 8 characters.",
+        password_mismatch: "The two passwords do not match.",
         too_many_attempts: "Too many failed attempts. Please try again in an hour.",
         unauthorized: "Your login has expired. Please log in again.",
         daily_limit: "You've used all of today's questions. Please try again tomorrow.",
@@ -273,6 +307,15 @@
   var loginCode = document.getElementById("login-code");
   var loginError = document.getElementById("login-error");
   var loginBtn = document.getElementById("login-btn");
+  var signupForm = document.getElementById("signup-form");
+  var signupName = document.getElementById("signup-name");
+  var signupPass = document.getElementById("signup-pass");
+  var signupPass2 = document.getElementById("signup-pass2");
+  var signupInvite = document.getElementById("signup-invite");
+  var signupError = document.getElementById("signup-error");
+  var signupBtn = document.getElementById("signup-btn");
+  var toSignupEl = document.getElementById("to-signup");
+  var toLoginEl = document.getElementById("to-login");
 
   var lang = "bn";
   try {
@@ -1145,6 +1188,15 @@
     loginNameLabel.textContent = t.nameLabel;
     loginCodeLabel.textContent = t.codeLabel;
     loginBtn.textContent = t.loginBtn;
+    toSignupEl.textContent = t.toSignup;
+    toLoginEl.textContent = t.toLogin;
+    document.getElementById("signup-title").textContent = t.signupTitle;
+    document.getElementById("signup-hint").textContent = t.signupHint;
+    document.getElementById("signup-name-label").textContent = t.signupNameLabel;
+    document.getElementById("signup-pass-label").textContent = t.signupPassLabel;
+    document.getElementById("signup-pass2-label").textContent = t.signupPass2Label;
+    document.getElementById("signup-invite-label").textContent = t.signupInviteLabel;
+    signupBtn.textContent = t.signupBtn;
     loginError.textContent = loginErrorKey ? errorText(loginErrorKey) : "";
     langBn.classList.toggle("active", lang === "bn");
     langEn.classList.toggle("active", lang === "en");
@@ -1186,10 +1238,22 @@
   // ---------- login state ----------
   // A visitor who is not logged in sees the home page. Asking a question sends them to the login card,
   // and after logging in we carry on with what they wanted to do.
+  // The login card has two faces: log in (default) and create a new ID.
+  function setAuthMode(mode) {
+    var signup = mode === "signup";
+    loginForm.hidden = signup;
+    signupForm.hidden = !signup;
+    signupError.textContent = "";
+    signupPass.value = "";
+    signupPass2.value = "";
+    signupInvite.value = "";
+  }
+
   function goToLogin(after) {
     afterLogin = after || null;
     loginErrorKey = null;
     loginError.textContent = "";
+    setAuthMode("login");
     setView("login");
     loginName.focus();
   }
@@ -1235,6 +1299,7 @@
     appEl.classList.add("logged-out");
     loginErrorKey = errorKey || null;
     loginCode.value = "";
+    setAuthMode("login");
     applyLanguage();
     setView(goLogin ? "login" : "home");
   }
@@ -1284,6 +1349,38 @@
     } finally {
       loginBtn.disabled = false;
       loginBtn.textContent = TEXT[lang].loginBtn;
+    }
+  }
+
+  async function doSignup(e) {
+    e.preventDefault();
+    if (signupBtn.disabled) return;
+    var t = TEXT[lang];
+    signupError.textContent = "";
+    if (signupPass.value.length < 8) { signupError.textContent = errorText("weak_password"); return; }
+    if (signupPass.value !== signupPass2.value) { signupError.textContent = errorText("password_mismatch"); return; }
+    signupBtn.disabled = true;
+    signupBtn.textContent = t.signingUp;
+    try {
+      var res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: signupName.value, code: signupPass.value, invite: signupInvite.value })
+      });
+      var data = null;
+      try { data = await res.json(); } catch (err) { /* ignore */ }
+      if (res.ok && data && data.ok) {
+        signupPass.value = ""; signupPass2.value = ""; signupInvite.value = "";
+        showApp(data); // a new student goes straight in
+      } else {
+        signupPass.value = ""; signupPass2.value = ""; signupInvite.value = "";
+        signupError.textContent = errorText((data && data.error) || "generic");
+      }
+    } catch (err) {
+      signupError.textContent = errorText("network");
+    } finally {
+      signupBtn.disabled = false;
+      signupBtn.textContent = TEXT[lang].signupBtn;
     }
   }
 
@@ -1754,6 +1851,9 @@
   previewRemoveEl.addEventListener("click", function () { if (!busy) clearPendingImage(); });
 
   loginForm.addEventListener("submit", doLogin);
+  signupForm.addEventListener("submit", doSignup);
+  toSignupEl.addEventListener("click", function (e) { e.preventDefault(); setAuthMode("signup"); signupName.focus(); });
+  toLoginEl.addEventListener("click", function (e) { e.preventDefault(); setAuthMode("login"); loginName.focus(); });
   logoutEl.addEventListener("click", function () { if (!busy) doLogout(); });
   newChatEl.addEventListener("click", function () { if (!busy && authed) resetChat(); });
   langBn.addEventListener("click", function () { setLanguage("bn"); });
