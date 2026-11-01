@@ -557,6 +557,31 @@ button.ghost:hover { color: var(--brand); border-color: var(--brand); }
 }
 .out-frame.show { display: block; }
 
+/* ---------- flowchart / diagram card: always a white page, like a printed figure ---------- */
+.diagram-card {
+  margin: 4px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  color: #111827;
+  overflow: hidden;
+}
+.diagram-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0d2a6b;
+  background: #f3f6fc;
+  border-bottom: 1px solid #e3e9f4;
+}
+.diagram-body { padding: 14px; text-align: center; overflow-x: auto; font-size: 14px; color: #5f6f8f; }
+.diagram-body svg { max-width: 100%; height: auto; display: inline-block; }
+.diagram-fail { margin: 0 0 8px; color: #c92a2a; text-align: left; }
+.diagram-body pre { text-align: left; margin: 0; padding: 10px 12px; border-radius: 8px; background: #f1f5f9; color: #111827; overflow-x: auto; }
+
 /* tag structure diagram */
 .dom-diagram { border-top: 1px solid var(--border); padding: 8px 12px 10px; font-size: 13px; }
 .dom-diagram summary { cursor: pointer; font-weight: 600; color: var(--brand); }
