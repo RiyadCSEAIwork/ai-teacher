@@ -29,6 +29,9 @@
       answerTitle: "AI-এর উত্তর",
       addImage: "ছবি যোগ করুন",
       getAnswer: "উত্তর দেখুন",
+      diagramTitle: "ফ্লোচার্ট / ডায়াগ্রাম",
+      diagramLoading: "ডায়াগ্রাম আঁকা হচ্ছে…",
+      diagramFailed: "ডায়াগ্রামটা আঁকা যায়নি। কোডটা নিচে দেওয়া হলো।",
       outputTitle: "আউটপুট — ব্রাউজারে যেমন দেখাবে",
       runOutput: "আউটপুট চালান",
       treeTitle: "ট্যাগের কাঠামো (ডায়াগ্রাম)",
@@ -134,6 +137,9 @@
       answerTitle: "AI's answer",
       addImage: "Add picture",
       getAnswer: "Get answer",
+      diagramTitle: "Flowchart / diagram",
+      diagramLoading: "Drawing the diagram…",
+      diagramFailed: "The diagram could not be drawn. Here is its code.",
       outputTitle: "Output — how it looks in a browser",
       runOutput: "Run output",
       treeTitle: "Tag structure (diagram)",
@@ -556,7 +562,86 @@
       "</div>";
   }
 
+  // ---------- diagrams: a ```mermaid block is drawn as a real flowchart picture (SVG) ----------
+  // The drawing library is loaded only when an answer contains a diagram, so normal answers cost nothing extra.
+  var MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
+  var mermaidPromise = null;
+  var diagramCache = {};
+  var diagramSeq = 0;
+
+  function loadMermaid() {
+    if (window.mermaid && window.mermaid.render) return Promise.resolve(window.mermaid);
+    if (mermaidPromise) return mermaidPromise;
+    mermaidPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = MERMAID_URL;
+      s.crossOrigin = "anonymous";
+      s.onload = function () {
+        try {
+          // "strict" keeps the drawing safe: no HTML or links can be smuggled in through the labels.
+          window.mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: "strict",
+            theme: "base",
+            fontFamily: '"Noto Sans Bengali", Inter, system-ui, sans-serif',
+            themeVariables: {
+              fontSize: "15px",
+              primaryColor: "#ffffff",
+              primaryBorderColor: "#1f2937",
+              primaryTextColor: "#111827",
+              lineColor: "#1f2937",
+              secondaryColor: "#ffffff",
+              tertiaryColor: "#ffffff",
+              edgeLabelBackground: "#ffffff"
+            },
+            flowchart: { htmlLabels: false, curve: "linear", useMaxWidth: true, padding: 14 }
+          });
+          resolve(window.mermaid);
+        } catch (e) { mermaidPromise = null; reject(e); }
+      };
+      s.onerror = function () { mermaidPromise = null; reject(new Error("mermaid load")); };
+      document.head.appendChild(s);
+    });
+    return mermaidPromise;
+  }
+
+  function diagramHtml(code, final) {
+    var t = TEXT[lang];
+    // The code is attached only when the answer is complete, so a half-written diagram is never drawn.
+    return '<div class="diagram-card"' + (final ? ' data-src="' + escapeHtml(code) + '"' : "") + ">" +
+      '<div class="diagram-head"><span class="out-dot"></span><span>' + escapeHtml(t.diagramTitle) + "</span></div>" +
+      '<div class="diagram-body">' + escapeHtml(t.diagramLoading) + "</div></div>";
+  }
+
+  function renderDiagrams(root) {
+    if (!root) return;
+    var cards = root.querySelectorAll(".diagram-card[data-src]");
+    Array.prototype.forEach.call(cards, function (card) {
+      if (card.getAttribute("data-state")) return;
+      card.setAttribute("data-state", "busy");
+      var src = card.getAttribute("data-src");
+      var body = card.querySelector(".diagram-body");
+      if (diagramCache[src]) { body.innerHTML = diagramCache[src]; card.setAttribute("data-state", "done"); return; }
+      var id = "mmd" + (++diagramSeq);
+      loadMermaid()
+        .then(function (m) { return m.render(id, src); })
+        .then(function (res) {
+          diagramCache[src] = res.svg;
+          body.innerHTML = res.svg;
+          card.setAttribute("data-state", "done");
+        })
+        .catch(function () {
+          // The drawing library leaves a red error picture behind when the code is wrong; remove it.
+          var junk = document.getElementById("d" + id);
+          if (junk && junk.parentNode) junk.parentNode.removeChild(junk);
+          body.innerHTML = '<p class="diagram-fail">' + escapeHtml(TEXT[lang].diagramFailed) + "</p><pre><code>" + escapeHtml(src) + "</code></pre>";
+          card.setAttribute("data-state", "failed");
+        });
+    });
+  }
+
   function codeBlockHtml(code, tag, final) {
+    if (/^(mermaid|flowchart)$/i.test(tag || "")) return diagramHtml(code, final);
     var t = TEXT[lang];
     var html = '<div class="code-block"><div class="code-head"><span class="code-dots"><i></i><i></i><i></i></span>' +
       '<span class="code-lang">' + escapeHtml(tag ? tag.toUpperCase() : "CODE") + '</span>' +
@@ -634,7 +719,7 @@
   function addMessage(kind, text) {
     var el = document.createElement("div");
     el.className = "msg " + (kind === "user" ? "user" : "bot") + (kind === "error" ? " error" : "");
-    if (kind === "bot") el.innerHTML = renderMarkdown(text, true);
+    if (kind === "bot") { el.innerHTML = renderMarkdown(text, true); renderDiagrams(el); }
     else el.textContent = text;
     chatEl.appendChild(el);
     scrollChat();
@@ -1505,10 +1590,15 @@
     var paintQueued = false;
     var needAlign = false; // once, bring the start of a new answer to the top so it can be read from the beginning
 
+    var finalPainted = false;
     function paint(final) {
       paintQueued = false;
       if (!botEl) return;
+      // A repaint queued while the answer was still arriving must not undo the finished answer.
+      if (final !== true && finalPainted) return;
+      if (final === true) finalPainted = true;
       botEl.innerHTML = renderMarkdown(answer, final === true); // output previews only once the answer is complete
+      if (final === true) renderDiagrams(botEl);
       if (needAlign) { needAlign = false; botEl.scrollIntoView({ block: "start" }); }
     }
 
