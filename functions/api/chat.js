@@ -3,8 +3,8 @@
 
 import { isConfigured, verifySession, getUsage, addUsage } from "../../lib/auth.js";
 
-// ফ্রী টিয়ারে সবচেয়ে দ্রুত এবং সেরা কোয়ালিটির জন্য gemini-2.0-flash
-const DEFAULT_MODEL = "gemini-2.0-flash";
+// ফ্রী টিয়ারে সবচেয়ে দ্রুত এবং সেরা কোয়ালিটির জন্য gemini-1.5-flash
+const DEFAULT_MODEL = "gemini-1.5-flash";
 const DEFAULT_THINKING_LEVEL = "low"; 
 const MAX_MESSAGES = 20;       
 const MAX_CHARS_PER_MESSAGE = 3000;
