@@ -2,7 +2,7 @@
 // Makes a short topic title (2-5 words) for the chat history list. It does not use up the member's daily questions.
 
 import { json, isConfigured, verifySession } from "../../lib/auth.js";
-const DEFAULT_MODEL = "gemini-2.0-flash";
+const DEFAULT_MODEL = "gemini-1.5-flash";
 
 export async function onRequestPost({ request, env }) {
   if (!env.GEMINI_API_KEY || !isConfigured(env)) return json({ error: "server_not_configured" }, 500);
