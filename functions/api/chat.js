@@ -1,14 +1,10 @@
 // Cloudflare Pages Function: POST /api/chat
-// The Gemini API key lives only here (as an environment variable), never in the browser.
-
 import { isConfigured, verifySession, getUsage, addUsage } from "../../lib/auth.js";
 
-// gemini-1.5-flash: ১০০% স্টেবল, সুপার ফাস্ট এবং দৈনিক ১,৫০০টি ফ্রি প্রশ্ন
 const MODEL_NAME = "gemini-1.5-flash";
 const MAX_MESSAGES = 20;       
 const MAX_CHARS_PER_MESSAGE = 3000;
 
-// Image upload limits
 const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const MAX_IMAGE_BASE64_CHARS = 5500000;
 const MAX_IMAGES_PER_REQUEST = 2;       
@@ -18,7 +14,6 @@ const DEFAULT_IMAGE_QUESTION = {
 };
 const OLD_IMAGE_NOTE = { bn: "(আগে একটি ছবি পাঠানো হয়েছিল)", en: "(an image was sent earlier)" };
 
-// অ্যাডভান্সড শিক্ষক প্রম্পট (HSC, বোর্ড ও ভার্সিটি এডমিশন স্ট্যান্ডার্ড)
 const SYSTEM_PROMPTS = {
   bn: `তুমি "AI Teacher" — উচ্চমাধ্যমিক (HSC), বোর্ড পরীক্ষা ও বিশ্ববিদ্যালয় ভর্তি পরীক্ষার (BUET, Medical, DU ইত্যাদি) জন্য একজন অত্যন্ত দক্ষ, নির্ভুল ও প্রজ্ঞাবান শিক্ষক।
 - ভাষা: ব্যবহারকারী বাংলায় লিখলে প্রাতিষ্ঠানিক ও স্পষ্ট বাংলায় উত্তর দাও। ইংরেজিতে লিখলে ইংরেজিতে উত্তর দাও।
@@ -73,7 +68,6 @@ Code and Diagrams:
 - When photos are provided, read handwriting and diagrams carefully, verify any existing marks, and start directly with the solution.`
 };
 
-// ---- Class / subject matching ----
 const MISMATCH_MARKER = "[[SUBJECT_MISMATCH]]";
 const SUBJECTS = {
   math: { bn: "গণিত", en: "Math" },
@@ -124,4 +118,216 @@ function json(body, status = 200) {
   });
 }
 
-export async funct
+export async function onRequestPost(context) {
+  const { request, env } = context;
+
+  if (!env.GEMINI_API_KEY || !isConfigured(env)) {
+    return json({ error: "server_not_configured" }, 500);
+  }
+
+  const user = await verifySession(env, request);
+  if (!user) return json({ error: "unauthorized" }, 401);
+
+  const usage = await getUsage(env, user);
+  if (usage.used >= usage.limit) {
+    return json({ error: "daily_limit", used: usage.used, limit: usage.limit }, 429);
+  }
+  if (usage.globalUsed >= usage.globalLimit) {
+    return json({ error: "global_limit" }, 429);
+  }
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch (_e) {
+    return json({ error: "bad_request" }, 400);
+  }
+
+  const lang = payload && payload.lang === "en" ? "en" : "bn";
+  const classIdx = payload && Number.isInteger(payload.cls) ? payload.cls : null;
+  const matchGuard = buildMatchGuard(
+    lang,
+    payload && typeof payload.subject === "string" ? payload.subject : "",
+    classIdx
+  );
+  const incoming = Array.isArray(payload && payload.messages) ? payload.messages : [];
+
+  let badImage = false;
+  const cleaned = incoming
+    .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.text === "string")
+    .map((m) => {
+      let image = null;
+      if (m.image) {
+        const img = m.image;
+        const ok = m.role === "user" && typeof img.mime === "string" && typeof img.data === "string"
+          && ALLOWED_IMAGE_MIMES.has(img.mime) && img.data.length > 0
+          && img.data.length <= MAX_IMAGE_BASE64_CHARS && /^[A-Za-z0-9+/]+={0,2}$/.test(img.data);
+        if (ok) image = { mime: img.mime, data: img.data };
+        else badImage = true;
+      }
+      return { role: m.role, text: m.text.trim().slice(0, MAX_CHARS_PER_MESSAGE), image };
+    })
+    .filter((m) => m.text.length > 0 || m.image)
+    .slice(-MAX_MESSAGES);
+
+  if (badImage) return json({ error: "bad_image" }, 400);
+
+  let imagesLeft = MAX_IMAGES_PER_REQUEST;
+  for (let i = cleaned.length - 1; i >= 0; i--) {
+    if (!cleaned[i].image) continue;
+    if (imagesLeft > 0) { imagesLeft--; continue; }
+    cleaned[i].image = null;
+    if (!cleaned[i].text) cleaned[i].text = OLD_IMAGE_NOTE[lang];
+  }
+
+  while (cleaned.length && cleaned[0].role !== "user") cleaned.shift();
+  if (!cleaned.length || cleaned[cleaned.length - 1].role !== "user") {
+    return json({ error: "bad_request" }, 400);
+  }
+
+  const lastMsg = cleaned[cleaned.length - 1];
+  if (!lastMsg.text) lastMsg.text = DEFAULT_IMAGE_QUESTION[lang];
+  const hasImage = cleaned.some((m) => m.image);
+
+  const model = MODEL_NAME;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
+
+  const contents = cleaned.map((m) => {
+    const parts = [];
+    if (m.text) parts.push({ text: m.text });
+    if (m.image) parts.push({ inlineData: { mimeType: m.image.mime, data: m.image.data } });
+    return { role: m.role === "assistant" ? "model" : "user", parts };
+  });
+
+  const generationConfig = {
+    maxOutputTokens: hasImage ? 4096 : 2500,
+    temperature: 0.2
+  };
+
+  let upstream;
+  try {
+    upstream = await fetch(url, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json", 
+        "x-goog-api-key": env.GEMINI_API_KEY 
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[lang] + matchGuard }] },
+        contents,
+        generationConfig,
+      }),
+    });
+  } catch (_err) {
+    return json({ error: "network" }, 502);
+  }
+
+  if (upstream.status === 429) return json({ error: "rate_limited" }, 429);
+  
+  if (!upstream.ok || !upstream.body) {
+    const errorDetails = await upstream.text();
+    console.log("Gemini API Error details:", upstream.status, errorDetails);
+    return json({ error: "upstream_error" }, 502);
+  }
+
+  const encoder = new TextEncoder();
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+  const send = (obj) => writer.write(encoder.encode("data: " + JSON.stringify(obj) + "\n\n"));
+
+  const pump = (async () => {
+    const reader = upstream.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let counted = false;
+    let gotText = false;
+    let head = "";
+    let decided = !matchGuard;
+    let mismatch = false;
+
+    async function emit(text) {
+      if (!text) return;
+      if (!counted && !mismatch) {
+        counted = true;
+        try { await addUsage(env, user, usage); } catch (err) { console.log("addUsage failed", String(err)); }
+      }
+      gotText = true;
+      await send({ t: text });
+    }
+
+    async function onText(text) {
+      if (decided) return emit(text);
+      head += text;
+      if (head.length < MISMATCH_MARKER.length && MISMATCH_MARKER.startsWith(head.trimStart())) return;
+      decided = true;
+      const trimmed = head.trimStart();
+      let rest = head;
+      if (trimmed.startsWith(MISMATCH_MARKER)) {
+        mismatch = true;
+        rest = trimmed.slice(MISMATCH_MARKER.length).replace(/^\s+/, "");
+      }
+      head = "";
+      return emit(rest);
+    }
+
+    async function flushHead() {
+      if (decided || !head) return;
+      decided = true;
+      const rest = head;
+      head = "";
+      await emit(rest);
+    }
+
+    async function handleEvent(raw) {
+      const dataLines = raw.split(/\r?\n/).filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim());
+      if (!dataLines.length) return;
+      let chunk;
+      try { chunk = JSON.parse(dataLines.join("\n")); } catch (_e) { return; }
+      const cand = chunk && chunk.candidates && chunk.candidates[0];
+      const parts = cand && cand.content && cand.content.parts ? cand.content.parts : [];
+      const text = parts.filter((p) => !p.thought).map((p) => p.text || "").join("");
+      if (!text) return;
+      await onText(text);
+    }
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let m;
+        while ((m = /\r?\n\r?\n/.exec(buffer))) {
+          const raw = buffer.slice(0, m.index);
+          buffer = buffer.slice(m.index + m[0].length);
+          await handleEvent(raw);
+        }
+      }
+      if (buffer.trim()) await handleEvent(buffer);
+      await flushHead();
+
+      if (!gotText) await send({ e: "empty_reply" });
+      else if (mismatch) await send({ done: true, mismatch: true, used: usage.used, limit: usage.limit });
+      else await send({ done: true, used: usage.used + 1, limit: usage.limit });
+    } catch (_err) {
+      try { await send({ e: "network" }); } catch (_e) {}
+      try { await reader.cancel(); } catch (_e) {}
+    } finally {
+      try { await writer.close(); } catch (_e) {}
+    }
+  })();
+
+  context.waitUntil(pump);
+
+  return new Response(readable, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-store, no-transform",
+      "X-Accel-Buffering": "no",
+    },
+  });
+}
+
+export async function onRequest() {
+  return json({ error: "method_not_allowed" }, 405);
+}
