@@ -9,7 +9,7 @@ export async function onRequestPost({ request, env }) {
   if (!user) return json({ error: "unauthorized" }, 401);
 
   let body;
-  try { body = await request.json(); } catch { return json({ error: "bad_request" }, 400); }
+  try { body = await request.json(); } catch (_e) { return json({ error: "bad_request" }, 400); }
 
   const lang = body && body.lang === "en" ? "en" : "bn";
   const question = String((body && body.question) || "").slice(0, 300);
@@ -34,14 +34,14 @@ export async function onRequestPost({ request, env }) {
         generationConfig: { maxOutputTokens: 100, temperature: 0.2 } 
       }),
     });
-  } catch {
+  } catch (_err) {
     return json({ error: "network" }, 502);
   }
 
   if (!upstream.ok) return json({ error: "upstream_error" }, 502);
 
   let data;
-  try { data = await upstream.json(); } catch { return json({ error: "upstream_error" }, 502); }
+  try { data = await upstream.json(); } catch (_e) { return json({ error: "upstream_error" }, 502); }
   const parts = data && data.candidates && data.candidates[0] && data.candidates[0].content
     ? data.candidates[0].content.parts || []
     : [];
