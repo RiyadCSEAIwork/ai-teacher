@@ -1,7 +1,7 @@
 // POST /api/title  { lang, question, answer }  ->  { ok: true, title }
 import { json, isConfigured, verifySession } from "../../lib/auth.js";
 
-const MODEL_NAME = "gemini-1.5-flash";
+const DEFAULT_MODEL = "gemini-1.5-flash-latest";
 
 export async function onRequestPost({ request, env }) {
   if (!env.GEMINI_API_KEY || !isConfigured(env)) return json({ error: "server_not_configured" }, 500);
@@ -22,7 +22,10 @@ export async function onRequestPost({ request, env }) {
     "No quotes, no emoji, no full stop, nothing else.\n\n" +
     "Question: " + (question || "(only a picture)") + "\n\nAnswer:\n" + answer;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL_NAME)}:generateContent`;
+  let model = (env.GEMINI_MODEL || DEFAULT_MODEL).trim();
+  if (model === "gemini-1.5-flash") model = "gemini-1.5-flash-latest";
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
   let upstream;
   try {
