@@ -100,10 +100,10 @@
         unauthorized: "লগইনের মেয়াদ শেষ।",
         daily_limit: "আজকের প্রশ্নের সীমা শেষ। কাল আবার চেষ্টা করুন।",
         global_limit: "আজকের জন্য মোট সীমা শেষ।",
-        bad_image: "ছবিটা পাঠানো যায়নি।",
-        image_type: "ফাইল ফরম্যাট সঠিক নয়।",
-        image_too_big: "ছবি অনেক বড় (সর্বোচ্চ ২০ MB)।",
-        image_failed: "ছবি খুলতে পারিনি।",
+        bad_image: "ছবিটা পাঠানো যায়নি। অন্য একটা ছবি দিয়ে আবার চেষ্টা করুন।",
+        image_type: "এই ধরনের ফাইল চলবে না। JPG, PNG, WebP বা HEIC দিন।",
+        image_too_big: "ছবিটা অনেক বড় (সর্বোচ্চ ২০ MB)।",
+        image_failed: "ছবিটা খুলতে পারিনি।",
         history_not_configured: "ইতিহাস ডাটাবেস যুক্ত করা বাকি।",
         history_failed: "ইতিহাস লোড করতে সমস্যা হয়েছে।",
         generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে।"
@@ -409,7 +409,6 @@
     return html;
   }
 
-  // সাধারণ টেক্সট থেকে MCQ চিনে সুন্দর কার্ড বানানোর স্বয়ংক্রিয় লজিক
   function parseNaturalMcq(text) {
     if (!/([কখগঘA-D]\s*[\).:-]).*([কখগঘA-D]\s*[\).:-])/s.test(text) && !/MCQ/i.test(text)) return null;
     var lines = text.split(/\r?\n/);
@@ -430,7 +429,7 @@
 
       var optMatch = line.match(/^(\*?\s*)([কখগঘA-Da-d][\).:-]?)\s*(.*)$/);
       if (optMatch && section !== "e" && section !== "w" && section !== "t") {
-        var isCorrect = optMatch[1].indexOf("*") !== -1 || line.indexOf("✓") !== -1 || line.indexOf("সঠিক") !== -1;
+        var isCorrect = optMatch[1].indexOf("*") !== -1 || line.indexOf("✓") !== -1 || line.indexOf("✔") !== -1 || line.indexOf("সঠিক") !== -1;
         var optText = optMatch[3].replace(/[✓✔]/g, "").replace(/\(সঠিক\)/g, "").trim();
         options.push({ key: optMatch[2], text: optText, correct: isCorrect });
         continue;
@@ -454,7 +453,6 @@
   }
 
   function renderMarkdown(raw, final) {
-    // যদি AI সম্পূর্ণ টেক্সটটিকে MCQ আকারে দেয়, সরাসরি ইন্টারেক্টিভ কার্ডে রূপান্তর
     var naturalMcq = parseNaturalMcq(raw);
     if (naturalMcq) return naturalMcq;
 
@@ -520,6 +518,7 @@
       var img = document.createElement("img");
       img.className = "msg-img";
       img.src = image.url;
+      img.addEventListener("click", function () { openLightbox(image.url); });
       el.appendChild(img);
     }
     if (text) {
@@ -554,8 +553,139 @@
     busy = state;
     sendEl.disabled = state;
     inputEl.disabled = state;
+    attachEl.disabled = state;
     homeInput.disabled = state;
     homeSend.disabled = state;
+    homeAttach.disabled = state;
+    previewRemoveEl.disabled = state;
+  }
+
+  // ================= ছবি আপলোড ও প্রসেসিং লজিক =================
+  function showPreview(nameText, statusText) {
+    previewEl.classList.remove("hidden");
+    previewEl.classList.toggle("loading", preparing);
+    previewNameEl.textContent = nameText || "";
+    previewStatusEl.textContent = statusText || "";
+    if (pendingImage && pendingImage.url) previewImgEl.src = pendingImage.url;
+    else previewImgEl.removeAttribute("src");
+  }
+
+  function sizeLabel(image) {
+    var kb = (image.data.length * 0.75) / 1024;
+    return kb < 1024 ? Math.max(1, Math.round(kb)) + " KB" : (kb / 1024).toFixed(1) + " MB";
+  }
+
+  function openLightbox(src) {
+    var box = document.createElement("div");
+    box.className = "lightbox";
+    var big = document.createElement("img");
+    big.src = src;
+    box.appendChild(big);
+    box.addEventListener("click", function () { box.remove(); });
+    document.body.appendChild(box);
+  }
+
+  function clearPendingImage() {
+    pendingImage = null;
+    preparing = false;
+    previewImgEl.removeAttribute("src");
+    previewEl.classList.add("hidden");
+    previewEl.classList.remove("loading");
+    previewNameEl.textContent = "";
+    previewStatusEl.textContent = "";
+    fileEl.value = "";
+  }
+
+  function loadImageElement(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () { resolve({ img: img, url: url }); };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
+  }
+
+  function readAsDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(String(r.result)); };
+      r.onerror = function () { reject(new Error("read")); };
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function prepareImage(file) {
+    var type = (file.type || "").toLowerCase();
+    var looksLikeImage = type.indexOf("image/") === 0 || IMAGE_EXT.test(file.name || "");
+    if (!looksLikeImage) throw new Error("image_type");
+    if (file.size > MAX_IMAGE_FILE_BYTES) throw new Error("image_too_big");
+
+    var loaded = null;
+    try {
+      loaded = await loadImageElement(file);
+    } catch (e) {
+      var isHeic = /heic|heif/.test(type) || /\.(heic|heif)$/i.test(file.name || "");
+      if (isHeic && file.size <= 3.5 * 1024 * 1024) {
+        var rawUrl = await readAsDataUrl(file);
+        return { mime: /heif$/.test(type) ? "image/heif" : "image/heic", data: rawUrl.split(",")[1], url: "" };
+      }
+      throw new Error("image_failed");
+    }
+
+    try {
+      var img = loaded.img;
+      var w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) throw new Error("image_failed");
+
+      var scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(w, h));
+      var cw = Math.max(1, Math.round(w * scale));
+      var ch = Math.max(1, Math.round(h * scale));
+
+      var canvas = document.createElement("canvas");
+      canvas.width = cw;
+      canvas.height = ch;
+      var ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.drawImage(img, 0, 0, cw, ch);
+
+      var qualities = [0.92, 0.85, 0.75, 0.6];
+      var dataUrl = "";
+      for (var i = 0; i < qualities.length; i++) {
+        dataUrl = canvas.toDataURL("image/jpeg", qualities[i]);
+        if (dataUrl.length - 23 <= MAX_IMAGE_BASE64) break;
+      }
+      var base64 = dataUrl.split(",")[1] || "";
+      if (!base64 || base64.length > MAX_IMAGE_BASE64) throw new Error("image_too_big");
+      return { mime: "image/jpeg", data: base64, url: dataUrl };
+    } finally {
+      URL.revokeObjectURL(loaded.url);
+    }
+  }
+
+  async function handleFileChosen() {
+    var file = fileEl.files && fileEl.files[0];
+    if (!file || busy) return;
+
+    clearPendingImage();
+    preparing = true;
+    sendEl.disabled = true;
+    showPreview(file.name || "", TEXT[lang].imageReading);
+
+    try {
+      var prepared = await prepareImage(file);
+      if (!preparing) return;
+      pendingImage = prepared;
+      preparing = false;
+      showPreview(file.name || "", sizeLabel(prepared));
+    } catch (e) {
+      clearPendingImage();
+      addMessage("error", "ছবি প্রসেস করতে সমস্যা হয়েছে। অন্য ছবি দিন।");
+    } finally {
+      preparing = false;
+      if (!busy) sendEl.disabled = false;
+    }
   }
 
   function autosize() {
@@ -563,7 +693,16 @@
     inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + "px";
   }
 
+  // ================= বিষয়ের SVG আইকন =================
   var SUBJECT_IDS = ["math", "physics", "chemistry", "biology", "ict"];
+  var SVG_OPEN = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  var SUBJECT_ICONS = {
+    math: SVG_OPEN + '<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8 7.5h8"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 15.5h.01M12 15.5h.01M15.5 15.5h.01"/></svg>',
+    physics: SVG_OPEN + '<circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>',
+    chemistry: SVG_OPEN + '<path d="M9 3h6M10 3v6l-5.2 9.2A2 2 0 0 0 6.5 21h11a2 2 0 0 0 1.7-2.8L14 9V3"/><path d="M7.5 15h9"/></svg>',
+    biology: SVG_OPEN + '<path d="M20 4C10 4 5 9 5 15c0 2 .8 3.6.8 3.6S7.6 20 10 20c6.5 0 10-5.5 10-16z"/><path d="M5 21c3-5.5 6-8.5 10.5-11"/></svg>',
+    ict: SVG_OPEN + '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>'
+  };
 
   function setView(next) {
     view = next;
@@ -581,31 +720,48 @@
     SUBJECT_IDS.forEach(function (id) { subjectSel.innerHTML += '<option value="' + id + '">' + t.subjects[id] + '</option>'; });
   }
 
+  function markSubject() {
+    var items = subjectListEl.children;
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].getAttribute("data-id") === subjectSel.value);
+    }
+  }
+
+  function pickSubject(id) {
+    subjectSel.value = id;
+    markSubject();
+  }
+
   function renderSubjects() {
     var t = TEXT[lang];
     subjectListEl.innerHTML = "";
     homeChipsEl.innerHTML = "";
     SUBJECT_IDS.forEach(function (id) {
       var li = document.createElement("li");
-      li.className = "subject-item";
-      li.innerHTML = '<button type="button">' + t.subjects[id] + '</button>';
-      li.querySelector("button").addEventListener("click", function () {
-        subjectSel.value = id;
-        setView("ask");
+      li.className = "subject-item sub-" + id;
+      li.setAttribute("data-id", id);
+      var b = document.createElement("button");
+      b.type = "button";
+      b.innerHTML = SUBJECT_ICONS[id] + "<span></span>";
+      b.lastChild.textContent = t.subjects[id];
+      b.addEventListener("click", function () {
+        pickSubject(id);
       });
+      li.appendChild(b);
       subjectListEl.appendChild(li);
 
       var chip = document.createElement("button");
       chip.type = "button";
-      chip.className = "chip";
-      chip.textContent = t.subjects[id];
+      chip.className = "chip sub-" + id;
+      chip.innerHTML = SUBJECT_ICONS[id] + "<span></span>";
+      chip.lastChild.textContent = t.subjects[id];
       chip.addEventListener("click", function () {
-        if (!authed) { goToLogin({ view: "ask", subject: id }); return; }
-        subjectSel.value = id;
+        pickSubject(id);
         setView("ask");
       });
       homeChipsEl.appendChild(chip);
     });
+    markSubject();
   }
 
   function applyLanguage() {
@@ -664,7 +820,7 @@
     addMeta("user");
     addUserMessage(q, image);
     history.push({ role: "user", text: q, image: image });
-    pendingImage = null;
+    clearPendingImage();
     inputEl.value = "";
     autosize();
     setBusy(true);
@@ -677,7 +833,12 @@
       var res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lang: lang, messages: history })
+        body: JSON.stringify({ 
+          lang: lang, 
+          subject: subjectSel.value,
+          cls: classSel.value ? Number(classSel.value) : null,
+          messages: history 
+        })
       });
 
       var text = "";
@@ -718,12 +879,20 @@
   formEl.addEventListener("submit", function (e) { e.preventDefault(); ask(inputEl.value); });
   homeForm.addEventListener("submit", function (e) {
     e.preventDefault();
-    if (!authed) { goToLogin({ view: "ask" }); return; }
     var q = homeInput.value.trim();
     homeInput.value = "";
     ask(q);
   });
   inputEl.addEventListener("input", autosize);
+
+  // ছবি আপলোড বাটন ক্লিক হ্যান্ডলার
+  attachEl.addEventListener("click", function () { if (!busy && !preparing) fileEl.click(); });
+  homeAttach.addEventListener("click", function () {
+    setView("ask");
+    fileEl.click();
+  });
+  fileEl.addEventListener("change", handleFileChosen);
+  previewRemoveEl.addEventListener("click", function () { if (!busy) clearPendingImage(); });
 
   historyBtn.addEventListener("click", function () { drawerEl.classList.add("open"); backdropEl.classList.add("show"); });
   drawerCloseEl.addEventListener("click", function () { drawerEl.classList.remove("open"); backdropEl.classList.remove("show"); });
@@ -731,6 +900,8 @@
 
   navHome.addEventListener("click", function () { setView("home"); });
   navAsk.addEventListener("click", function () { setView("ask"); });
+
+  subjectSel.addEventListener("change", markSubject);
 
   applyLanguage();
   checkSession();
