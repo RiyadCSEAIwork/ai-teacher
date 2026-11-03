@@ -227,7 +227,12 @@ export async function onRequestPost(context) {
   if (!upstream.ok || !upstream.body) {
     const errorDetails = await upstream.text();
     console.log("Gemini API Error details:", upstream.status, errorDetails);
-    return json({ error: "upstream_error" }, 502);
+    let msg = errorDetails;
+    try {
+      const parsed = JSON.parse(errorDetails);
+      msg = parsed.error && parsed.error.message ? parsed.error.message : errorDetails;
+    } catch (_e) {}
+    return json({ error: "upstream_error", detail: "Google Error (" + upstream.status + "): " + msg }, 502);
   }
 
   const encoder = new TextEncoder();
