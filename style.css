@@ -1,5 +1,5 @@
 /* ========================================================
-   AI Teacher - Complete Clean Stylesheet
+   AI Teacher - Full Stylesheet with Subject Themes & Icons
    ======================================================== */
 
 :root {
@@ -19,6 +19,13 @@
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.08);
   --font-main: "Noto Sans Bengali", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
+
+/* বিষয়ভিত্তিক কালার সিস্টেম */
+.sub-math { --sub-color: #2563eb; --sub-bg: #eff6ff; }
+.sub-physics { --sub-color: #0284c7; --sub-bg: #f0f9ff; }
+.sub-chemistry { --sub-color: #ea580c; --sub-bg: #fff7ed; }
+.sub-biology { --sub-color: #059669; --sub-bg: #ecfdf5; }
+.sub-ict { --sub-color: #7c3aed; --sub-bg: #f5f3ff; }
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -59,11 +66,7 @@ body {
 }
 
 .brand-ai { color: var(--primary); }
-
-.usage {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
+.usage { font-size: 0.75rem; color: var(--text-muted); }
 
 .nav {
   display: flex;
@@ -216,21 +219,9 @@ body {
   margin-bottom: 12px;
 }
 
-.hero-sub {
-  font-size: 1.05rem;
-  color: var(--text-muted);
-}
-
-.hero-art {
-  width: 320px;
-  flex-shrink: 0;
-}
-
-.hero-art img {
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-lg);
-}
+.hero-sub { font-size: 1.05rem; color: var(--text-muted); }
+.hero-art { width: 320px; flex-shrink: 0; }
+.hero-art img { width: 100%; height: auto; border-radius: var(--radius-lg); }
 
 .home-ask {
   display: flex;
@@ -292,15 +283,26 @@ body {
   gap: 8px;
   padding: 9px 16px;
   background: #ffffff;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: 9999px;
   font-size: 0.9rem;
   font-weight: 600;
   color: #334155;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
-/* ================= Ask View ================= */
+.chip svg {
+  color: var(--sub-color);
+}
+
+.chip:hover {
+  border-color: var(--sub-color);
+  background: var(--sub-bg);
+  color: var(--sub-color);
+}
+
+/* ================= Ask View (Sidebar & Subject Theme) ================= */
 .ask-view {
   display: flex;
   height: calc(100vh - 65px);
@@ -308,34 +310,47 @@ body {
 }
 
 .side {
-  width: 230px;
+  width: 240px;
   background: #ffffff;
   border-right: 1px solid var(--border-color);
-  padding: 16px 12px;
+  padding: 18px 14px;
   overflow-y: auto;
   flex-shrink: 0;
 }
 
-.subject-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.subject-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 
 .subject-item button {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border: 1px solid transparent;
+  gap: 12px;
+  padding: 11px 16px;
+  border: 1.5px solid transparent;
   background: transparent;
   border-radius: var(--radius-md);
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: #475569;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subject-item svg {
+  color: var(--sub-color);
+  flex-shrink: 0;
+}
+
+.subject-item:hover button {
+  background: var(--sub-bg);
+  color: var(--sub-color);
 }
 
 .subject-item.active button {
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: var(--sub-bg);
+  color: var(--sub-color);
+  border-color: var(--sub-color);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .ask-main {
@@ -359,7 +374,6 @@ body {
 }
 
 .welcome { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 16px; }
-
 .ta-wrap { position: relative; margin-bottom: 12px; }
 
 .ta-wrap textarea {
@@ -374,37 +388,24 @@ body {
 }
 
 .ta-wrap textarea:focus { border-color: var(--primary); }
-
 .counter { position: absolute; right: 12px; bottom: 8px; font-size: 0.75rem; color: #94a3b8; }
-
 .ask-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 
 .pill-btn, .pill-select {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 14px;
+  padding: 8px 16px;
   border: 1px solid var(--border-color);
   background: #ffffff;
   border-radius: 9999px;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: #475569;
   cursor: pointer;
 }
 
-.ctx-chip {
-  display: none;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--primary);
-  background: var(--primary-soft);
-  padding: 6px 14px;
-  border-radius: 9999px;
-}
-
-.ctx-locked .ctx-chip { display: inline-flex; }
-.ctx-locked .pill-select { display: none; }
+.pill-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
 .send-main { margin-left: auto; }
 
 /* Image Preview */
@@ -486,7 +487,6 @@ body {
 .msg-meta { font-size: 0.75rem; color: #94a3b8; margin-bottom: -10px; }
 .msg-meta.from-user { align-self: flex-end; }
 .msg-meta.from-bot { align-self: flex-start; }
-.day-sep { text-align: center; font-size: 0.75rem; color: #94a3b8; margin: 10px 0; }
 .msg-img { max-width: 220px; border-radius: 8px; cursor: pointer; margin-bottom: 8px; }
 
 /* Buttons under answer */
@@ -561,7 +561,7 @@ body {
   gap: 10px;
   padding: 12px 16px;
   background: #ffffff;
-  border: 1.5px solid #fecdd3; /* সাধারণ/ভুল অপশন */
+  border: 1.5px solid #fecdd3;
   border-radius: 12px;
   font-size: 15px;
   color: #334155;
@@ -658,7 +658,7 @@ body {
   font-size: 14px;
 }
 
-/* ================= Drawer (চ্যাটের ইতিহাস ফিক্স) ================= */
+/* ================= Drawer ================= */
 .drawer {
   position: fixed !important;
   top: 0 !important;
@@ -676,9 +676,7 @@ body {
   padding: 20px 16px;
 }
 
-.drawer.open {
-  transform: translateX(0) !important;
-}
+.drawer.open { transform: translateX(0) !important; }
 
 .backdrop {
   position: fixed;
@@ -690,18 +688,9 @@ body {
   transition: opacity 0.3s ease;
 }
 
-.backdrop.show {
-  opacity: 1;
-  pointer-events: auto;
-}
+.backdrop.show { opacity: 1; pointer-events: auto; }
 
-.drawer-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
+.drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .drawer-x { border: none; background: transparent; cursor: pointer; color: var(--text-muted); }
 .drawer-new {
   width: 100%;
@@ -720,6 +709,25 @@ body {
 .chat-item:hover, .chat-item.active { background: #f1f5f9; }
 .chat-open { flex: 1; text-align: left; border: none; background: transparent; padding: 9px 12px; font-size: 0.9rem; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chat-del { border: none; background: transparent; padding: 8px; color: #94a3b8; cursor: pointer; }
+
+/* Lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  cursor: zoom-out;
+}
+
+.lightbox img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+}
 
 /* Responsive */
 @media (max-width: 768px) {
