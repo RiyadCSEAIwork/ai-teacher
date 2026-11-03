@@ -1,7 +1,8 @@
 // Cloudflare Pages Function: POST /api/chat
 import { isConfigured, verifySession, getUsage, addUsage } from "../../lib/auth.js";
 
-const MODEL_NAME = "gemini-1.5-flash";
+// v1beta তে গুগলের সঠিক মডেল নাম gemini-1.5-flash-latest
+const DEFAULT_MODEL = "gemini-1.5-flash-latest";
 const MAX_MESSAGES = 20;       
 const MAX_CHARS_PER_MESSAGE = 3000;
 
@@ -189,7 +190,9 @@ export async function onRequestPost(context) {
   if (!lastMsg.text) lastMsg.text = DEFAULT_IMAGE_QUESTION[lang];
   const hasImage = cleaned.some((m) => m.image);
 
-  const model = MODEL_NAME;
+  let model = (env.GEMINI_MODEL || DEFAULT_MODEL).trim();
+  if (model === "gemini-1.5-flash") model = "gemini-1.5-flash-latest";
+
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
 
   const contents = cleaned.map((m) => {
