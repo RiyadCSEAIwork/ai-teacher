@@ -220,7 +220,6 @@
   };
 
   var MAX_HISTORY = 12;
-
   var MAX_IMAGE_FILE_BYTES = 20 * 1024 * 1024;
   var MAX_IMAGE_SIDE = 2048;                    
   var MAX_IMAGE_BASE64 = 5000000;               
@@ -362,7 +361,7 @@
     "\\degree": "°", "\\circ": "°"
   };
   var SUPERSCRIPT = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "+": "⁺" };
-  var SUBSCRIPT = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "" };
+  var SUBSCRIPT = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉" };
 
   function mapChars(str, table) {
     var out = "";
@@ -618,7 +617,84 @@
     });
   }
 
+  // ===== নতুন ইন্টারেক্টিভ MCQ কার্ড রেন্ডারার =====
+  function renderMcqCard(code) {
+    var lines = code.split("\n");
+    var currentSection = "";
+    var question = "";
+    var options = [];
+    var explanation = [];
+    var whyWrong = [];
+    var trick = [];
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      if (/^\[QUESTION\]/i.test(line)) { currentSection = "q"; continue; }
+      if (/^\[OPTIONS\]/i.test(line)) { currentSection = "o"; continue; }
+      if (/^\[EXPLANATION\]/i.test(line)) { currentSection = "e"; continue; }
+      if (/^\[WHY_WRONG\]/i.test(line)) { currentSection = "w"; continue; }
+      if (/^\[TRICK\]/i.test(line)) { currentSection = "t"; continue; }
+
+      if (currentSection === "q") question += (question ? " " : "") + line;
+      else if (currentSection === "o") {
+        var isCorrect = false;
+        var cleanOpt = line;
+        if (cleanOpt.startsWith("*")) { isCorrect = true; cleanOpt = cleanOpt.slice(1).trim(); }
+        var m = cleanOpt.match(/^([কখগঘA-Da-d][\).:-]?)\s*(.*)$/);
+        if (m) options.push({ key: m[1], text: m[2], correct: isCorrect });
+        else options.push({ key: "", text: cleanOpt, correct: isCorrect });
+      }
+      else if (currentSection === "e") explanation.push(line);
+      else if (currentSection === "w") whyWrong.push(line.replace(/^[-*•]\s*/, ""));
+      else if (currentSection === "t") trick.push(line);
+    }
+
+    var html = '<div class="mcq-card-ui">';
+    if (question) {
+      html += '<div class="mcq-header"><span class="mcq-badge">MCQ</span><h4 class="mcq-q-title">' + inline(escapeHtml(question)) + '</h4></div>';
+    }
+
+    if (options.length) {
+      html += '<div class="mcq-grid">';
+      options.forEach(function (opt) {
+        var cls = "mcq-opt-item" + (opt.correct ? " is-correct" : "");
+        html += '<div class="' + cls + '">';
+        html += '<span class="mcq-opt-key">' + escapeHtml(opt.key) + '</span>';
+        html += '<span class="mcq-opt-text">' + inline(escapeHtml(opt.text)) + '</span>';
+        if (opt.correct) {
+          html += '<span class="mcq-check-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (explanation.length) {
+      html += '<div class="mcq-exp-box"><div class="mcq-exp-head">' + (lang === "en" ? "Explanation" : "ব্যাখ্যা") + '</div>';
+      html += '<div class="mcq-exp-body">' + inline(escapeHtml(explanation.join("<br>"))) + '</div></div>';
+    }
+
+    if (whyWrong.length) {
+      html += '<details class="mcq-wrong-details"><summary class="mcq-wrong-summary">';
+      html += '<span>' + (lang === "en" ? "Why other options are wrong?" : "অন্যান্য অপশন কেন ভুল?") + '</span>';
+      html += '<span class="mcq-plus-icon">+</span></summary><div class="mcq-wrong-body"><ul>';
+      whyWrong.forEach(function (w) {
+        html += '<li>' + inline(escapeHtml(w)) + '</li>';
+      });
+      html += '</ul></div></details>';
+    }
+
+    if (trick.length) {
+      html += '<div class="mcq-trick-box"><strong>💡 ' + (lang === "en" ? "Memory Trick:" : "মনে রাখার কৌশল:") + '</strong> ' + inline(escapeHtml(trick.join(" "))) + '</div>';
+    }
+
+    html += '</div>';
+    return html;
+  }
+
   function codeBlockHtml(code, tag, final) {
+    if (/^(mcq)$/i.test(tag || "")) return renderMcqCard(code);
     if (/^(mermaid|flowchart)$/i.test(tag || "")) return diagramHtml(code, final);
     var t = TEXT[lang];
     var html = '<div class="code-block"><div class="code-head"><span class="code-dots"><i></i><i></i><i></i></span>' +
@@ -1506,7 +1582,6 @@
     }
   }
 
-  // এখানে গুগল থেকে আসল এরর মেসেজটি স্ক্রিনে সরাসরি দেখানো হবে
   function handleFailure(key, data) {
     history.pop();
     if (key === "unauthorized") {
