@@ -221,11 +221,10 @@
 
   var MAX_HISTORY = 12;
 
-  // Picture settings. Photos are shrunk in the browser first so uploads are quick and fit the server limits.
-  var MAX_IMAGE_FILE_BYTES = 20 * 1024 * 1024; // refuse files above 20 MB before even opening them
-  var MAX_IMAGE_SIDE = 2048;                    // longest side in pixels; keeps small print readable
-  var MAX_IMAGE_BASE64 = 5000000;               // must stay under the server's 5.5 million limit
-  var KEEP_IMAGES_IN_REQUEST = 2;               // only the newest pictures are sent along with the chat
+  var MAX_IMAGE_FILE_BYTES = 20 * 1024 * 1024;
+  var MAX_IMAGE_SIDE = 2048;                    
+  var MAX_IMAGE_BASE64 = 5000000;               
+  var KEEP_IMAGES_IN_REQUEST = 2;               
   var IMAGE_EXT = /\.(jpe?g|png|webp|gif|heic|heif)$/i;
 
   var appEl = document.getElementById("app");
@@ -257,7 +256,6 @@
   var drawerMsgEl = document.getElementById("drawer-msg");
   var chatListEl = document.getElementById("chat-list");
 
-  // new layout: home page + ask page
   var navHome = document.getElementById("nav-home");
   var navAsk = document.getElementById("nav-ask");
   var navHomeLabel = document.getElementById("nav-home-label");
@@ -288,12 +286,11 @@
   var answerCardEl = document.querySelector(".answer-card");
   var welcomeEl = document.getElementById("welcome");
 
-  // The answer box shows only once the chat has something in it; the page (not the box) scrolls.
   function syncHasChat() {
     var has = chatEl.children.length > 0;
     if (askMainEl.classList.contains("has-chat") === has) return;
     askMainEl.classList.toggle("has-chat", has);
-    inputEl.rows = has ? 1 : 3; // a slim box for follow-up questions
+    inputEl.rows = has ? 1 : 3;
     updatePlaceholder();
     autosize();
   }
@@ -327,23 +324,22 @@
   try {
     var saved = localStorage.getItem("aiteacher_lang");
     if (saved === "bn" || saved === "en") lang = saved;
-  } catch (e) { /* storage may be blocked; ignore */ }
+  } catch (e) {}
 
-  var history = []; // {role: 'user'|'assistant', text}
+  var history = [];
   var busy = false;
   var authed = false;
   var user = "";
   var usage = { used: 0, limit: 0 };
   var loginErrorKey = null;
-  var pendingImage = null; // {mime, data (base64), url (data: URL for the preview)} chosen but not sent yet
-  var preparing = false;   // true while a chosen picture is being shrunk
-  var view = "home";       // "home", "ask" or "login"
-  var afterLogin = null;   // what to do once a visitor has logged in: {view, question, subject}
-  var chatId = null;       // id of the chat being saved (null until the first answer arrives)
-  var chatTitle = "";      // short title shown in the history list
-  var chatCtx = null;      // {subjId, clsIdx}: the class and subject this chat started with; follow-ups stay inside it
+  var pendingImage = null;
+  var preparing = false;
+  var view = "home";
+  var afterLogin = null;
+  var chatId = null;
+  var chatTitle = "";
+  var chatCtx = null;
 
-  // ---------- safe rendering (escape first, then add a little formatting) ----------
   function escapeHtml(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -353,14 +349,10 @@
     return s
       .replace(/`([^`\n]+)`/g, "<code>$1</code>")
       .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
-      // *italic* (the opening * must touch a word, so "2 * 3 * 4" is left alone)
       .replace(/(^|[\s(])\*(?!\s)([^*\n]*[^\s*])\*(?![\w*])/g, "$1<em>$2</em>")
-      // [text](https://link): only http(s) links; the text was escaped already, so nothing can break out of the attribute
       .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   }
 
-  // Gemini sometimes writes math as LaTeX ($\rightarrow$). We don't render LaTeX,
-  // so turn the common bits into plain Unicode instead of showing raw code.
   var LATEX_MAP = {
     "\\rightarrow": "→", "\\to": "→", "\\leftarrow": "←", "\\Rightarrow": "⇒", "\\leftrightarrow": "↔",
     "\\times": "×", "\\cdot": "·", "\\div": "÷", "\\pm": "±",
@@ -370,12 +362,12 @@
     "\\degree": "°", "\\circ": "°"
   };
   var SUPERSCRIPT = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "+": "⁺" };
-  var SUBSCRIPT = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉" };
+  var SUBSCRIPT = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "" };
 
   function mapChars(str, table) {
     var out = "";
     for (var i = 0; i < str.length; i++) {
-      if (!table[str[i]]) return null; // can't convert everything, leave as is
+      if (!table[str[i]]) return null;
       out += table[str[i]];
     }
     return out;
@@ -393,27 +385,23 @@
   }
 
   function cleanLatex(raw) {
-    // Only touch $...$ spans that really contain a backslash command, so prices like "$5 and $10" stay intact.
     return raw
       .replace(/\$\$([^$]*\\[^$]*)\$\$/g, function (m, inner) { return latexToText(inner); })
       .replace(/\$([^$\n]*\\[^$\n]*)\$/g, function (m, inner) { return latexToText(inner); });
   }
 
-  // Maths between $...$ (inside a line) or $$...$$ (own line), also \(...\) and \[...\], is drawn with KaTeX.
-  // Each formula is swapped for a small marker first, so the normal text formatting cannot disturb it.
   function mathToken(maths, tex, display) {
     maths.push({ tex: tex.trim(), display: display });
     return "\uE000" + (maths.length - 1) + "\uE001";
   }
 
   function extractMath(raw, maths) {
-    var parts = raw.split("```"); // code blocks (odd parts) are left alone
+    var parts = raw.split("```");
     for (var i = 0; i < parts.length; i += 2) {
       parts[i] = parts[i]
         .replace(/\$\$([\s\S]+?)\$\$/g, function (m, tex) { return mathToken(maths, tex, true); })
         .replace(/\\\[([\s\S]+?)\\\]/g, function (m, tex) { return mathToken(maths, tex, true); })
         .replace(/\\\(([\s\S]+?)\\\)/g, function (m, tex) { return mathToken(maths, tex, false); })
-        // $5 and $10 is money, not maths: the closing $ must follow a non-space and must not be followed by a digit
         .replace(/\$(?!\s)([^$\n]*?[^\s$])\$(?!\d)/g, function (m, tex) { return mathToken(maths, tex, false); });
     }
     return parts.join("```");
@@ -433,7 +421,6 @@
     return html;
   }
 
-  // ---------- code blocks: coloured code, a copy button, and for HTML a live output preview ----------
   function unescapeHtml(s) {
     return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
   }
@@ -448,7 +435,6 @@
 
   function span(cls, text) { return '<span class="' + cls + '">' + escapeHtml(text) + "</span>"; }
 
-  // Every piece of the code is escaped before it is put back, so code can never turn into real HTML on the page.
   function highlightAttrs(a) {
     var out = "", last = 0, m, re = /([\w:@.-]+)(?:(=)("[^"]*"|'[^']*'|[^\s"'>]+))?/g;
     while ((m = re.exec(a))) {
@@ -508,7 +494,6 @@
     return !l && /^\s*(<!doctype html|<html[\s>])/i.test(code);
   }
 
-  // A small tree of the tags, so the structure of the page can be seen at a glance.
   function domTreeHtml(code) {
     var doc;
     try { doc = new DOMParser().parseFromString(code, "text/html"); } catch (e) { return ""; }
@@ -538,8 +523,6 @@
     return items ? '<ul class="dom-tree">' + items + "</ul>" : "";
   }
 
-  // The output as a browser window. Without scripts it is shown straight away; code with scripts waits for a click.
-  // The frame is fully sandboxed: it cannot reach this site, its login or its storage.
   function previewHtml(code) {
     var t = TEXT[lang];
     var doc = /<html[\s>]/i.test(code) ? code : '<!doctype html><html><head><meta charset="utf-8"></head><body>' + code + "</body></html>";
@@ -562,8 +545,6 @@
       "</div>";
   }
 
-  // ---------- diagrams: a ```mermaid block is drawn as a real flowchart picture (SVG) ----------
-  // The drawing library is loaded only when an answer contains a diagram, so normal answers cost nothing extra.
   var MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
   var mermaidPromise = null;
   var diagramCache = {};
@@ -578,7 +559,6 @@
       s.crossOrigin = "anonymous";
       s.onload = function () {
         try {
-          // "strict" keeps the drawing safe: no HTML or links can be smuggled in through the labels.
           window.mermaid.initialize({
             startOnLoad: false,
             securityLevel: "strict",
@@ -607,7 +587,6 @@
 
   function diagramHtml(code, final) {
     var t = TEXT[lang];
-    // The code is attached only when the answer is complete, so a half-written diagram is never drawn.
     return '<div class="diagram-card"' + (final ? ' data-src="' + escapeHtml(code) + '"' : "") + ">" +
       '<div class="diagram-head"><span class="out-dot"></span><span>' + escapeHtml(t.diagramTitle) + "</span></div>" +
       '<div class="diagram-body">' + escapeHtml(t.diagramLoading) + "</div></div>";
@@ -631,7 +610,6 @@
           card.setAttribute("data-state", "done");
         })
         .catch(function () {
-          // The drawing library leaves a red error picture behind when the code is wrong; remove it.
           var junk = document.getElementById("d" + id);
           if (junk && junk.parentNode) junk.parentNode.removeChild(junk);
           body.innerHTML = '<p class="diagram-fail">' + escapeHtml(TEXT[lang].diagramFailed) + "</p><pre><code>" + escapeHtml(src) + "</code></pre>";
@@ -647,7 +625,6 @@
       '<span class="code-lang">' + escapeHtml(tag ? tag.toUpperCase() : "CODE") + '</span>' +
       '<button type="button" class="code-copy">' + escapeHtml(t.copy) + "</button></div>" +
       "<pre><code>" + highlightCode(code, tag) + "</code></pre></div>";
-    // The preview is added only when the answer is complete, so a half-written page never flickers on screen.
     if (final && isHtmlCode(code, tag)) html += previewHtml(code);
     return html;
   }
@@ -655,13 +632,12 @@
   function renderMarkdown(raw, final) {
     var maths = [];
     var useMath = !!(window.katex && window.katex.renderToString);
-    var source = useMath ? extractMath(raw, maths) : cleanLatex(raw); // no KaTeX: show formulas as plain text
+    var source = useMath ? extractMath(raw, maths) : cleanLatex(raw);
     var text = escapeHtml(source).replace(/\r\n/g, "\n");
     var out = [];
     var parts = text.split(/```/);
     for (var i = 0; i < parts.length; i++) {
       if (i % 2 === 1) {
-        // code block: the optional language tag is on the first line
         var tagMatch = parts[i].match(/^([a-zA-Z0-9_+#-]*)\n/);
         var codeTag = tagMatch ? tagMatch[1] : "";
         var codeRaw = unescapeHtml(parts[i].replace(/^[a-zA-Z0-9_+#-]*\n/, "")).replace(/\n$/, "");
@@ -670,7 +646,7 @@
       }
       var lines = parts[i].split("\n");
       var para = [];
-      var list = null; // {tag, items}
+      var list = null;
       var flushPara = function () {
         if (para.length) { out.push("<p>" + inline(para.join("<br>")) + "</p>"); para = []; }
       };
@@ -681,8 +657,8 @@
         }
       };
       for (var j = 0; j < lines.length; j++) {
-        var line = lines[j].replace(/^\s*&gt;\s?/, ""); // drop "> " quote markers
-        if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) { // ---  ***  ___  become a thin divider line
+        var line = lines[j].replace(/^\s*&gt;\s?/, "");
+        if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) {
           flushPara(); flushList();
           out.push("<hr>");
           continue;
@@ -715,7 +691,6 @@
     return html;
   }
 
-  // ---------- UI helpers ----------
   function addMessage(kind, text) {
     var el = document.createElement("div");
     el.className = "msg " + (kind === "user" ? "user" : "bot") + (kind === "error" ? " error" : "");
@@ -726,8 +701,7 @@
     return el;
   }
 
-  // ---------- time record: "Me · 5:00 PM" above each question, "AI Teacher · 5:00 PM · ⚡ 3.2 s" above each answer ----------
-  var lastMetaDay = ""; // so a date line is added only when the day changes
+  var lastMetaDay = "";
 
   function dayKey(ts) {
     var d = new Date(ts);
@@ -771,7 +745,6 @@
 
   function renderDaySep(el) { el.textContent = fmtDay(Number(el.getAttribute("data-ts"))); }
 
-  // Adds the small label (and, when the day changes, a date line) in front of the next bubble.
   function addMeta(role, ts, dur) {
     if (!ts) return null;
     var key = dayKey(ts);
@@ -793,7 +766,6 @@
     return el;
   }
 
-  // When the language is switched, the labels already on screen follow it.
   function refreshMeta() {
     var metas = chatEl.querySelectorAll(".msg-meta");
     for (var i = 0; i < metas.length; i++) renderMeta(metas[i]);
@@ -801,7 +773,6 @@
     for (var j = 0; j < seps.length; j++) renderDaySep(seps[j]);
   }
 
-  // A question bubble that can also show the picture that was sent with it.
   function addUserMessage(text, image) {
     var el = document.createElement("div");
     el.className = "msg user";
@@ -823,7 +794,6 @@
     return el;
   }
 
-  // ---------- actions under the latest answer: copy + quick follow-ups ----------
   function removeActions() {
     var old = chatEl.querySelectorAll(".actions");
     for (var i = 0; i < old.length; i++) old[i].remove();
@@ -848,7 +818,6 @@
     });
   }
 
-  // What gets copied: the answer without markdown marks (**bold**, ## headings, --- dividers).
   function plainAnswer(text) {
     return cleanLatex(text)
       .replace(/\*\*([^*\n]+)\*\*/g, "$1")
@@ -874,7 +843,7 @@
       copyText(plainAnswer(answerText)).then(function () {
         copyBtn.lastChild.textContent = TEXT[lang].copied;
         setTimeout(function () { copyBtn.lastChild.textContent = TEXT[lang].copy; }, 1600);
-      }, function () { /* clipboard blocked: nothing to do */ });
+      }, function () {});
     });
     bar.appendChild(copyBtn);
 
@@ -887,7 +856,6 @@
       bar.appendChild(b);
     });
 
-    // 👍 / 👎: only remembered with the chat. It never asks the AI anything and never uses up a question.
     var entry = history[history.length - 1];
     if (entry && entry.role === "assistant") {
       var thumb = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3z"/><path d="M7 11l4-8a2.2 2.2 0 0 1 2.2 2.5L12.6 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>';
@@ -901,7 +869,7 @@
         fb.title = pair[1];
         fb.setAttribute("aria-label", pair[1]);
         fb.addEventListener("click", function () {
-          entry.fb = entry.fb === kind ? undefined : kind; // tap again to take it back
+          entry.fb = entry.fb === kind ? undefined : kind;
           fbBtns.forEach(function (x) { x.btn.setAttribute("aria-pressed", entry.fb === x.kind ? "true" : "false"); });
           saveChat();
         });
@@ -928,7 +896,6 @@
     if (!state && view === "ask") inputEl.focus({ preventScroll: true });
   }
 
-  // ---------- picture from the gallery ----------
   function showPreview(nameText, statusText) {
     previewEl.classList.remove("hidden");
     previewEl.classList.toggle("loading", preparing);
@@ -945,7 +912,6 @@
     return kb < 1024 ? Math.max(1, Math.round(kb)) + " KB" : (kb / 1024).toFixed(1) + " MB";
   }
 
-  // Click a picture in the chat to see it large; click again or press Esc to close.
   function openLightbox(src) {
     var box = document.createElement("div");
     box.className = "lightbox";
@@ -970,7 +936,7 @@
     previewEl.classList.remove("loading");
     previewNameEl.textContent = "";
     previewStatusEl.textContent = "";
-    fileEl.value = ""; // so choosing the same picture again still triggers "change"
+    fileEl.value = "";
   }
 
   function loadImageElement(file) {
@@ -992,8 +958,6 @@
     });
   }
 
-  // Turns the chosen file into {mime, data, url}. Normal pictures are redrawn on a canvas, which also
-  // fixes phone-camera rotation and shrinks very large photos. Throws an error key (see TEXT.errors).
   async function prepareImage(file) {
     var type = (file.type || "").toLowerCase();
     var looksLikeImage = type.indexOf("image/") === 0 || IMAGE_EXT.test(file.name || "");
@@ -1004,7 +968,6 @@
     try {
       loaded = await loadImageElement(file);
     } catch (e) {
-      // Some browsers can't open HEIC. Gemini can read it directly, so send the original if it is small enough.
       var isHeic = /heic|heif/.test(type) || /\.(heic|heif)$/i.test(file.name || "");
       if (isHeic && file.size <= 3.5 * 1024 * 1024) {
         var rawUrl = await readAsDataUrl(file);
@@ -1026,11 +989,10 @@
       canvas.width = cw;
       canvas.height = ch;
       var ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#ffffff"; // transparent PNGs would turn black as JPEG, so paint white first
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, cw, ch);
       ctx.drawImage(img, 0, 0, cw, ch);
 
-      // JPEG at high quality keeps handwriting and small print sharp; lower it only if the result is still too big.
       var qualities = [0.92, 0.85, 0.75, 0.6];
       var dataUrl = "";
       for (var i = 0; i < qualities.length; i++) {
@@ -1045,7 +1007,6 @@
     }
   }
 
-  // A small JPEG copy (about 900 px, under ~190 KB) that is saved with the chat for the history.
   async function makeThumb(dataUrl) {
     if (!dataUrl) return "";
     try {
@@ -1070,7 +1031,7 @@
         var out = (canvas.toDataURL("image/jpeg", qualities[q]).split(",")[1]) || "";
         if (out && out.length <= 250000) return out;
       }
-    } catch (e) { /* no copy: the history just shows a picture marker */ }
+    } catch (e) {}
     return "";
   }
 
@@ -1086,8 +1047,7 @@
     try {
       var prepared = await prepareImage(file);
       prepared.thumb = await makeThumb(prepared.url);
-      if (!preparing) return; // the user removed it while it was being prepared
-      // A HEIC picture sent as is has no preview image (the browser can't draw it); the file name is shown instead.
+      if (!preparing) return;
       pendingImage = prepared;
       preparing = false;
       showPreview(file.name || "", sizeLabel(prepared));
@@ -1107,7 +1067,6 @@
     counterEl.textContent = inputEl.value.length + "/" + inputEl.maxLength;
   }
 
-  // ---------- pages (home / ask), subjects, class ----------
   var SUBJECT_IDS = ["math", "physics", "chemistry", "biology", "ict"];
   var SVG_OPEN = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
   var SUBJECT_ICONS = {
@@ -1157,13 +1116,11 @@
   }
 
   function pickSubject(id) {
-    // Choosing another subject while a chat is open starts a new chat (the old one stays in the history).
     if (history.length && !busy && chatCtx && chatCtx.subjId !== id) resetChat();
     subjectSel.value = id;
     markSubject();
   }
 
-  // The subject list on the ask page and the subject chips on the home page.
   function renderSubjects() {
     var t = TEXT[lang];
     subjectListEl.innerHTML = "";
@@ -1177,7 +1134,7 @@
       b.innerHTML = SUBJECT_ICONS[id] + "<span></span>";
       b.lastChild.textContent = t.subjects[id];
       b.addEventListener("click", function () {
-        if (history.length && chatCtx && subjectSel.value === id) return; // already this chat's subject
+        if (history.length && chatCtx && subjectSel.value === id) return;
         pickSubject(subjectSel.value === id ? "" : id);
       });
       li.appendChild(b);
@@ -1199,7 +1156,6 @@
     markSubject();
   }
 
-  // The chosen class and subject, as readable words. Sent with the question so the answer fits the level.
   function ctxFromIds(subjId, clsIdx) {
     var t = TEXT[lang];
     var cls = (clsIdx === null || clsIdx === undefined || clsIdx === "") ? "" : (t.classes[Number(clsIdx)] || "");
@@ -1207,7 +1163,7 @@
     return (cls || subj) ? {
       cls: cls,
       subj: subj,
-      subjId: subj ? subjId : "",                                        // sent to the server so it can check the question matches
+      subjId: subj ? subjId : "",
       clsIdx: cls ? Number(clsIdx) : null
     } : null;
   }
@@ -1216,11 +1172,10 @@
     return ctxFromIds(subjectSel.value, classSel.value === "" ? null : Number(classSel.value));
   }
 
-  // The class and subject this chat is about. Shown as a small label once the chat has started.
   function updateCtxChip() {
     var c = chatCtx ? ctxFromIds(chatCtx.subjId, chatCtx.clsIdx) : null;
     ctxChipEl.textContent = c ? [c.cls, c.subj].filter(Boolean).join(" · ") : "";
-    askMainEl.classList.toggle("ctx-locked", !!c); // while locked, the class and subject boxes stay hidden
+    askMainEl.classList.toggle("ctx-locked", !!c);
   }
 
   function errorText(key) {
@@ -1315,15 +1270,11 @@
   function setLanguage(next) {
     lang = next;
     removeActions();
-    try { localStorage.setItem("aiteacher_lang", lang); } catch (e) { /* ignore */ }
+    try { localStorage.setItem("aiteacher_lang", lang); } catch (e) {}
     applyLanguage();
-    if (authed && history.length === 0) resetChat(); // only refresh the welcome text if no conversation yet
+    if (authed && history.length === 0) resetChat();
   }
 
-  // ---------- login state ----------
-  // A visitor who is not logged in sees the home page. Asking a question sends them to the login card,
-  // and after logging in we carry on with what they wanted to do.
-  // The login card has two faces: log in (default) and create a new ID.
   function setAuthMode(mode) {
     var signup = mode === "signup";
     loginForm.hidden = signup;
@@ -1369,7 +1320,6 @@
     continueAfterLogin();
   }
 
-  // Not logged in. goLogin = true opens the login card (used for errors and expired logins); false shows the home page.
   function showGuest(errorKey, goLogin) {
     authed = false;
     user = "";
@@ -1395,10 +1345,10 @@
     try {
       var res = await fetch("/api/me");
       var data = null;
-      try { data = await res.json(); } catch (e) { /* ignore */ }
+      try { data = await res.json(); } catch (e) {}
       if (res.ok && data && data.ok) showApp(data);
       else if (data && data.error === "server_not_configured") showLogin("server_not_configured");
-      else showGuest(null, false); // not logged in: the visitor sees the home page first
+      else showGuest(null, false);
     } catch (e) {
       showLogin("network");
     } finally {
@@ -1419,7 +1369,7 @@
         body: JSON.stringify({ name: loginName.value, code: loginCode.value })
       });
       var data = null;
-      try { data = await res.json(); } catch (err) { /* ignore */ }
+      try { data = await res.json(); } catch (err) {}
       if (res.ok && data && data.ok) {
         loginCode.value = "";
         showApp(data);
@@ -1453,10 +1403,10 @@
         body: JSON.stringify({ name: signupName.value, code: signupPass.value, invite: signupInvite.value })
       });
       var data = null;
-      try { data = await res.json(); } catch (err) { /* ignore */ }
+      try { data = await res.json(); } catch (err) {}
       if (res.ok && data && data.ok) {
         signupPass.value = ""; signupPass2.value = ""; signupInvite.value = "";
-        showApp(data); // a new student goes straight in
+        showApp(data);
       } else {
         signupPass.value = ""; signupPass2.value = ""; signupInvite.value = "";
         signupError.textContent = errorText((data && data.error) || "generic");
@@ -1470,12 +1420,10 @@
   }
 
   async function doLogout() {
-    try { await fetch("/api/logout", { method: "POST" }); } catch (e) { /* ignore */ }
+    try { await fetch("/api/logout", { method: "POST" }); } catch (e) {}
     showGuest(null, false);
   }
 
-  // ---------- talking to the backend ----------
-  // Recent chat for the server. Pictures stay attached only for the newest few; older ones become a short note.
   function buildMessages() {
     var recent = history.slice(-MAX_HISTORY);
     var imagesLeft = KEEP_IMAGES_IN_REQUEST;
@@ -1483,7 +1431,6 @@
     for (var i = recent.length - 1; i >= 0; i--) {
       var m = recent[i];
       var item = { role: m.role, text: m.text };
-      // The newest question carries the chosen class and subject as a short hint for the AI.
       if (m.role === "user" && m.ctx && i === recent.length - 1) {
         item.text = TEXT[lang].context(m.ctx.cls, m.ctx.subj) + (m.text || TEXT[lang].defaultImageQuestion);
       }
@@ -1491,7 +1438,6 @@
         item.image = { mime: m.image.mime, data: m.image.data };
         imagesLeft--;
       }
-      // A picture-only question gets its default wording from the server; earlier ones need some text.
       if (!item.text && i !== recent.length - 1) item.text = TEXT[lang].imageOnly;
       out.unshift(item);
     }
@@ -1509,7 +1455,7 @@
     var askedAt = Date.now();
     addMeta("user", askedAt);
     addUserMessage(q, image);
-    // The first question fixes the class and subject; follow-ups in the same chat keep them.
+
     var ctx;
     if (chatCtx) {
       ctx = ctxFromIds(chatCtx.subjId, chatCtx.clsIdx);
@@ -1546,9 +1492,8 @@
       if (res.ok && res.body && type.indexOf("text/event-stream") !== -1) {
         await readStream(res, typing, askedAt);
       } else {
-        // Errors (login expired, daily limit, ...) still arrive as plain JSON.
         var data = null;
-        try { data = await res.json(); } catch (e) { /* non-JSON response */ }
+        try { data = await res.json(); } catch (e) {}
         typing.remove();
         handleFailure(data && data.error, data);
       }
@@ -1561,9 +1506,9 @@
     }
   }
 
-  // Shared handling for any failed question: undo the dangling turn and show a clear message.
+  // এখানে গুগল থেকে আসল এরর মেসেজটি স্ক্রিনে সরাসরি দেখানো হবে
   function handleFailure(key, data) {
-    history.pop(); // let the user retry the same question without a dangling turn
+    history.pop();
     if (key === "unauthorized") {
       showLogin("unauthorized");
       return;
@@ -1572,13 +1517,12 @@
       usage = { used: data.limit || usage.limit, limit: data.limit || usage.limit };
       renderUsage();
     }
-    addMessage("error", errorText(key));
+    addMessage("error", (data && data.detail) || errorText(key));
   }
 
-  // Reads the answer piece by piece and shows it as it grows.
   async function readStream(res, typing, askedAt) {
-    var answerTs = 0;     // when the first words of the answer arrived
-    var metaEl = null;    // the "AI Teacher · time" label above the answer
+    var answerTs = 0;
+    var metaEl = null;
     var reader = res.body.getReader();
     var decoder = new TextDecoder("utf-8");
     var buffer = "";
@@ -1586,18 +1530,17 @@
     var botEl = null;
     var finished = false;
     var failKey = null;
-    var mismatch = false;  // the AI said the question does not fit the chosen class / subject
+    var mismatch = false;
     var paintQueued = false;
-    var needAlign = false; // once, bring the start of a new answer to the top so it can be read from the beginning
+    var needAlign = false;
 
     var finalPainted = false;
     function paint(final) {
       paintQueued = false;
       if (!botEl) return;
-      // A repaint queued while the answer was still arriving must not undo the finished answer.
       if (final !== true && finalPainted) return;
       if (final === true) finalPainted = true;
-      botEl.innerHTML = renderMarkdown(answer, final === true); // output previews only once the answer is complete
+      botEl.innerHTML = renderMarkdown(answer, final === true);
       if (final === true) renderDiagrams(botEl);
       if (needAlign) { needAlign = false; botEl.scrollIntoView({ block: "start" }); }
     }
@@ -1666,22 +1609,18 @@
     }
 
     if (answer) {
-      // Show whatever arrived. It counts as a question already, so keep it in the history.
-      // How long the answer took, counted from the moment the question was sent until it finished.
       var took = finished && askedAt ? Date.now() - askedAt : 0;
       if (metaEl && took) { metaEl.setAttribute("data-dur", String(took)); renderMeta(metaEl); }
       history.push({ role: "assistant", text: answer, ts: answerTs || Date.now(), dur: took || undefined });
-      // The very first question did not fit the chosen class/subject: don't lock it in, so it can be chosen again.
       if (mismatch && history.length === 2 && chatCtx) { chatCtx = null; history[0].ctx = null; updateCtxChip(); }
       saveChat();
       if (!finished) addMessage("error", errorText(failKey || "network"));
-      else if (!mismatch) addAnswerActions(answer); // a "wrong subject" note has nothing to simplify or copy
+      else if (!mismatch) addAnswerActions(answer);
     } else {
       handleFailure(failKey || "generic", null);
     }
   }
 
-// ---------- chat history (saved on the server for each login) ----------
   var MAX_SAVED_MESSAGES = 40;
 
   function newChatId() {
@@ -1694,7 +1633,6 @@
     return t.length > 50 ? t.slice(0, 50) + "…" : t;
   }
 
-  // Saves the whole conversation after each answer. Best effort: a failure never disturbs the chat.
   async function saveChat() {
     if (!authed || !history.length) return;
     if (!chatId) chatId = newChatId();
@@ -1705,18 +1643,16 @@
         if (history[i].role === "user") { first = history[i]; break; }
       }
       chatTitle = titleFrom(first && first.text);
-      // A first question that came with a picture gets a topic title made from the answer.
       needTitle = !!(first && first.image);
     }
     var id = chatId;
 
-    // New pictures: save a small copy first, so the history can show them again later.
     for (var k = 0; k < history.length; k++) {
       var im = history[k].image;
       if (im && im.thumb && !im.imgId) {
         var newId = newChatId();
         if (await uploadImage(id, newId, im.thumb)) im.imgId = newId;
-        else im.thumb = ""; // limit reached or offline: this picture stays a plain marker
+        else im.thumb = "";
       }
     }
 
@@ -1743,7 +1679,7 @@
       });
       if (res.status === 401) showLogin("unauthorized");
       ok = res.ok;
-    } catch (e) { /* ignore */ }
+    } catch (e) {}
     if (ok && needTitle) improveTitle(id);
   }
 
@@ -1761,7 +1697,6 @@
     }
   }
 
-  // Asks the server for a 2-5 word topic title (e.g. "সালোকসংশ্লেষণ") and saves the chat again with it.
   async function improveTitle(id) {
     var question = "";
     var answer = "";
@@ -1778,10 +1713,10 @@
       });
       var data = await readJson(res);
       if (!res.ok || !data || !data.ok || !data.title) return;
-      if (id !== chatId) return; // the student already moved to another chat
+      if (id !== chatId) return;
       chatTitle = data.title;
-      if (!busy) saveChat(); // otherwise the next save (after the answer) carries the new title
-    } catch (e) { /* keep the first title */ }
+      if (!busy) saveChat();
+    } catch (e) {}
   }
 
   function openDrawer() {
@@ -1846,10 +1781,9 @@
     });
   }
 
-  // Shows a saved chat and lets the student carry on from where it stopped.
   function showChat(chat) {
     resetChat();
-    chatEl.innerHTML = ""; // drop the welcome bubble
+    chatEl.innerHTML = "";
     lastMetaDay = "";
     suggestionsEl.classList.add("hidden");
     chatId = chat.id;
@@ -1860,7 +1794,6 @@
         var raw = (m.img && placeholders.indexOf(m.text) !== -1) ? "" : (m.text || "");
         addMeta("user", m.ts);
         if (m.img && m.imgId) {
-          // the saved small copy of the picture is loaded from the server
           addUserMessage(raw, { url: "/api/chats?img=" + encodeURIComponent(m.imgId) });
         } else {
           addUserMessage((m.img ? "🖼 " : "") + (raw || (m.img ? TEXT[lang].imageOnly : "")), null);
@@ -1874,7 +1807,6 @@
         history.push({ role: "assistant", text: m.text || "", ts: m.ts, dur: m.dur, fb: m.fb });
       }
     });
-    // Follow-ups in an opened chat stay in its class and subject.
     updateCtxChip();
     if (chatCtx) {
       classSel.value = chatCtx.clsIdx === null ? "" : String(chatCtx.clsIdx);
@@ -1884,7 +1816,6 @@
     var last = history[history.length - 1];
     if (last && last.role === "assistant") addAnswerActions(last.text);
     scrollChat();
-    // Older chats that were saved with the plain "(ছবি)" title get a proper topic title now.
     if (placeholders.indexOf(chatTitle) !== -1) improveTitle(chatId);
   }
 
@@ -1922,7 +1853,6 @@
     }
   }
 
-  // ---------- events ----------
   formEl.addEventListener("submit", function (e) {
     e.preventDefault();
     ask(inputEl.value);
@@ -1949,13 +1879,12 @@
   langBn.addEventListener("click", function () { setLanguage("bn"); });
   langEn.addEventListener("click", function () { setLanguage("en"); });
 
-historyBtn.addEventListener("click", openDrawer);
+  historyBtn.addEventListener("click", openDrawer);
   drawerCloseEl.addEventListener("click", closeDrawer);
   backdropEl.addEventListener("click", closeDrawer);
   drawerNewEl.addEventListener("click", function () { if (!busy && authed) { resetChat(); setView("ask"); closeDrawer(); } });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
 
-  // top navigation
   navHome.addEventListener("click", function () { setView("home"); });
   navAsk.addEventListener("click", function () {
     if (!authed) { goToLogin({ view: "ask" }); return; }
@@ -1964,7 +1893,6 @@ historyBtn.addEventListener("click", openDrawer);
   });
   loginOpenEl.addEventListener("click", function () { goToLogin({ view: "home" }); });
 
-  // home page: ask bar and picture button
   homeForm.addEventListener("submit", function (e) {
     e.preventDefault();
     var q = homeInput.value.trim();
@@ -1980,7 +1908,6 @@ historyBtn.addEventListener("click", openDrawer);
     fileEl.click();
   });
 
-  // buttons inside answers: copy a code block, run an HTML output that contains scripts
   chatEl.addEventListener("click", function (e) {
     var btn = e.target && e.target.closest ? e.target.closest(".code-copy, .out-run") : null;
     if (!btn) return;
@@ -1989,22 +1916,21 @@ historyBtn.addEventListener("click", openDrawer);
       copyText(codeEl.textContent).then(function () {
         btn.textContent = TEXT[lang].copied;
         setTimeout(function () { btn.textContent = TEXT[lang].copy; }, 1600);
-      }, function () { /* clipboard blocked: nothing to do */ });
+      }, function () {});
     } else {
       var card = btn.closest(".out-card");
       var frame = card && card.querySelector(".out-frame");
       if (!frame) return;
-      frame.setAttribute("sandbox", "allow-scripts"); // scripts may run, but the page stays cut off from this site
+      frame.setAttribute("sandbox", "allow-scripts");
       frame.setAttribute("srcdoc", frame.getAttribute("data-srcdoc") || "");
       frame.classList.add("show");
       btn.remove();
     }
   });
 
-  // class and subject choices
   subjectSel.addEventListener("change", markSubject);
   classSel.addEventListener("change", function () {
-    try { localStorage.setItem("aiteacher_class", classSel.value); } catch (e) { /* ignore */ }
+    try { localStorage.setItem("aiteacher_class", classSel.value); } catch (e) {}
   });
 
   applyLanguage();
@@ -2013,7 +1939,7 @@ historyBtn.addEventListener("click", openDrawer);
     if (savedClass !== null && /^[0-9]*$/.test(savedClass) && classSel.querySelector('option[value="' + savedClass + '"]')) {
       classSel.value = savedClass;
     }
-  } catch (e) { /* storage may be blocked; ignore */ }
+  } catch (e) {}
   autosize();
   checkSession();
 })();
