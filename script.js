@@ -31,7 +31,7 @@
       getAnswer: "উত্তর দেখুন",
       diagramTitle: "ফ্লোচার্ট / ডায়াগ্রাম",
       diagramLoading: "ডায়াগ্রাম আঁকা হচ্ছে…",
-      diagramFailed: "ডায়াগ্রামটা আঁকা যায়নি। কোডটা নিচে দেওয়া হলো।",
+      diagramFailed: "ডায়াগ্রাম আঁকা যায়নি। কোডটা নিচে দেওয়া হলো।",
       outputTitle: "আউটপুট — ব্রাউজারে যেমন দেখাবে",
       runOutput: "আউটপুট চালান",
       treeTitle: "ট্যাগের কাঠামো (ডায়াগ্রাম)",
@@ -87,26 +87,26 @@
       errors: {
         rate_limited: "এই মুহূর্তে অনেক অনুরোধ এসেছে। এক মিনিট পরে আবার চেষ্টা করুন।",
         network: "ইন্টারনেট সংযোগে সমস্যা হচ্ছে। সংযোগ দেখে আবার চেষ্টা করুন।",
-        server_not_configured: "সার্ভার এখনো ঠিকমতো সেট করা হয়নি (লগইন বা সংরক্ষণের সেটিং বাকি)।",
+        server_not_configured: "সার্ভার এখনো ঠিকমতো সেট করা হয়নি।",
         invalid_login: "নাম বা পাসওয়ার্ড ভুল।",
-        signup_closed: "এখন নতুন আইডি খোলা বন্ধ আছে। অ্যাডমিনের সঙ্গে কথা বলুন।",
+        signup_closed: "নতুন আইডি খোলা বন্ধ আছে।",
         signup_full: "আইডি খোলার সব জায়গা ভরে গেছে।",
         invalid_invite: "ইনভাইট কোড ভুল।",
-        name_taken: "এই ইউজারনেম আগেই নেওয়া হয়েছে। অন্য একটা বেছে নিন।",
-        bad_name: "ইউজারনেম ৩–২০ অক্ষরের হতে হবে, শুধু a-z, ০-৯, _ বা - চলবে।",
+        name_taken: "এই ইউজারনেম আগেই নেওয়া হয়েছে।",
+        bad_name: "ইউজারনেম ৩–২০ অক্ষরের হতে হবে।",
         weak_password: "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।",
         password_mismatch: "দুইবার লেখা পাসওয়ার্ড মিলছে না।",
-        too_many_attempts: "অনেকবার ভুল চেষ্টা হয়েছে। এক ঘণ্টা পরে আবার চেষ্টা করুন।",
-        unauthorized: "লগইনের মেয়াদ শেষ। আবার লগইন করুন।",
+        too_many_attempts: "অনেকবার ভুল চেষ্টা হয়েছে।",
+        unauthorized: "লগইনের মেয়াদ শেষ।",
         daily_limit: "আজকের প্রশ্নের সীমা শেষ। কাল আবার চেষ্টা করুন।",
-        global_limit: "আজকের জন্য সাইটের মোট সীমা শেষ। কাল আবার চেষ্টা করুন।",
-        bad_image: "ছবিটা পাঠানো যায়নি। অন্য একটা ছবি দিয়ে আবার চেষ্টা করুন।",
-        image_type: "এই ধরনের ফাইল চলবে না। JPG, PNG, WebP, GIF বা HEIC ছবি দিন।",
-        image_too_big: "ছবিটা অনেক বড় (সর্বোচ্চ ২০ MB)। ছোট একটা ছবি দিন।",
-        image_failed: "ছবিটা খুলতে পারিনি। অন্য ছবি বা JPG/PNG ফরম্যাটে চেষ্টা করুন।",
-        history_not_configured: "ইতিহাস সংরক্ষণ এখনো চালু করা হয়নি (Cloudflare-এ D1 ডাটাবেস যুক্ত করা বাকি)।",
-        history_failed: "ইতিহাস লোড করতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।",
-        generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
+        global_limit: "আজকের জন্য মোট সীমা শেষ।",
+        bad_image: "ছবিটা পাঠানো যায়নি।",
+        image_type: "ফাইল ফরম্যাট সঠিক নয়।",
+        image_too_big: "ছবি অনেক বড় (সর্বোচ্চ ২০ MB)।",
+        image_failed: "ছবি খুলতে পারিনি।",
+        history_not_configured: "ইতিহাস ডাটাবেস যুক্ত করা বাকি।",
+        history_failed: "ইতিহাস লোড করতে সমস্যা হয়েছে।",
+        generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে।"
       }
     },
     en: {
@@ -117,7 +117,7 @@
       newChat: "New chat",
       logout: "Log out",
       note: "AI can make mistakes. Please double-check important information.",
-      welcome: "Hi! I'm AI Teacher. Ask me anything and I'll explain it step by step. You can write in English or বাংলা.",
+      welcome: "Hi! I'm AI Teacher. Ask me anything and I'll explain it step by step.",
       thinking: "Thinking",
       attach: "Add a picture from your gallery",
       removeImage: "Remove picture",
@@ -139,7 +139,7 @@
       getAnswer: "Get answer",
       diagramTitle: "Flowchart / diagram",
       diagramLoading: "Drawing the diagram…",
-      diagramFailed: "The diagram could not be drawn. Here is its code.",
+      diagramFailed: "The diagram could not be drawn.",
       outputTitle: "Output — how it looks in a browser",
       runOutput: "Run output",
       treeTitle: "Tag structure (diagram)",
@@ -158,9 +158,9 @@
         var parts = [];
         if (cls) parts.push("Class: " + cls);
         if (subj) parts.push("Subject: " + subj);
-        return "[Context — " + parts.join("; ") + ". Answer at this level and do not repeat this context in your reply.]\n";
+        return "[Context — " + parts.join("; ") + ". Answer at this level.]\n";
       },
-      defaultImageQuestion: "Look carefully at this image and explain it. If it contains a question, solve it.",
+      defaultImageQuestion: "Look carefully at this image and explain it.",
       historyTitle: "Chat history",
       noChats: "No saved chats yet.",
       loadingChats: "Loading…",
@@ -171,14 +171,14 @@
       usage: function (user, used, limit) { return user + " · " + used + "/" + limit + " questions today"; },
       loginTitle: "Log in",
       loginOpen: "Log in",
-      loginHint: "For approved members only. Enter your name and password.",
+      loginHint: "For approved members only.",
       toSignup: "Create a new ID",
       toLogin: "Already have an ID? Log in",
       signupTitle: "Create a new ID",
-      signupHint: "You need the invite code from your teacher or admin. Only a few IDs are available.",
-      signupNameLabel: "Username (3-20 characters: a-z, 0-9, _ or -)",
-      signupPassLabel: "Password (at least 8 characters)",
-      signupPass2Label: "Repeat the password",
+      signupHint: "You need the invite code from your teacher.",
+      signupNameLabel: "Username",
+      signupPassLabel: "Password",
+      signupPass2Label: "Repeat password",
       signupInviteLabel: "Invite code",
       signupBtn: "Create ID",
       signingUp: "Please wait…",
@@ -186,36 +186,8 @@
       codeLabel: "Password",
       loginBtn: "Enter",
       loggingIn: "Please wait…",
-      suggestions: [
-        "What is photosynthesis?",
-        "How do I solve a quadratic equation?",
-        "নিউটনের গতিসূত্র সহজ করে বলো",
-        "Explain the present perfect tense"
-      ],
-      errors: {
-        rate_limited: "Too many requests right now. Please wait a minute and try again.",
-        network: "Network problem. Check your connection and try again.",
-        server_not_configured: "The server isn't fully set up yet (login or storage setting missing).",
-        invalid_login: "Wrong name or password.",
-        signup_closed: "Creating new IDs is closed right now. Please ask the admin.",
-        signup_full: "All the places for new IDs are taken.",
-        invalid_invite: "The invite code is wrong.",
-        name_taken: "That username is already taken. Please choose another.",
-        bad_name: "The username must be 3-20 characters: only a-z, 0-9, _ or -.",
-        weak_password: "The password must be at least 8 characters.",
-        password_mismatch: "The two passwords do not match.",
-        too_many_attempts: "Too many failed attempts. Please try again in an hour.",
-        unauthorized: "Your login has expired. Please log in again.",
-        daily_limit: "You've used all of today's questions. Please try again tomorrow.",
-        global_limit: "The site's total limit for today has been reached. Please try again tomorrow.",
-        bad_image: "The picture couldn't be sent. Please try a different picture.",
-        image_type: "That file type isn't supported. Please choose a JPG, PNG, WebP, GIF or HEIC picture.",
-        image_too_big: "That picture is too large (max 20 MB). Please choose a smaller one.",
-        image_failed: "Couldn't open that picture. Try another one, or a JPG/PNG version.",
-        history_not_configured: "Chat history isn't switched on yet (the D1 database still needs to be connected in Cloudflare).",
-        history_failed: "Couldn't load the chat history. Please try again shortly.",
-        generic: "Sorry, something went wrong getting the answer. Please try again shortly."
-      }
+      suggestions: ["What is photosynthesis?", "How do I solve quadratic equations?"],
+      errors: { generic: "Sorry, something went wrong getting the answer." }
     }
   };
 
@@ -346,47 +318,11 @@
 
   function inline(s) {
     return s
+      .replace(/&lt;br\s*\/?&gt;/gi, "<br>")
       .replace(/`([^`\n]+)`/g, "<code>$1</code>")
       .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
       .replace(/(^|[\s(])\*(?!\s)([^*\n]*[^\s*])\*(?![\w*])/g, "$1<em>$2</em>")
       .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-  }
-
-  var LATEX_MAP = {
-    "\\rightarrow": "→", "\\to": "→", "\\leftarrow": "←", "\\Rightarrow": "⇒", "\\leftrightarrow": "↔",
-    "\\times": "×", "\\cdot": "·", "\\div": "÷", "\\pm": "±",
-    "\\leq": "≤", "\\le": "≤", "\\geq": "≥", "\\ge": "≥", "\\neq": "≠", "\\approx": "≈",
-    "\\pi": "π", "\\theta": "θ", "\\alpha": "α", "\\beta": "β", "\\gamma": "γ", "\\delta": "δ",
-    "\\Delta": "Δ", "\\lambda": "λ", "\\mu": "μ", "\\sigma": "σ", "\\omega": "ω", "\\infty": "∞",
-    "\\degree": "°", "\\circ": "°"
-  };
-  var SUPERSCRIPT = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "+": "⁺" };
-  var SUBSCRIPT = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉" };
-
-  function mapChars(str, table) {
-    var out = "";
-    for (var i = 0; i < str.length; i++) {
-      if (!table[str[i]]) return null;
-      out += table[str[i]];
-    }
-    return out;
-  }
-
-  function latexToText(inner) {
-    var s = inner;
-    s = s.replace(/\\text\{([^{}]*)\}/g, "$1").replace(/\\mathrm\{([^{}]*)\}/g, "$1");
-    s = s.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1)/($2)");
-    s = s.replace(/\\sqrt\{([^{}]*)\}/g, "√($1)");
-    s = s.replace(/\\[a-zA-Z]+/g, function (cmd) { return LATEX_MAP[cmd] || cmd; });
-    s = s.replace(/\^\{?([0-9+-]+)\}?/g, function (m, d) { return mapChars(d, SUPERSCRIPT) || m; });
-    s = s.replace(/_\{?([0-9]+)\}?/g, function (m, d) { return mapChars(d, SUBSCRIPT) || m; });
-    return s.replace(/[{}]/g, "").replace(/\s+/g, " ").trim();
-  }
-
-  function cleanLatex(raw) {
-    return raw
-      .replace(/\$\$([^$]*\\[^$]*)\$\$/g, function (m, inner) { return latexToText(inner); })
-      .replace(/\$([^$\n]*\\[^$\n]*)\$/g, function (m, inner) { return latexToText(inner); });
   }
 
   function mathToken(maths, tex, display) {
@@ -412,7 +348,11 @@
     if (mathCache[key]) return mathCache[key];
     var html;
     try {
-      html = window.katex.renderToString(item.tex, { displayMode: item.display, throwOnError: false, strict: "ignore", output: "html" });
+      if (window.katex && window.katex.renderToString) {
+        html = window.katex.renderToString(item.tex, { displayMode: item.display, throwOnError: false, strict: "ignore", output: "html" });
+      } else {
+        html = "<code>" + escapeHtml(item.tex) + "</code>";
+      }
     } catch (e) {
       html = "<code>" + escapeHtml(item.tex) + "</code>";
     }
@@ -424,232 +364,8 @@
     return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
   }
 
-  function wordSet(list) {
-    var set = {};
-    list.split(" ").forEach(function (w) { set[w] = true; });
-    return set;
-  }
-  var KW_JS = wordSet("const let var function return if else for while do switch case break continue new this class extends import export from default async await try catch finally throw typeof instanceof in of null undefined true false void int float double char long short bool boolean string public private protected static final package using namespace struct enum include");
-  var KW_PY = wordSet("def class return if elif else for while in not and or is None True False import from as with try except finally raise pass break continue lambda yield global print");
-
-  function span(cls, text) { return '<span class="' + cls + '">' + escapeHtml(text) + "</span>"; }
-
-  function highlightAttrs(a) {
-    var out = "", last = 0, m, re = /([\w:@.-]+)(?:(=)("[^"]*"|'[^']*'|[^\s"'>]+))?/g;
-    while ((m = re.exec(a))) {
-      out += escapeHtml(a.slice(last, m.index)) + span("tk-a", m[1]);
-      if (m[2]) out += span("tk-p", "=") + span("tk-s", m[3]);
-      last = re.lastIndex;
-    }
-    return out + escapeHtml(a.slice(last));
-  }
-
-  function highlightHtml(raw) {
-    var out = "", last = 0, m;
-    var re = /(<!--[\s\S]*?-->)|(<\/?)([a-zA-Z!][\w:-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?>)/g;
-    while ((m = re.exec(raw))) {
-      out += escapeHtml(raw.slice(last, m.index));
-      if (m[1]) out += span("tk-c", m[1]);
-      else out += span("tk-p", m[2]) + span("tk-t", m[3]) + highlightAttrs(m[4]) + span("tk-p", m[5]);
-      last = re.lastIndex;
-    }
-    return out + escapeHtml(raw.slice(last));
-  }
-
-  function highlightCode(raw, tag) {
-    var l = (tag || "").toLowerCase();
-    if (l === "html" || l === "htm" || l === "xml" || l === "svg") return highlightHtml(raw);
-    var re, kw = null, css = false;
-    if (/^(js|javascript|ts|typescript|java|c|cpp|c\+\+|cs|csharp|php|go|kotlin|swift)$/.test(l)) {
-      re = /(\/\*[\s\S]*?\*\/|\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)/g;
-      kw = KW_JS;
-    } else if (/^(py|python|bash|sh|shell)$/.test(l)) {
-      re = /(#[^\n]*)|("""[\s\S]*?"""|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)/g;
-      kw = KW_PY;
-    } else if (l === "css") {
-      re = /(\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(#[0-9a-fA-F]{3,8}\b|\b\d+(?:\.\d+)?(?:px|em|rem|%|vh|vw|s)?\b)|([A-Za-z-]+)(?=\s*:)/g;
-      css = true;
-    } else {
-      return escapeHtml(raw);
-    }
-    var out = "", last = 0, m;
-    while ((m = re.exec(raw))) {
-      out += escapeHtml(raw.slice(last, m.index));
-      if (m[1]) out += span("tk-c", m[0]);
-      else if (m[2]) out += span("tk-s", m[0]);
-      else if (m[3]) out += span("tk-n", m[0]);
-      else if (m[4] && ((kw && kw[m[4]]) )) out += span("tk-k", m[0]);
-      else if (m[4] && css) out += span("tk-a", m[0]);
-      else out += escapeHtml(m[0]);
-      last = re.lastIndex;
-      if (m[0] === "") re.lastIndex++;
-    }
-    return out + escapeHtml(raw.slice(last));
-  }
-
-  function isHtmlCode(code, tag) {
-    var l = (tag || "").toLowerCase();
-    if (l === "html" || l === "htm") return true;
-    return !l && /^\s*(<!doctype html|<html[\s>])/i.test(code);
-  }
-
-  function domTreeHtml(code) {
-    var doc;
-    try { doc = new DOMParser().parseFromString(code, "text/html"); } catch (e) { return ""; }
-    var count = 0;
-    function node(el, depth) {
-      var tag = el.tagName.toLowerCase();
-      if (count >= 80 || depth > 8) return "";
-      if (tag === "head" && !el.firstChild) return "";
-      count++;
-      var attrs = "";
-      ["id", "class", "href", "src", "type"].forEach(function (a) {
-        if (el.hasAttribute(a)) attrs += ' <span class="dt-attr">' + escapeHtml(a + '="' + el.getAttribute(a).slice(0, 24) + '"') + "</span>";
-      });
-      var own = "", kids = "";
-      for (var c = el.firstChild; c; c = c.nextSibling) {
-        if (c.nodeType === 3 && tag !== "script" && tag !== "style") {
-          var tx = c.nodeValue.replace(/\s+/g, " ").trim();
-          if (tx) own += ' <span class="dt-text">' + escapeHtml('"' + (tx.length > 28 ? tx.slice(0, 28) + "…" : tx) + '"') + "</span>";
-        } else if (c.nodeType === 1) {
-          kids += node(c, depth + 1);
-        }
-      }
-      return '<li><span class="dt-tag">' + escapeHtml("<" + tag + ">") + "</span>" + attrs + own + (kids ? "<ul>" + kids + "</ul>" : "") + "</li>";
-    }
-    var roots = /<html[\s>]/i.test(code) ? [doc.documentElement] : Array.prototype.slice.call(doc.body.children);
-    var items = roots.map(function (r) { return node(r, 0); }).join("");
-    return items ? '<ul class="dom-tree">' + items + "</ul>" : "";
-  }
-
-  function previewHtml(code) {
-    var t = TEXT[lang];
-    var doc = /<html[\s>]/i.test(code) ? code : '<!doctype html><html><head><meta charset="utf-8"></head><body>' + code + "</body></html>";
-    var base = '<base target="_blank"><style>body{font-family:system-ui,"Noto Sans Bengali",sans-serif;margin:14px;line-height:1.5;color:#111}</style>';
-    if (/<head[^>]*>/i.test(doc)) doc = doc.replace(/<head[^>]*>/i, function (h) { return h + base; });
-    else if (/<html[^>]*>/i.test(doc)) doc = doc.replace(/<html[^>]*>/i, function (h) { return h + "<head>" + base + "</head>"; });
-    else doc = base + doc;
-
-    var hasScript = /<script[\s>]/i.test(code);
-    var lines = code.split("\n").length;
-    var height = Math.max(150, Math.min(380, 70 + lines * 12));
-    var frame = '<iframe class="out-frame' + (hasScript ? "" : " show") + '" sandbox="" referrerpolicy="no-referrer" title="' + escapeHtml(t.outputTitle) + '" style="height:' + height + 'px"' +
-      (hasScript ? ' data-srcdoc="' + escapeHtml(doc) + '"' : ' srcdoc="' + escapeHtml(doc) + '"') + "></iframe>";
-    var tree = domTreeHtml(code);
-    return '<div class="out-card">' +
-      '<div class="out-head"><span class="out-dot"></span><span class="out-title">' + escapeHtml(t.outputTitle) + "</span>" +
-      (hasScript ? '<button type="button" class="out-run">▶ ' + escapeHtml(t.runOutput) + "</button>" : "") + "</div>" +
-      '<div class="browser"><div class="browser-bar"><i></i><i></i><i></i><span class="browser-url">localhost/index.html</span></div>' + frame + "</div>" +
-      (tree ? '<details class="dom-diagram"><summary>' + escapeHtml(t.treeTitle) + "</summary>" + tree + "</details>" : "") +
-      "</div>";
-  }
-
-  var MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
-  var mermaidPromise = null;
-  var diagramCache = {};
-  var diagramSeq = 0;
-
-  function loadMermaid() {
-    if (window.mermaid && window.mermaid.render) return Promise.resolve(window.mermaid);
-    if (mermaidPromise) return mermaidPromise;
-    mermaidPromise = new Promise(function (resolve, reject) {
-      var s = document.createElement("script");
-      s.src = MERMAID_URL;
-      s.crossOrigin = "anonymous";
-      s.onload = function () {
-        try {
-          window.mermaid.initialize({
-            startOnLoad: false,
-            securityLevel: "strict",
-            theme: "base",
-            fontFamily: '"Noto Sans Bengali", Inter, system-ui, sans-serif',
-            themeVariables: {
-              fontSize: "15px",
-              primaryColor: "#ffffff",
-              primaryBorderColor: "#1f2937",
-              primaryTextColor: "#111827",
-              lineColor: "#1f2937",
-              secondaryColor: "#ffffff",
-              tertiaryColor: "#ffffff",
-              edgeLabelBackground: "#ffffff"
-            },
-            flowchart: { htmlLabels: false, curve: "linear", useMaxWidth: true, padding: 14 }
-          });
-          resolve(window.mermaid);
-        } catch (e) { mermaidPromise = null; reject(e); }
-      };
-      s.onerror = function () { mermaidPromise = null; reject(new Error("mermaid load")); };
-      document.head.appendChild(s);
-    });
-    return mermaidPromise;
-  }
-
-  function diagramHtml(code, final) {
-    var t = TEXT[lang];
-    return '<div class="diagram-card"' + (final ? ' data-src="' + escapeHtml(code) + '"' : "") + ">" +
-      '<div class="diagram-head"><span class="out-dot"></span><span>' + escapeHtml(t.diagramTitle) + "</span></div>" +
-      '<div class="diagram-body">' + escapeHtml(t.diagramLoading) + "</div></div>";
-  }
-
-  function renderDiagrams(root) {
-    if (!root) return;
-    var cards = root.querySelectorAll(".diagram-card[data-src]");
-    Array.prototype.forEach.call(cards, function (card) {
-      if (card.getAttribute("data-state")) return;
-      card.setAttribute("data-state", "busy");
-      var src = card.getAttribute("data-src");
-      var body = card.querySelector(".diagram-body");
-      if (diagramCache[src]) { body.innerHTML = diagramCache[src]; card.setAttribute("data-state", "done"); return; }
-      var id = "mmd" + (++diagramSeq);
-      loadMermaid()
-        .then(function (m) { return m.render(id, src); })
-        .then(function (res) {
-          diagramCache[src] = res.svg;
-          body.innerHTML = res.svg;
-          card.setAttribute("data-state", "done");
-        })
-        .catch(function () {
-          var junk = document.getElementById("d" + id);
-          if (junk && junk.parentNode) junk.parentNode.removeChild(junk);
-          body.innerHTML = '<p class="diagram-fail">' + escapeHtml(TEXT[lang].diagramFailed) + "</p><pre><code>" + escapeHtml(src) + "</code></pre>";
-          card.setAttribute("data-state", "failed");
-        });
-    });
-  }
-
-  // ===== নতুন ইন্টারেক্টিভ MCQ কার্ড রেন্ডারার =====
-  function renderMcqCard(code) {
-    var lines = code.split("\n");
-    var currentSection = "";
-    var question = "";
-    var options = [];
-    var explanation = [];
-    var whyWrong = [];
-    var trick = [];
-
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i].trim();
-      if (!line) continue;
-      if (/^\[QUESTION\]/i.test(line)) { currentSection = "q"; continue; }
-      if (/^\[OPTIONS\]/i.test(line)) { currentSection = "o"; continue; }
-      if (/^\[EXPLANATION\]/i.test(line)) { currentSection = "e"; continue; }
-      if (/^\[WHY_WRONG\]/i.test(line)) { currentSection = "w"; continue; }
-      if (/^\[TRICK\]/i.test(line)) { currentSection = "t"; continue; }
-
-      if (currentSection === "q") question += (question ? " " : "") + line;
-      else if (currentSection === "o") {
-        var isCorrect = false;
-        var cleanOpt = line;
-        if (cleanOpt.startsWith("*")) { isCorrect = true; cleanOpt = cleanOpt.slice(1).trim(); }
-        var m = cleanOpt.match(/^([কখগঘA-Da-d][\).:-]?)\s*(.*)$/);
-        if (m) options.push({ key: m[1], text: m[2], correct: isCorrect });
-        else options.push({ key: "", text: cleanOpt, correct: isCorrect });
-      }
-      else if (currentSection === "e") explanation.push(line);
-      else if (currentSection === "w") whyWrong.push(line.replace(/^[-*•]\s*/, ""));
-      else if (currentSection === "t") trick.push(line);
-    }
-
+  // ===== অল-ইন-ওয়ান স্মার্ট MCQ কার্ড রেন্ডারার =====
+  function buildMcqHtml(question, options, explanation, whyWrong, trick) {
     var html = '<div class="mcq-card-ui">';
     if (question) {
       html += '<div class="mcq-header"><span class="mcq-badge">MCQ</span><h4 class="mcq-q-title">' + inline(escapeHtml(question)) + '</h4></div>';
@@ -671,13 +387,13 @@
     }
 
     if (explanation.length) {
-      html += '<div class="mcq-exp-box"><div class="mcq-exp-head">' + (lang === "en" ? "Explanation" : "ব্যাখ্যা") + '</div>';
+      html += '<div class="mcq-exp-box"><div class="mcq-exp-head">ব্যাখ্যা</div>';
       html += '<div class="mcq-exp-body">' + inline(escapeHtml(explanation.join("<br>"))) + '</div></div>';
     }
 
     if (whyWrong.length) {
       html += '<details class="mcq-wrong-details"><summary class="mcq-wrong-summary">';
-      html += '<span>' + (lang === "en" ? "Why other options are wrong?" : "অন্যান্য অপশন কেন ভুল?") + '</span>';
+      html += '<span>অন্যান্য অপশন কেন ভুল?</span>';
       html += '<span class="mcq-plus-icon">+</span></summary><div class="mcq-wrong-body"><ul>';
       whyWrong.forEach(function (w) {
         html += '<li>' + inline(escapeHtml(w)) + '</li>';
@@ -686,167 +402,115 @@
     }
 
     if (trick.length) {
-      html += '<div class="mcq-trick-box"><strong>💡 ' + (lang === "en" ? "Memory Trick:" : "মনে রাখার কৌশল:") + '</strong> ' + inline(escapeHtml(trick.join(" "))) + '</div>';
+      html += '<div class="mcq-trick-box"><strong>💡 মনে রাখার কৌশল:</strong> ' + inline(escapeHtml(trick.join(" "))) + '</div>';
     }
 
     html += '</div>';
     return html;
   }
 
-  function codeBlockHtml(code, tag, final) {
-    if (/^(mcq)$/i.test(tag || "")) return renderMcqCard(code);
-    if (/^(mermaid|flowchart)$/i.test(tag || "")) return diagramHtml(code, final);
-    var t = TEXT[lang];
-    var html = '<div class="code-block"><div class="code-head"><span class="code-dots"><i></i><i></i><i></i></span>' +
-      '<span class="code-lang">' + escapeHtml(tag ? tag.toUpperCase() : "CODE") + '</span>' +
-      '<button type="button" class="code-copy">' + escapeHtml(t.copy) + "</button></div>" +
-      "<pre><code>" + highlightCode(code, tag) + "</code></pre></div>";
-    if (final && isHtmlCode(code, tag)) html += previewHtml(code);
-    return html;
+  // সাধারণ টেক্সট থেকে MCQ চিনে সুন্দর কার্ড বানানোর স্বয়ংক্রিয় লজিক
+  function parseNaturalMcq(text) {
+    if (!/([কখগঘA-D]\s*[\).:-]).*([কখগঘA-D]\s*[\).:-])/s.test(text) && !/MCQ/i.test(text)) return null;
+    var lines = text.split(/\r?\n/);
+    var question = "";
+    var options = [];
+    var explanation = [];
+    var whyWrong = [];
+    var trick = [];
+    var section = "q";
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line === "MCQ") continue;
+
+      if (/^(ব্যাখ্যা|Explanation)/i.test(line)) { section = "e"; continue; }
+      if (/^(অন্যান্য অপশন|বাকি অপশন|অন্য অপশন|Why other)/i.test(line)) { section = "w"; continue; }
+      if (/^(মনে রাখার কৌশল|শর্টকাট|Memory trick)/i.test(line)) { section = "t"; continue; }
+
+      var optMatch = line.match(/^(\*?\s*)([কখগঘA-Da-d][\).:-]?)\s*(.*)$/);
+      if (optMatch && section !== "e" && section !== "w" && section !== "t") {
+        var isCorrect = optMatch[1].indexOf("*") !== -1 || line.indexOf("✓") !== -1 || line.indexOf("সঠিক") !== -1;
+        var optText = optMatch[3].replace(/[✓✔]/g, "").replace(/\(সঠিক\)/g, "").trim();
+        options.push({ key: optMatch[2], text: optText, correct: isCorrect });
+        continue;
+      }
+
+      if (section === "q" && !options.length) {
+        question += (question ? " " : "") + line;
+      } else if (section === "e") {
+        explanation.push(line);
+      } else if (section === "w") {
+        whyWrong.push(line.replace(/^[-*•▶\s]+/, ""));
+      } else if (section === "t") {
+        trick.push(line.replace(/^(💡|🧠)\s*/, ""));
+      }
+    }
+
+    if (options.length >= 2) {
+      return buildMcqHtml(question, options, explanation, whyWrong, trick);
+    }
+    return null;
   }
 
   function renderMarkdown(raw, final) {
+    // যদি AI সম্পূর্ণ টেক্সটটিকে MCQ আকারে দেয়, সরাসরি ইন্টারেক্টিভ কার্ডে রূপান্তর
+    var naturalMcq = parseNaturalMcq(raw);
+    if (naturalMcq) return naturalMcq;
+
     var maths = [];
-    var useMath = !!(window.katex && window.katex.renderToString);
-    var source = useMath ? extractMath(raw, maths) : cleanLatex(raw);
+    var source = extractMath(raw, maths);
     var text = escapeHtml(source).replace(/\r\n/g, "\n");
     var out = [];
     var parts = text.split(/```/);
+
     for (var i = 0; i < parts.length; i++) {
       if (i % 2 === 1) {
-        var tagMatch = parts[i].match(/^([a-zA-Z0-9_+#-]*)\n/);
-        var codeTag = tagMatch ? tagMatch[1] : "";
         var codeRaw = unescapeHtml(parts[i].replace(/^[a-zA-Z0-9_+#-]*\n/, "")).replace(/\n$/, "");
-        out.push(codeBlockHtml(codeRaw, codeTag, final));
+        out.push('<pre><code>' + escapeHtml(codeRaw) + '</code></pre>');
         continue;
       }
       var lines = parts[i].split("\n");
       var para = [];
-      var list = null;
-      var flushPara = function () {
-        if (para.length) { out.push("<p>" + inline(para.join("<br>")) + "</p>"); para = []; }
-      };
-      var flushList = function () {
-        if (list) {
-          out.push("<" + list.tag + ">" + list.items.map(function (li) { return "<li>" + inline(li) + "</li>"; }).join("") + "</" + list.tag + ">");
-          list = null;
-        }
-      };
       for (var j = 0; j < lines.length; j++) {
-        var line = lines[j].replace(/^\s*&gt;\s?/, "");
-        if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) {
-          flushPara(); flushList();
-          out.push("<hr>");
-          continue;
-        }
-        var heading = line.match(/^#{1,6}\s+(.*)$/);
-        if (heading) {
-          flushPara(); flushList();
-          out.push("<p><strong>" + inline(heading[1]) + "</strong></p>");
-          continue;
-        }
-        var ul = line.match(/^\s*[-*•]\s+(.*)$/);
-        var ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
-        if (ul || ol) {
-          flushPara();
-          var tag = ul ? "ul" : "ol";
-          if (!list || list.tag !== tag) { flushList(); list = { tag: tag, items: [] }; }
-          list.items.push((ul || ol)[1]);
-        } else if (line.trim() === "") {
-          flushPara(); flushList();
+        var line = lines[j];
+        if (line.trim() === "") {
+          if (para.length) { out.push("<p>" + inline(para.join("<br>")) + "</p>"); para = []; }
         } else {
-          flushList(); para.push(line);
+          para.push(line);
         }
       }
-      flushPara(); flushList();
+      if (para.length) out.push("<p>" + inline(para.join("<br>")) + "</p>");
     }
+
     var html = out.join("");
-    if (useMath) {
-      html = html.replace(/\uE000(\d+)\uE001/g, function (m, n) { return maths[Number(n)] ? renderTex(maths[Number(n)]) : ""; });
-    }
+    html = html.replace(/\uE000(\d+)\uE001/g, function (m, n) { return maths[Number(n)] ? renderTex(maths[Number(n)]) : ""; });
     return html;
   }
 
   function addMessage(kind, text) {
     var el = document.createElement("div");
     el.className = "msg " + (kind === "user" ? "user" : "bot") + (kind === "error" ? " error" : "");
-    if (kind === "bot") { el.innerHTML = renderMarkdown(text, true); renderDiagrams(el); }
+    if (kind === "bot") { el.innerHTML = renderMarkdown(text, true); }
     else el.textContent = text;
     chatEl.appendChild(el);
     scrollChat();
     return el;
   }
 
-  var lastMetaDay = "";
-
-  function dayKey(ts) {
-    var d = new Date(ts);
-    return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate();
-  }
-
-  function locale() { return lang === "bn" ? "bn-BD" : "en-US"; }
-
-  function fmtTime(ts) {
-    try {
-      return new Date(ts).toLocaleTimeString(locale(), { hour: "numeric", minute: "2-digit", hour12: true });
-    } catch (e) { return ""; }
-  }
-
-  function fmtDay(ts) {
-    var t = TEXT[lang];
-    var key = dayKey(ts);
-    if (key === dayKey(Date.now())) return t.today;
-    if (key === dayKey(Date.now() - 86400000)) return t.yesterday;
-    try {
-      return new Date(ts).toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric" });
-    } catch (e) { return ""; }
-  }
-
-  function fmtDuration(ms) {
-    if (!ms || ms < 0) return "";
-    var s = ms < 10000 ? Math.round(ms / 100) / 10 : Math.round(ms / 1000);
-    var num;
-    try { num = s.toLocaleString(locale(), { minimumFractionDigits: s % 1 ? 1 : 0 }); } catch (e) { num = String(s); }
-    return "⚡ " + num + " " + TEXT[lang].secondsUnit;
-  }
-
   function renderMeta(el) {
     var t = TEXT[lang];
     var who = el.getAttribute("data-role") === "user" ? t.meLabel : t.aiLabel;
-    var parts = [who, fmtTime(Number(el.getAttribute("data-ts")))];
-    var dur = Number(el.getAttribute("data-dur"));
-    if (dur) parts.push(fmtDuration(dur));
-    el.textContent = parts.filter(Boolean).join(" · ");
+    el.textContent = who + " · " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  function renderDaySep(el) { el.textContent = fmtDay(Number(el.getAttribute("data-ts"))); }
-
-  function addMeta(role, ts, dur) {
-    if (!ts) return null;
-    var key = dayKey(ts);
-    if (key !== lastMetaDay) {
-      lastMetaDay = key;
-      var sep = document.createElement("div");
-      sep.className = "day-sep";
-      sep.setAttribute("data-ts", String(ts));
-      renderDaySep(sep);
-      chatEl.appendChild(sep);
-    }
+  function addMeta(role) {
     var el = document.createElement("div");
     el.className = "msg-meta " + (role === "user" ? "from-user" : "from-bot");
     el.setAttribute("data-role", role);
-    el.setAttribute("data-ts", String(ts));
-    if (dur) el.setAttribute("data-dur", String(dur));
     renderMeta(el);
     chatEl.appendChild(el);
     return el;
-  }
-
-  function refreshMeta() {
-    var metas = chatEl.querySelectorAll(".msg-meta");
-    for (var i = 0; i < metas.length; i++) renderMeta(metas[i]);
-    var seps = chatEl.querySelectorAll(".day-sep");
-    for (var j = 0; j < seps.length; j++) renderDaySep(seps[j]);
   }
 
   function addUserMessage(text, image) {
@@ -855,9 +519,7 @@
     if (image && image.url) {
       var img = document.createElement("img");
       img.className = "msg-img";
-      img.alt = "";
       img.src = image.url;
-      img.addEventListener("click", function () { openLightbox(image.url); });
       el.appendChild(img);
     }
     if (text) {
@@ -870,91 +532,21 @@
     return el;
   }
 
-  function removeActions() {
+  function addAnswerActions(answerText) {
     var old = chatEl.querySelectorAll(".actions");
     for (var i = 0; i < old.length; i++) old[i].remove();
-  }
-
-  function copyText(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      return navigator.clipboard.writeText(text);
-    }
-    return new Promise(function (resolve, reject) {
-      try {
-        var ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        var ok = document.execCommand("copy");
-        ta.remove();
-        ok ? resolve() : reject(new Error("copy"));
-      } catch (e) { reject(e); }
-    });
-  }
-
-  function plainAnswer(text) {
-    return cleanLatex(text)
-      .replace(/\*\*([^*\n]+)\*\*/g, "$1")
-      .replace(/`([^`\n]+)`/g, "$1")
-      .replace(/^#{1,6}\s+/gm, "")
-      .replace(/^\s*([-*_])(\s*\1){2,}\s*$/gm, "")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
-  }
-
-  function addAnswerActions(answerText) {
-    removeActions();
-    var t = TEXT[lang];
     var bar = document.createElement("div");
     bar.className = "actions";
-
     var copyBtn = document.createElement("button");
     copyBtn.type = "button";
     copyBtn.className = "action-btn";
-    copyBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span></span>';
-    copyBtn.lastChild.textContent = t.copy;
+    copyBtn.textContent = "কপি";
     copyBtn.addEventListener("click", function () {
-      copyText(plainAnswer(answerText)).then(function () {
-        copyBtn.lastChild.textContent = TEXT[lang].copied;
-        setTimeout(function () { copyBtn.lastChild.textContent = TEXT[lang].copy; }, 1600);
-      }, function () {});
+      navigator.clipboard.writeText(answerText);
+      copyBtn.textContent = "কপি হয়েছে";
+      setTimeout(function () { copyBtn.textContent = "কপি"; }, 1500);
     });
     bar.appendChild(copyBtn);
-
-    t.followups.forEach(function (label) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "action-btn";
-      b.textContent = label;
-      b.addEventListener("click", function () { ask(label); });
-      bar.appendChild(b);
-    });
-
-    var entry = history[history.length - 1];
-    if (entry && entry.role === "assistant") {
-      var thumb = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3z"/><path d="M7 11l4-8a2.2 2.2 0 0 1 2.2 2.5L12.6 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>';
-      var fbBtns = [];
-      [["up", t.likeTip], ["down", t.dislikeTip]].forEach(function (pair) {
-        var kind = pair[0];
-        var fb = document.createElement("button");
-        fb.type = "button";
-        fb.className = "action-btn fb-btn fb-" + kind;
-        fb.innerHTML = thumb;
-        fb.title = pair[1];
-        fb.setAttribute("aria-label", pair[1]);
-        fb.addEventListener("click", function () {
-          entry.fb = entry.fb === kind ? undefined : kind;
-          fbBtns.forEach(function (x) { x.btn.setAttribute("aria-pressed", entry.fb === x.kind ? "true" : "false"); });
-          saveChat();
-        });
-        fbBtns.push({ kind: kind, btn: fb });
-        bar.appendChild(fb);
-      });
-      fbBtns.forEach(function (x) { x.btn.setAttribute("aria-pressed", entry.fb === x.kind ? "true" : "false"); });
-    }
-
     chatEl.appendChild(bar);
   }
 
@@ -962,196 +554,16 @@
     busy = state;
     sendEl.disabled = state;
     inputEl.disabled = state;
-    attachEl.disabled = state;
     homeInput.disabled = state;
     homeSend.disabled = state;
-    homeAttach.disabled = state;
-    classSel.disabled = state;
-    subjectSel.disabled = state;
-    previewRemoveEl.disabled = state;
-    if (!state && view === "ask") inputEl.focus({ preventScroll: true });
-  }
-
-  function showPreview(nameText, statusText) {
-    previewEl.classList.remove("hidden");
-    previewEl.classList.toggle("loading", preparing);
-    previewNameEl.textContent = nameText || "";
-    previewStatusEl.textContent = statusText || "";
-    previewRemoveEl.title = TEXT[lang].removeImage;
-    previewRemoveEl.setAttribute("aria-label", TEXT[lang].removeImage);
-    if (pendingImage && pendingImage.url) previewImgEl.src = pendingImage.url;
-    else previewImgEl.removeAttribute("src");
-  }
-
-  function sizeLabel(image) {
-    var kb = (image.data.length * 0.75) / 1024;
-    return kb < 1024 ? Math.max(1, Math.round(kb)) + " KB" : (kb / 1024).toFixed(1) + " MB";
-  }
-
-  function openLightbox(src) {
-    var box = document.createElement("div");
-    box.className = "lightbox";
-    box.setAttribute("role", "dialog");
-    box.setAttribute("aria-modal", "true");
-    var big = document.createElement("img");
-    big.src = src;
-    big.alt = "";
-    box.appendChild(big);
-    function close() { document.removeEventListener("keydown", onKey); box.remove(); }
-    function onKey(e) { if (e.key === "Escape") close(); }
-    box.addEventListener("click", close);
-    document.addEventListener("keydown", onKey);
-    document.body.appendChild(box);
-  }
-
-  function clearPendingImage() {
-    pendingImage = null;
-    preparing = false;
-    previewImgEl.removeAttribute("src");
-    previewEl.classList.add("hidden");
-    previewEl.classList.remove("loading");
-    previewNameEl.textContent = "";
-    previewStatusEl.textContent = "";
-    fileEl.value = "";
-  }
-
-  function loadImageElement(file) {
-    return new Promise(function (resolve, reject) {
-      var url = URL.createObjectURL(file);
-      var img = new Image();
-      img.onload = function () { resolve({ img: img, url: url }); };
-      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
-      img.src = url;
-    });
-  }
-
-  function readAsDataUrl(file) {
-    return new Promise(function (resolve, reject) {
-      var r = new FileReader();
-      r.onload = function () { resolve(String(r.result)); };
-      r.onerror = function () { reject(new Error("read")); };
-      r.readAsDataURL(file);
-    });
-  }
-
-  async function prepareImage(file) {
-    var type = (file.type || "").toLowerCase();
-    var looksLikeImage = type.indexOf("image/") === 0 || IMAGE_EXT.test(file.name || "");
-    if (!looksLikeImage) throw new Error("image_type");
-    if (file.size > MAX_IMAGE_FILE_BYTES) throw new Error("image_too_big");
-
-    var loaded = null;
-    try {
-      loaded = await loadImageElement(file);
-    } catch (e) {
-      var isHeic = /heic|heif/.test(type) || /\.(heic|heif)$/i.test(file.name || "");
-      if (isHeic && file.size <= 3.5 * 1024 * 1024) {
-        var rawUrl = await readAsDataUrl(file);
-        return { mime: /heif$/.test(type) ? "image/heif" : "image/heic", data: rawUrl.split(",")[1], url: "" };
-      }
-      throw new Error("image_failed");
-    }
-
-    try {
-      var img = loaded.img;
-      var w = img.naturalWidth, h = img.naturalHeight;
-      if (!w || !h) throw new Error("image_failed");
-
-      var scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(w, h));
-      var cw = Math.max(1, Math.round(w * scale));
-      var ch = Math.max(1, Math.round(h * scale));
-
-      var canvas = document.createElement("canvas");
-      canvas.width = cw;
-      canvas.height = ch;
-      var ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, cw, ch);
-      ctx.drawImage(img, 0, 0, cw, ch);
-
-      var qualities = [0.92, 0.85, 0.75, 0.6];
-      var dataUrl = "";
-      for (var i = 0; i < qualities.length; i++) {
-        dataUrl = canvas.toDataURL("image/jpeg", qualities[i]);
-        if (dataUrl.length - 23 <= MAX_IMAGE_BASE64) break;
-      }
-      var base64 = dataUrl.split(",")[1] || "";
-      if (!base64 || base64.length > MAX_IMAGE_BASE64) throw new Error("image_too_big");
-      return { mime: "image/jpeg", data: base64, url: dataUrl };
-    } finally {
-      URL.revokeObjectURL(loaded.url);
-    }
-  }
-
-  async function makeThumb(dataUrl) {
-    if (!dataUrl) return "";
-    try {
-      var img = await new Promise(function (resolve, reject) {
-        var i = new Image();
-        i.onload = function () { resolve(i); };
-        i.onerror = function () { reject(new Error("thumb")); };
-        i.src = dataUrl;
-      });
-      var w = img.naturalWidth, h = img.naturalHeight;
-      if (!w || !h) return "";
-      var scale = Math.min(1, 900 / Math.max(w, h));
-      var canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(w * scale));
-      canvas.height = Math.max(1, Math.round(h * scale));
-      var ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      var qualities = [0.72, 0.58, 0.45, 0.35];
-      for (var q = 0; q < qualities.length; q++) {
-        var out = (canvas.toDataURL("image/jpeg", qualities[q]).split(",")[1]) || "";
-        if (out && out.length <= 250000) return out;
-      }
-    } catch (e) {}
-    return "";
-  }
-
-  async function handleFileChosen() {
-    var file = fileEl.files && fileEl.files[0];
-    if (!file || busy || !authed) return;
-
-    clearPendingImage();
-    preparing = true;
-    sendEl.disabled = true;
-    showPreview(file.name || "", TEXT[lang].imageReading);
-
-    try {
-      var prepared = await prepareImage(file);
-      prepared.thumb = await makeThumb(prepared.url);
-      if (!preparing) return;
-      pendingImage = prepared;
-      preparing = false;
-      showPreview(file.name || "", sizeLabel(prepared));
-    } catch (e) {
-      var key = e && e.message && TEXT[lang].errors[e.message] ? e.message : "image_failed";
-      clearPendingImage();
-      addMessage("error", errorText(key));
-    } finally {
-      preparing = false;
-      if (!busy) sendEl.disabled = false;
-    }
   }
 
   function autosize() {
     inputEl.style.height = "auto";
-    inputEl.style.height = Math.min(inputEl.scrollHeight, window.innerWidth <= 720 ? 120 : 200) + "px";
-    counterEl.textContent = inputEl.value.length + "/" + inputEl.maxLength;
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + "px";
   }
 
   var SUBJECT_IDS = ["math", "physics", "chemistry", "biology", "ict"];
-  var SVG_OPEN = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
-  var SUBJECT_ICONS = {
-    math: SVG_OPEN + '<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8 7.5h8"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 15.5h.01M12 15.5h.01M15.5 15.5h.01"/></svg>',
-    physics: SVG_OPEN + '<circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>',
-    chemistry: SVG_OPEN + '<path d="M9 3h6M10 3v6l-5.2 9.2A2 2 0 0 0 6.5 21h11a2 2 0 0 0 1.7-2.8L14 9V3"/><path d="M7.5 15h9"/></svg>',
-    biology: SVG_OPEN + '<path d="M20 4C10 4 5 9 5 15c0 2 .8 3.6.8 3.6S7.6 20 10 20c6.5 0 10-5.5 10-16z"/><path d="M5 21c3-5.5 6-8.5 10.5-11"/></svg>',
-    ict: SVG_OPEN + '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>'
-  };
 
   function setView(next) {
     view = next;
@@ -1161,40 +573,12 @@
     if (next === "ask") autosize();
   }
 
-  function option(value, label) {
-    var o = document.createElement("option");
-    o.value = value;
-    o.textContent = label;
-    return o;
-  }
-
   function fillSelects() {
     var t = TEXT[lang];
-    var cv = classSel.value;
-    var sv = subjectSel.value;
-    classSel.innerHTML = "";
-    classSel.appendChild(option("", t.classLabel));
-    t.classes.forEach(function (c, i) { classSel.appendChild(option(String(i), c)); });
-    subjectSel.innerHTML = "";
-    subjectSel.appendChild(option("", t.subjectLabel));
-    SUBJECT_IDS.forEach(function (id) { subjectSel.appendChild(option(id, t.subjects[id])); });
-    classSel.value = cv;
-    subjectSel.value = sv;
-    if (classSel.value !== cv) classSel.value = "";
-    if (subjectSel.value !== sv) subjectSel.value = "";
-  }
-
-  function markSubject() {
-    var items = subjectListEl.children;
-    for (var i = 0; i < items.length; i++) {
-      items[i].classList.toggle("active", items[i].getAttribute("data-id") === subjectSel.value);
-    }
-  }
-
-  function pickSubject(id) {
-    if (history.length && !busy && chatCtx && chatCtx.subjId !== id) resetChat();
-    subjectSel.value = id;
-    markSubject();
+    classSel.innerHTML = '<option value="">' + t.classLabel + '</option>';
+    t.classes.forEach(function (c, i) { classSel.innerHTML += '<option value="' + i + '">' + c + '</option>'; });
+    subjectSel.innerHTML = '<option value="">' + t.subjectLabel + '</option>';
+    SUBJECT_IDS.forEach(function (id) { subjectSel.innerHTML += '<option value="' + id + '">' + t.subjects[id] + '</option>'; });
   }
 
   function renderSubjects() {
@@ -1203,818 +587,151 @@
     homeChipsEl.innerHTML = "";
     SUBJECT_IDS.forEach(function (id) {
       var li = document.createElement("li");
-      li.className = "subject-item sub-" + id;
-      li.setAttribute("data-id", id);
-      var b = document.createElement("button");
-      b.type = "button";
-      b.innerHTML = SUBJECT_ICONS[id] + "<span></span>";
-      b.lastChild.textContent = t.subjects[id];
-      b.addEventListener("click", function () {
-        if (history.length && chatCtx && subjectSel.value === id) return;
-        pickSubject(subjectSel.value === id ? "" : id);
+      li.className = "subject-item";
+      li.innerHTML = '<button type="button">' + t.subjects[id] + '</button>';
+      li.querySelector("button").addEventListener("click", function () {
+        subjectSel.value = id;
+        setView("ask");
       });
-      li.appendChild(b);
       subjectListEl.appendChild(li);
 
       var chip = document.createElement("button");
       chip.type = "button";
-      chip.className = "chip sub-" + id;
-      chip.innerHTML = SUBJECT_ICONS[id] + "<span></span>";
-      chip.lastChild.textContent = t.subjects[id];
+      chip.className = "chip";
+      chip.textContent = t.subjects[id];
       chip.addEventListener("click", function () {
         if (!authed) { goToLogin({ view: "ask", subject: id }); return; }
-        pickSubject(id);
+        subjectSel.value = id;
         setView("ask");
-        inputEl.focus();
       });
       homeChipsEl.appendChild(chip);
     });
-    markSubject();
-  }
-
-  function ctxFromIds(subjId, clsIdx) {
-    var t = TEXT[lang];
-    var cls = (clsIdx === null || clsIdx === undefined || clsIdx === "") ? "" : (t.classes[Number(clsIdx)] || "");
-    var subj = subjId ? (t.subjects[subjId] || "") : "";
-    return (cls || subj) ? {
-      cls: cls,
-      subj: subj,
-      subjId: subj ? subjId : "",
-      clsIdx: cls ? Number(clsIdx) : null
-    } : null;
-  }
-
-  function currentContext() {
-    return ctxFromIds(subjectSel.value, classSel.value === "" ? null : Number(classSel.value));
-  }
-
-  function updateCtxChip() {
-    var c = chatCtx ? ctxFromIds(chatCtx.subjId, chatCtx.clsIdx) : null;
-    ctxChipEl.textContent = c ? [c.cls, c.subj].filter(Boolean).join(" · ") : "";
-    askMainEl.classList.toggle("ctx-locked", !!c);
-  }
-
-  function errorText(key) {
-    var errs = TEXT[lang].errors;
-    return errs[key] || errs.generic;
-  }
-
-  function renderUsage() {
-    usageEl.textContent = authed ? TEXT[lang].usage(user, usage.used, usage.limit) : "";
   }
 
   function applyLanguage() {
     var t = TEXT[lang];
-    document.documentElement.lang = lang;
-    updatePlaceholder();
     sendLabelEl.textContent = t.getAnswer;
-    newChatEl.textContent = t.newChat;
-    logoutLabelEl.textContent = t.logout;
-    logoutEl.title = t.logout;
-    logoutEl.setAttribute("aria-label", t.logout);
-    loginOpenLabelEl.textContent = t.loginOpen;
-    historyLabelEl.textContent = t.historyBtn;
     navHomeLabel.textContent = t.navHome;
     navAskLabel.textContent = t.navAsk;
+    historyLabelEl.textContent = t.historyBtn;
     heroT1.textContent = t.heroTitle1;
-    heroT2.textContent = t.heroTitle2;
     heroSub.textContent = t.heroSub;
     homeInput.placeholder = t.homePlaceholder;
     homeSendLabel.textContent = t.homeAsk;
-    homeAttach.title = t.attach;
-    homeAttach.setAttribute("aria-label", t.attach);
     askTitleEl.textContent = t.askTitle;
     answerTitleEl.textContent = t.answerTitle;
     attachLabelEl.textContent = t.addImage;
+    welcomeEl.textContent = t.welcome;
     fillSelects();
     renderSubjects();
-    refreshMeta();
-    updateCtxChip();
     drawerTitleEl.textContent = t.historyTitle;
     drawerNewEl.textContent = "+ " + t.newChat;
-    attachEl.title = t.attach;
-    attachEl.setAttribute("aria-label", t.attach);
-    previewRemoveEl.title = t.removeImage;
-    previewRemoveEl.setAttribute("aria-label", t.removeImage);
-    if (preparing) previewStatusEl.textContent = t.imageReading;
-    noteEl.textContent = t.note;
-    welcomeEl.textContent = t.welcome;
-    loginTitle.textContent = t.loginTitle;
-    loginHint.textContent = t.loginHint;
-    loginNameLabel.textContent = t.nameLabel;
-    loginCodeLabel.textContent = t.codeLabel;
-    loginBtn.textContent = t.loginBtn;
-    toSignupEl.textContent = t.toSignup;
-    toLoginEl.textContent = t.toLogin;
-    document.getElementById("signup-title").textContent = t.signupTitle;
-    document.getElementById("signup-hint").textContent = t.signupHint;
-    document.getElementById("signup-name-label").textContent = t.signupNameLabel;
-    document.getElementById("signup-pass-label").textContent = t.signupPassLabel;
-    document.getElementById("signup-pass2-label").textContent = t.signupPass2Label;
-    document.getElementById("signup-invite-label").textContent = t.signupInviteLabel;
-    signupBtn.textContent = t.signupBtn;
-    loginError.textContent = loginErrorKey ? errorText(loginErrorKey) : "";
     langBn.classList.toggle("active", lang === "bn");
     langEn.classList.toggle("active", lang === "en");
-    langBn.setAttribute("aria-pressed", lang === "bn");
-    langEn.setAttribute("aria-pressed", lang === "en");
-    renderUsage();
-
-    suggestionsEl.innerHTML = "";
-    t.suggestions.forEach(function (q) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.textContent = q;
-      b.addEventListener("click", function () { ask(q); });
-      suggestionsEl.appendChild(b);
-    });
-  }
-
-  function resetChat() {
-    history = [];
-    chatId = null;
-    chatTitle = "";
-    chatCtx = null;
-    updateCtxChip();
-    clearPendingImage();
-    chatEl.innerHTML = "";
-    lastMetaDay = "";
-    suggestionsEl.classList.remove("hidden");
-    askMainEl.scrollTop = 0;
-  }
-
-  function setLanguage(next) {
-    lang = next;
-    removeActions();
-    try { localStorage.setItem("aiteacher_lang", lang); } catch (e) {}
-    applyLanguage();
-    if (authed && history.length === 0) resetChat();
-  }
-
-  function setAuthMode(mode) {
-    var signup = mode === "signup";
-    loginForm.hidden = signup;
-    signupForm.hidden = !signup;
-    signupError.textContent = "";
-    signupPass.value = "";
-    signupPass2.value = "";
-    signupInvite.value = "";
   }
 
   function goToLogin(after) {
     afterLogin = after || null;
-    loginErrorKey = null;
-    loginError.textContent = "";
-    setAuthMode("login");
     setView("login");
-    loginName.focus();
-  }
-
-  function continueAfterLogin() {
-    var next = afterLogin;
-    afterLogin = null;
-    if (!next || next.view !== "ask") return;
-    if (next.subject) pickSubject(next.subject);
-    if (next.question) {
-      homeInput.value = "";
-      ask(next.question);
-    } else {
-      setView("ask");
-      inputEl.focus();
-    }
   }
 
   function showApp(data) {
     authed = true;
     user = data.user || "";
-    usage = { used: data.used || 0, limit: data.limit || 0 };
-    loginErrorKey = null;
     appEl.classList.remove("logged-out");
     applyLanguage();
-    resetChat();
     setView("home");
-    continueAfterLogin();
   }
-
-  function showGuest(errorKey, goLogin) {
-    authed = false;
-    user = "";
-    history = [];
-    afterLogin = null;
-    clearPendingImage();
-    chatEl.innerHTML = "";
-    chatId = null;
-    chatTitle = "";
-    chatCtx = null;
-    closeDrawer();
-    appEl.classList.add("logged-out");
-    loginErrorKey = errorKey || null;
-    loginCode.value = "";
-    setAuthMode("login");
-    applyLanguage();
-    setView(goLogin ? "login" : "home");
-  }
-
-  function showLogin(errorKey) { showGuest(errorKey, true); }
 
   async function checkSession() {
     try {
       var res = await fetch("/api/me");
-      var data = null;
-      try { data = await res.json(); } catch (e) {}
+      var data = await res.json();
       if (res.ok && data && data.ok) showApp(data);
-      else if (data && data.error === "server_not_configured") showLogin("server_not_configured");
-      else showGuest(null, false);
+      else setView("home");
     } catch (e) {
-      showLogin("network");
+      setView("home");
     } finally {
       appEl.classList.remove("checking");
     }
   }
 
-  async function doLogin(e) {
-    e.preventDefault();
-    if (loginBtn.disabled) return;
-    loginBtn.disabled = true;
-    loginBtn.textContent = TEXT[lang].loggingIn;
-    loginError.textContent = "";
-    try {
-      var res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: loginName.value, code: loginCode.value })
-      });
-      var data = null;
-      try { data = await res.json(); } catch (err) {}
-      if (res.ok && data && data.ok) {
-        loginCode.value = "";
-        showApp(data);
-      } else {
-        loginErrorKey = (data && data.error) || "generic";
-        loginCode.value = "";
-        loginError.textContent = errorText(loginErrorKey);
-      }
-    } catch (err) {
-      loginErrorKey = "network";
-      loginError.textContent = errorText("network");
-    } finally {
-      loginBtn.disabled = false;
-      loginBtn.textContent = TEXT[lang].loginBtn;
-    }
-  }
-
-  async function doSignup(e) {
-    e.preventDefault();
-    if (signupBtn.disabled) return;
-    var t = TEXT[lang];
-    signupError.textContent = "";
-    if (signupPass.value.length < 8) { signupError.textContent = errorText("weak_password"); return; }
-    if (signupPass.value !== signupPass2.value) { signupError.textContent = errorText("password_mismatch"); return; }
-    signupBtn.disabled = true;
-    signupBtn.textContent = t.signingUp;
-    try {
-      var res = await fetch("/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: signupName.value, code: signupPass.value, invite: signupInvite.value })
-      });
-      var data = null;
-      try { data = await res.json(); } catch (err) {}
-      if (res.ok && data && data.ok) {
-        signupPass.value = ""; signupPass2.value = ""; signupInvite.value = "";
-        showApp(data);
-      } else {
-        signupPass.value = ""; signupPass2.value = ""; signupInvite.value = "";
-        signupError.textContent = errorText((data && data.error) || "generic");
-      }
-    } catch (err) {
-      signupError.textContent = errorText("network");
-    } finally {
-      signupBtn.disabled = false;
-      signupBtn.textContent = TEXT[lang].signupBtn;
-    }
-  }
-
-  async function doLogout() {
-    try { await fetch("/api/logout", { method: "POST" }); } catch (e) {}
-    showGuest(null, false);
-  }
-
-  function buildMessages() {
-    var recent = history.slice(-MAX_HISTORY);
-    var imagesLeft = KEEP_IMAGES_IN_REQUEST;
-    var out = [];
-    for (var i = recent.length - 1; i >= 0; i--) {
-      var m = recent[i];
-      var item = { role: m.role, text: m.text };
-      if (m.role === "user" && m.ctx && i === recent.length - 1) {
-        item.text = TEXT[lang].context(m.ctx.cls, m.ctx.subj) + (m.text || TEXT[lang].defaultImageQuestion);
-      }
-      if (m.image && imagesLeft > 0) {
-        item.image = { mime: m.image.mime, data: m.image.data };
-        imagesLeft--;
-      }
-      if (!item.text && i !== recent.length - 1) item.text = TEXT[lang].imageOnly;
-      out.unshift(item);
-    }
-    return out;
-  }
-
   async function ask(question) {
     var q = (question || "").trim();
     var image = pendingImage;
-    if ((!q && !image) || busy || preparing || !authed) return;
+    if ((!q && !image) || busy) return;
     setView("ask");
-
-    suggestionsEl.classList.add("hidden");
-    removeActions();
-    var askedAt = Date.now();
-    addMeta("user", askedAt);
+    addMeta("user");
     addUserMessage(q, image);
-
-    var ctx;
-    if (chatCtx) {
-      ctx = ctxFromIds(chatCtx.subjId, chatCtx.clsIdx);
-    } else {
-      ctx = currentContext();
-      if (ctx) {
-        chatCtx = { subjId: ctx.subjId, clsIdx: ctx.clsIdx };
-        updateCtxChip();
-      }
-    }
-    history.push({ role: "user", text: q, image: image, ctx: ctx, ts: askedAt });
-    clearPendingImage();
+    history.push({ role: "user", text: q, image: image });
+    pendingImage = null;
     inputEl.value = "";
     autosize();
     setBusy(true);
 
     var typing = addMessage("bot", "");
     typing.classList.add("typing");
-    typing.textContent = TEXT[lang].thinking;
+    typing.textContent = "ভাবছি…";
 
     try {
       var res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lang: lang,
-          subject: (history[history.length - 1].ctx && history[history.length - 1].ctx.subjId) || "",
-          cls: history[history.length - 1].ctx ? history[history.length - 1].ctx.clsIdx : null,
-          messages: buildMessages()
-        })
+        body: JSON.stringify({ lang: lang, messages: history })
       });
-      var type = res.headers.get("Content-Type") || "";
 
-      if (res.ok && res.body && type.indexOf("text/event-stream") !== -1) {
-        await readStream(res, typing, askedAt);
-      } else {
-        var data = null;
-        try { data = await res.json(); } catch (e) {}
-        typing.remove();
-        handleFailure(data && data.error, data);
-      }
-    } catch (e) {
+      var text = "";
       typing.remove();
-      addMessage("error", errorText("network"));
-      history.pop();
+      var botEl = addMessage("bot", "");
+
+      var reader = res.body.getReader();
+      var decoder = new TextDecoder("utf-8");
+      var buffer = "";
+
+      while (true) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, { stream: true });
+        var lines = buffer.split("\n\n");
+        buffer = lines.pop();
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i].trim();
+          if (line.startsWith("data:")) {
+            try {
+              var ev = JSON.parse(line.slice(5).trim());
+              if (ev.t) { text += ev.t; botEl.innerHTML = renderMarkdown(text, false); }
+            } catch (err) {}
+          }
+        }
+      }
+      botEl.innerHTML = renderMarkdown(text, true);
+      history.push({ role: "assistant", text: text });
+      addAnswerActions(text);
+    } catch (e) {
+      addMessage("error", "উত্তর আনতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
     } finally {
       setBusy(false);
     }
   }
 
-  function handleFailure(key, data) {
-    history.pop();
-    if (key === "unauthorized") {
-      showLogin("unauthorized");
-      return;
-    }
-    if (key === "daily_limit" && data) {
-      usage = { used: data.limit || usage.limit, limit: data.limit || usage.limit };
-      renderUsage();
-    }
-    addMessage("error", (data && data.detail) || errorText(key));
-  }
-
-  async function readStream(res, typing, askedAt) {
-    var answerTs = 0;
-    var metaEl = null;
-    var reader = res.body.getReader();
-    var decoder = new TextDecoder("utf-8");
-    var buffer = "";
-    var answer = "";
-    var botEl = null;
-    var finished = false;
-    var failKey = null;
-    var mismatch = false;
-    var paintQueued = false;
-    var needAlign = false;
-
-    var finalPainted = false;
-    function paint(final) {
-      paintQueued = false;
-      if (!botEl) return;
-      if (final !== true && finalPainted) return;
-      if (final === true) finalPainted = true;
-      botEl.innerHTML = renderMarkdown(answer, final === true);
-      if (final === true) renderDiagrams(botEl);
-      if (needAlign) { needAlign = false; botEl.scrollIntoView({ block: "start" }); }
-    }
-
-    function queuePaint() {
-      if (paintQueued) return;
-      paintQueued = true;
-      requestAnimationFrame(function () { paint(false); });
-    }
-
-    function handleEvent(raw) {
-      var lines = raw.split(/\r?\n/);
-      var payload = "";
-      for (var i = 0; i < lines.length; i++) {
-        if (lines[i].indexOf("data:") === 0) payload += lines[i].slice(5).trim();
-      }
-      if (!payload) return;
-      var ev;
-      try { ev = JSON.parse(payload); } catch (e) { return; }
-
-      if (typeof ev.t === "string" && ev.t) {
-        if (!botEl) {
-          typing.remove();
-          answerTs = Date.now();
-          metaEl = addMeta("bot", answerTs);
-          botEl = addMessage("bot", "");
-          botEl.classList.add("streaming");
-          needAlign = true;
-        }
-        answer += ev.t;
-        queuePaint();
-      } else if (ev.done) {
-        finished = true;
-        if (ev.mismatch) mismatch = true;
-        if (typeof ev.used === "number") {
-          usage = { used: ev.used, limit: ev.limit || usage.limit };
-          renderUsage();
-        }
-      } else if (ev.e) {
-        failKey = ev.e;
-      }
-    }
-
-    try {
-      while (true) {
-        var chunk = await reader.read();
-        if (chunk.done) break;
-        buffer += decoder.decode(chunk.value, { stream: true });
-        var m;
-        while ((m = /\r?\n\r?\n/.exec(buffer))) {
-          var raw = buffer.slice(0, m.index);
-          buffer = buffer.slice(m.index + m[0].length);
-          handleEvent(raw);
-        }
-      }
-      if (buffer.trim()) handleEvent(buffer);
-    } catch (e) {
-      failKey = failKey || "network";
-    }
-
-    if (botEl) {
-      botEl.classList.remove("streaming");
-      paint(finished && !failKey);
-    } else {
-      typing.remove();
-    }
-
-    if (answer) {
-      var took = finished && askedAt ? Date.now() - askedAt : 0;
-      if (metaEl && took) { metaEl.setAttribute("data-dur", String(took)); renderMeta(metaEl); }
-      history.push({ role: "assistant", text: answer, ts: answerTs || Date.now(), dur: took || undefined });
-      if (mismatch && history.length === 2 && chatCtx) { chatCtx = null; history[0].ctx = null; updateCtxChip(); }
-      saveChat();
-      if (!finished) addMessage("error", errorText(failKey || "network"));
-      else if (!mismatch) addAnswerActions(answer);
-    } else {
-      handleFailure(failKey || "generic", null);
-    }
-  }
-
-  var MAX_SAVED_MESSAGES = 40;
-
-  function newChatId() {
-    return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  }
-
-  function titleFrom(text) {
-    var t = (text || "").replace(/\s+/g, " ").trim();
-    if (!t) t = TEXT[lang].imageOnly;
-    return t.length > 50 ? t.slice(0, 50) + "…" : t;
-  }
-
-  async function saveChat() {
-    if (!authed || !history.length) return;
-    if (!chatId) chatId = newChatId();
-    var needTitle = false;
-    if (!chatTitle) {
-      var first = null;
-      for (var i = 0; i < history.length; i++) {
-        if (history[i].role === "user") { first = history[i]; break; }
-      }
-      chatTitle = titleFrom(first && first.text);
-      needTitle = !!(first && first.image);
-    }
-    var id = chatId;
-
-    for (var k = 0; k < history.length; k++) {
-      var im = history[k].image;
-      if (im && im.thumb && !im.imgId) {
-        var newId = newChatId();
-        if (await uploadImage(id, newId, im.thumb)) im.imgId = newId;
-        else im.thumb = "";
-      }
-    }
-
-    var msgs = history.slice(-MAX_SAVED_MESSAGES).map(function (m) {
-      return {
-        role: m.role,
-        text: m.text || "",
-        img: !!(m.image || m.img),
-        imgId: (m.image && m.image.imgId) || m.imgId || undefined,
-        ts: m.ts || undefined,
-        dur: m.dur || undefined,
-        fb: m.fb || undefined,
-        ctx: (m.role === "user" && m.ctx && (m.ctx.subjId || m.ctx.clsIdx !== null && m.ctx.clsIdx !== undefined))
-          ? { s: m.ctx.subjId || "", c: (m.ctx.clsIdx === null || m.ctx.clsIdx === undefined) ? undefined : m.ctx.clsIdx }
-          : undefined
-      };
-    });
-    var ok = false;
-    try {
-      var res = await fetch("/api/chats", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: id, title: chatTitle, messages: msgs })
-      });
-      if (res.status === 401) showLogin("unauthorized");
-      ok = res.ok;
-    } catch (e) {}
-    if (ok && needTitle) improveTitle(id);
-  }
-
-  async function uploadImage(chat, imgId, base64) {
-    try {
-      var res = await fetch("/api/chats?img=" + encodeURIComponent(imgId) + "&chat=" + encodeURIComponent(chat), {
-        method: "PUT",
-        headers: { "Content-Type": "text/plain" },
-        body: base64
-      });
-      if (res.status === 401) showLogin("unauthorized");
-      return res.ok;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  async function improveTitle(id) {
-    var question = "";
-    var answer = "";
-    for (var i = 0; i < history.length; i++) {
-      if (history[i].role === "user" && !question) question = history[i].text || "";
-      if (history[i].role === "assistant" && !answer) answer = history[i].text || "";
-    }
-    if (!answer) return;
-    try {
-      var res = await fetch("/api/title", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lang: lang, question: question, answer: answer })
-      });
-      var data = await readJson(res);
-      if (!res.ok || !data || !data.ok || !data.title) return;
-      if (id !== chatId) return;
-      chatTitle = data.title;
-      if (!busy) saveChat();
-    } catch (e) {}
-  }
-
-  function openDrawer() {
-    if (!authed) return;
-    drawerEl.classList.add("open");
-    backdropEl.classList.add("show");
-    drawerEl.setAttribute("aria-hidden", "false");
-    loadChatList();
-  }
-
-  function closeDrawer() {
-    drawerEl.classList.remove("open");
-    backdropEl.classList.remove("show");
-    drawerEl.setAttribute("aria-hidden", "true");
-  }
-
-  async function readJson(res) {
-    try { return await res.json(); } catch (e) { return null; }
-  }
-
-  async function loadChatList() {
-    drawerMsgEl.textContent = TEXT[lang].loadingChats;
-    chatListEl.innerHTML = "";
-    try {
-      var res = await fetch("/api/chats");
-      var data = await readJson(res);
-      if (res.status === 401) { showLogin("unauthorized"); return; }
-      if (!res.ok || !data || !data.ok) {
-        drawerMsgEl.textContent = errorText(data && data.error === "history_not_configured" ? "history_not_configured" : "history_failed");
-        return;
-      }
-      renderChatList(data.chats || []);
-    } catch (e) {
-      drawerMsgEl.textContent = errorText("network");
-    }
-  }
-
-  function renderChatList(chats) {
-    chatListEl.innerHTML = "";
-    drawerMsgEl.textContent = chats.length ? "" : TEXT[lang].noChats;
-    chats.forEach(function (c) {
-      var li = document.createElement("li");
-      li.className = "chat-item" + (c.id === chatId ? " active" : "");
-
-      var open = document.createElement("button");
-      open.type = "button";
-      open.className = "chat-open";
-      open.textContent = c.title || TEXT[lang].untitled;
-      open.addEventListener("click", function () { openChat(c.id); });
-
-      var del = document.createElement("button");
-      del.type = "button";
-      del.className = "chat-del";
-      del.title = TEXT[lang].deleteChat;
-      del.setAttribute("aria-label", TEXT[lang].deleteChat);
-      del.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
-      del.addEventListener("click", function () { deleteChatById(c.id); });
-
-      li.appendChild(open);
-      li.appendChild(del);
-      chatListEl.appendChild(li);
-    });
-  }
-
-  function showChat(chat) {
-    resetChat();
-    chatEl.innerHTML = "";
-    lastMetaDay = "";
-    suggestionsEl.classList.add("hidden");
-    chatId = chat.id;
-    chatTitle = chat.title || "";
-    var placeholders = [TEXT.bn.imageOnly, TEXT.en.imageOnly];
-    (chat.messages || []).forEach(function (m) {
-      if (m.role === "user") {
-        var raw = (m.img && placeholders.indexOf(m.text) !== -1) ? "" : (m.text || "");
-        addMeta("user", m.ts);
-        if (m.img && m.imgId) {
-          addUserMessage(raw, { url: "/api/chats?img=" + encodeURIComponent(m.imgId) });
-        } else {
-          addUserMessage((m.img ? "🖼 " : "") + (raw || (m.img ? TEXT[lang].imageOnly : "")), null);
-        }
-        var sctx = m.ctx ? { cls: "", subj: "", subjId: m.ctx.s || "", clsIdx: Number.isInteger(m.ctx.c) ? m.ctx.c : null } : null;
-        history.push({ role: "user", text: raw, image: null, img: !!m.img, imgId: m.imgId || "", ts: m.ts, ctx: sctx });
-        if (sctx && !chatCtx) chatCtx = { subjId: sctx.subjId, clsIdx: sctx.clsIdx };
-      } else {
-        addMeta("bot", m.ts, m.dur);
-        addMessage("bot", m.text || "");
-        history.push({ role: "assistant", text: m.text || "", ts: m.ts, dur: m.dur, fb: m.fb });
-      }
-    });
-    updateCtxChip();
-    if (chatCtx) {
-      classSel.value = chatCtx.clsIdx === null ? "" : String(chatCtx.clsIdx);
-      subjectSel.value = chatCtx.subjId || "";
-      markSubject();
-    }
-    var last = history[history.length - 1];
-    if (last && last.role === "assistant") addAnswerActions(last.text);
-    scrollChat();
-    if (placeholders.indexOf(chatTitle) !== -1) improveTitle(chatId);
-  }
-
-  async function openChat(id) {
-    if (busy || !authed) return;
-    if (id === chatId) { setView("ask"); closeDrawer(); return; }
-    drawerMsgEl.textContent = TEXT[lang].loadingChats;
-    try {
-      var res = await fetch("/api/chats?id=" + encodeURIComponent(id));
-      var data = await readJson(res);
-      if (res.status === 401) { showLogin("unauthorized"); return; }
-      if (!res.ok || !data || !data.ok || !data.chat) {
-        drawerMsgEl.textContent = errorText("history_failed");
-        return;
-      }
-      showChat(data.chat);
-      setView("ask");
-      closeDrawer();
-    } catch (e) {
-      drawerMsgEl.textContent = errorText("network");
-    }
-  }
-
-  async function deleteChatById(id) {
-    if (busy || !authed) return;
-    if (!window.confirm(TEXT[lang].deleteAsk)) return;
-    try {
-      var res = await fetch("/api/chats?id=" + encodeURIComponent(id), { method: "DELETE" });
-      if (res.status === 401) { showLogin("unauthorized"); return; }
-      if (!res.ok) { drawerMsgEl.textContent = errorText("history_failed"); return; }
-      if (id === chatId) resetChat();
-      loadChatList();
-    } catch (e) {
-      drawerMsgEl.textContent = errorText("network");
-    }
-  }
-
-  formEl.addEventListener("submit", function (e) {
-    e.preventDefault();
-    ask(inputEl.value);
-  });
-
-  inputEl.addEventListener("input", autosize);
-  inputEl.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
-      e.preventDefault();
-      formEl.requestSubmit();
-    }
-  });
-
-  attachEl.addEventListener("click", function () { if (!busy && !preparing && authed) fileEl.click(); });
-  fileEl.addEventListener("change", handleFileChosen);
-  previewRemoveEl.addEventListener("click", function () { if (!busy) clearPendingImage(); });
-
-  loginForm.addEventListener("submit", doLogin);
-  signupForm.addEventListener("submit", doSignup);
-  toSignupEl.addEventListener("click", function (e) { e.preventDefault(); setAuthMode("signup"); signupName.focus(); });
-  toLoginEl.addEventListener("click", function (e) { e.preventDefault(); setAuthMode("login"); loginName.focus(); });
-  logoutEl.addEventListener("click", function () { if (!busy) doLogout(); });
-  newChatEl.addEventListener("click", function () { if (!busy && authed) resetChat(); });
-  langBn.addEventListener("click", function () { setLanguage("bn"); });
-  langEn.addEventListener("click", function () { setLanguage("en"); });
-
-  historyBtn.addEventListener("click", openDrawer);
-  drawerCloseEl.addEventListener("click", closeDrawer);
-  backdropEl.addEventListener("click", closeDrawer);
-  drawerNewEl.addEventListener("click", function () { if (!busy && authed) { resetChat(); setView("ask"); closeDrawer(); } });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
-
-  navHome.addEventListener("click", function () { setView("home"); });
-  navAsk.addEventListener("click", function () {
-    if (!authed) { goToLogin({ view: "ask" }); return; }
-    setView("ask");
-    inputEl.focus();
-  });
-  loginOpenEl.addEventListener("click", function () { goToLogin({ view: "home" }); });
-
+  // ইভেন্ট লিসেনার
+  formEl.addEventListener("submit", function (e) { e.preventDefault(); ask(inputEl.value); });
   homeForm.addEventListener("submit", function (e) {
     e.preventDefault();
+    if (!authed) { goToLogin({ view: "ask" }); return; }
     var q = homeInput.value.trim();
-    if (!q || busy) return;
-    if (!authed) { goToLogin({ view: "ask", question: q }); return; }
     homeInput.value = "";
     ask(q);
   });
-  homeAttach.addEventListener("click", function () {
-    if (busy || preparing) return;
-    if (!authed) { goToLogin({ view: "ask" }); return; }
-    setView("ask");
-    fileEl.click();
-  });
+  inputEl.addEventListener("input", autosize);
 
-  chatEl.addEventListener("click", function (e) {
-    var btn = e.target && e.target.closest ? e.target.closest(".code-copy, .out-run") : null;
-    if (!btn) return;
-    if (btn.classList.contains("code-copy")) {
-      var codeEl = btn.closest(".code-block").querySelector("code");
-      copyText(codeEl.textContent).then(function () {
-        btn.textContent = TEXT[lang].copied;
-        setTimeout(function () { btn.textContent = TEXT[lang].copy; }, 1600);
-      }, function () {});
-    } else {
-      var card = btn.closest(".out-card");
-      var frame = card && card.querySelector(".out-frame");
-      if (!frame) return;
-      frame.setAttribute("sandbox", "allow-scripts");
-      frame.setAttribute("srcdoc", frame.getAttribute("data-srcdoc") || "");
-      frame.classList.add("show");
-      btn.remove();
-    }
-  });
+  historyBtn.addEventListener("click", function () { drawerEl.classList.add("open"); backdropEl.classList.add("show"); });
+  drawerCloseEl.addEventListener("click", function () { drawerEl.classList.remove("open"); backdropEl.classList.remove("show"); });
+  backdropEl.addEventListener("click", function () { drawerEl.classList.remove("open"); backdropEl.classList.remove("show"); });
 
-  subjectSel.addEventListener("change", markSubject);
-  classSel.addEventListener("change", function () {
-    try { localStorage.setItem("aiteacher_class", classSel.value); } catch (e) {}
-  });
+  navHome.addEventListener("click", function () { setView("home"); });
+  navAsk.addEventListener("click", function () { setView("ask"); });
 
   applyLanguage();
-  try {
-    var savedClass = localStorage.getItem("aiteacher_class");
-    if (savedClass !== null && /^[0-9]*$/.test(savedClass) && classSel.querySelector('option[value="' + savedClass + '"]')) {
-      classSel.value = savedClass;
-    }
-  } catch (e) {}
-  autosize();
   checkSession();
 })();
