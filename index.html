@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI Teacher</title>
-  <meta name="description" content="প্রশ্ন করুন, AI Teacher সহজ ভাষায় বুঝিয়ে দেবে। Ask anything and learn step by step.">
+  <meta name="description" content="প্রশ্ন করুন, AI Teacher সহজ ভাষায় বুঝিয়ে দেবে।">
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <!-- KaTeX draws maths (fractions, powers, roots) properly. If it cannot load, formulas fall back to plain text. -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="style.css">
+  <!-- v=2 যুক্ত করা হয়েছে যাতে ব্রাউজার ক্যাশ ভেঙে নতুন স্টাইল লোড করে -->
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <div id="app" class="app logged-out checking" data-view="home">
@@ -77,7 +77,6 @@
         <a href="#" id="to-signup" class="login-switch" role="button"></a>
       </form>
 
-      <!-- sign-up: a student makes their own ID (needs the invite code; only a few places) -->
       <form id="signup-form" class="login-card" autocomplete="on" hidden>
         <h2 id="signup-title"></h2>
         <p id="signup-hint" class="login-hint"></p>
@@ -132,7 +131,6 @@
           <h2 id="ask-title"></h2>
           <p id="welcome" class="welcome"></p>
 
-          <!-- The chosen picture waits here (as a small card) until the question is sent. -->
           <div id="preview" class="preview hidden">
             <div class="preview-thumb">
               <img id="preview-img" alt="">
@@ -153,13 +151,11 @@
           </div>
 
           <div class="ask-controls">
-            <!-- Gallery only: no "capture" attribute, so the camera is not opened directly. -->
             <button id="attach" type="button" class="pill-btn">
               <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 9"/></svg>
               <span id="attach-label"></span>
             </button>
             <input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden>
-            <!-- Once a chat has started, its class and subject are shown here instead of the two boxes. -->
             <span id="ctx-chip" class="ctx-chip"></span>
             <select id="class-sel" class="pill-select"></select>
             <select id="subject-sel" class="pill-select"></select>
@@ -184,7 +180,7 @@
       </div>
     </section>
 
-    <!-- ===== chat history: slides in from the left ===== -->
+    <!-- ===== chat history ===== -->
     <div id="backdrop" class="backdrop"></div>
     <aside id="drawer" class="drawer" aria-hidden="true">
       <div class="drawer-head">
