@@ -360,15 +360,25 @@
     return html;
   }
 
+  function formatRichText(raw) {
+    var maths = [];
+    var source = extractMath(raw, maths);
+    var html = inline(escapeHtml(source));
+    html = html.replace(/\uE000(\d+)\uE001/g, function (m, n) {
+      return maths[Number(n)] ? renderTex(maths[Number(n)]) : "";
+    });
+    return html;
+  }
+
   function unescapeHtml(s) {
     return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
   }
 
-  // ===== অল-ইন-ওয়ান স্মার্ট MCQ কার্ড রেন্ডারার =====
+  // ===== অল-ইন-ওয়ান শক্তিশালী MCQ কার্ড রেন্ডারার =====
   function buildMcqHtml(question, options, explanation, whyWrong, trick) {
     var html = '<div class="mcq-card-ui">';
     if (question) {
-      html += '<div class="mcq-header"><span class="mcq-badge">MCQ</span><h4 class="mcq-q-title">' + inline(escapeHtml(question)) + '</h4></div>';
+      html += '<div class="mcq-header"><span class="mcq-badge">MCQ</span><h4 class="mcq-q-title">' + formatRichText(question) + '</h4></div>';
     }
 
     if (options.length) {
@@ -377,7 +387,7 @@
         var cls = "mcq-opt-item" + (opt.correct ? " is-correct" : "");
         html += '<div class="' + cls + '">';
         html += '<span class="mcq-opt-key">' + escapeHtml(opt.key) + '</span>';
-        html += '<span class="mcq-opt-text">' + inline(escapeHtml(opt.text)) + '</span>';
+        html += '<span class="mcq-opt-text">' + formatRichText(opt.text) + '</span>';
         if (opt.correct) {
           html += '<span class="mcq-check-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span>';
         }
@@ -388,7 +398,7 @@
 
     if (explanation.length) {
       html += '<div class="mcq-exp-box"><div class="mcq-exp-head">ব্যাখ্যা</div>';
-      html += '<div class="mcq-exp-body">' + inline(escapeHtml(explanation.join("<br>"))) + '</div></div>';
+      html += '<div class="mcq-exp-body">' + formatRichText(explanation.join("<br>")) + '</div></div>';
     }
 
     if (whyWrong.length) {
@@ -396,21 +406,25 @@
       html += '<span>অন্যান্য অপশন কেন ভুল?</span>';
       html += '<span class="mcq-plus-icon">+</span></summary><div class="mcq-wrong-body"><ul>';
       whyWrong.forEach(function (w) {
-        html += '<li>' + inline(escapeHtml(w)) + '</li>';
+        html += '<li>' + formatRichText(w) + '</li>';
       });
       html += '</ul></div></details>';
     }
 
     if (trick.length) {
-      html += '<div class="mcq-trick-box"><strong>💡 মনে রাখার কৌশল:</strong> ' + inline(escapeHtml(trick.join(" "))) + '</div>';
+      html += '<div class="mcq-trick-box"><strong>💡 মনে রাখার কৌশল / স্বর্ণসূত্র:</strong> ' + formatRichText(trick.join(" ")) + '</div>';
     }
 
     html += '</div>';
     return html;
   }
 
+  // যেভাবেই লিখুক ( *(a), ক), 1), (ক) ) চিনে কার্ড বানানোর বুলেটপ্রুফ পার্সার
   function parseNaturalMcq(text) {
-    if (!/([কখগঘA-D]\s*[\).:-]).*([কখগঘA-D]\s*[\).:-])/s.test(text) && !/MCQ/i.test(text)) return null;
+    if (!/\[QUESTION\]|\[OPTIONS\]/i.test(text) && !/(\(?\*?[কখগঘA-Da-d1-4]\)?\s*[\).:-]).*(\(?\*?[কখগঘA-Da-d1-4]\)?\s*[\).:-])/s.test(text)) {
+      return null;
+    }
+
     var lines = text.split(/\r?\n/);
     var question = "";
     var options = [];
@@ -423,19 +437,25 @@
       var line = lines[i].trim();
       if (!line || line === "MCQ") continue;
 
-      if (/^(ব্যাখ্যা|Explanation)/i.test(line)) { section = "e"; continue; }
-      if (/^(অন্যান্য অপশন|বাকি অপশন|অন্য অপশন|Why other)/i.test(line)) { section = "w"; continue; }
-      if (/^(মনে রাখার কৌশল|শর্টকাট|Memory trick)/i.test(line)) { section = "t"; continue; }
+      // সেকশন ট্যাগ শনাক্তকরণ
+      if (/^\[QUESTION\]/i.test(line)) { section = "q"; continue; }
+      if (/^\[OPTIONS\]/i.test(line)) { section = "o"; continue; }
+      if (/^\[EXPLANATION\]/i.test(line) || /^(ব্যাখ্যা|Explanation)/i.test(line)) { section = "e"; continue; }
+      if (/^\[WHY_WRONG\]/i.test(line) || /^(অন্যান্য অপশন|বাকি অপশন|অন্য অপশন|Why other)/i.test(line)) { section = "w"; continue; }
+      if (/^\[TRICK\]/i.test(line) || /^(মনে রাখার কৌশল|শর্টকাট|স্বর্ণসূত্র|Memory trick)/i.test(line)) { section = "t"; continue; }
 
-      var optMatch = line.match(/^(\*?\s*)([কখগঘA-Da-d][\).:-]?)\s*(.*)$/);
-      if (optMatch && section !== "e" && section !== "w" && section !== "t") {
-        var isCorrect = optMatch[1].indexOf("*") !== -1 || line.indexOf("✓") !== -1 || line.indexOf("✔") !== -1 || line.indexOf("সঠিক") !== -1;
+      // অপশন শনাক্তকরণ: *(a), (b), *ক), খ., গ) সবকিছু সাপোর্ট করবে
+      var optMatch = line.match(/^(\*?\s*)\(?([কখগঘA-Da-d1-4])\)?[\).:-]?\s*(.*)$/);
+      if (optMatch && (section === "o" || section === "q")) {
+        section = "o";
+        var isCorrect = optMatch[1].indexOf("*") !== -1 || line.indexOf("✓") !== -1 || line.indexOf("✔") !== -1 || line.indexOf("(সঠিক)") !== -1;
+        var keyLabel = line.indexOf("(") === 0 || optMatch[0].indexOf("(") !== -1 ? "(" + optMatch[2] + ")" : optMatch[2] + ")";
         var optText = optMatch[3].replace(/[✓✔]/g, "").replace(/\(সঠিক\)/g, "").trim();
-        options.push({ key: optMatch[2], text: optText, correct: isCorrect });
+        options.push({ key: keyLabel, text: optText, correct: isCorrect });
         continue;
       }
 
-      if (section === "q" && !options.length) {
+      if (section === "q") {
         question += (question ? " " : "") + line;
       } else if (section === "e") {
         explanation.push(line);
@@ -879,13 +899,14 @@
   formEl.addEventListener("submit", function (e) { e.preventDefault(); ask(inputEl.value); });
   homeForm.addEventListener("submit", function (e) {
     e.preventDefault();
+    if (!authed) { goToLogin({ view: "ask" }); return; }
     var q = homeInput.value.trim();
     homeInput.value = "";
     ask(q);
   });
   inputEl.addEventListener("input", autosize);
 
-  // ছবি আপলোড বাটন ক্লিক হ্যান্ডলার
+  // ছবি আপলোড বাটন
   attachEl.addEventListener("click", function () { if (!busy && !preparing) fileEl.click(); });
   homeAttach.addEventListener("click", function () {
     setView("ask");
