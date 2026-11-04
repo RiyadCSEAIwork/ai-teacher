@@ -257,20 +257,19 @@
   var answerCardEl = document.querySelector(".answer-card");
   var welcomeEl = document.getElementById("welcome");
 
+  // ===== চ্যাট শুরু হলে ইনপুট বক্সকে নিচে পাঠানোর কন্ট্রোলার =====
   function syncHasChat() {
     var has = chatEl.children.length > 0;
-    if (askMainEl.classList.contains("has-chat") === has) return;
     askMainEl.classList.toggle("has-chat", has);
     inputEl.rows = has ? 1 : 3;
-    updatePlaceholder();
+    inputEl.placeholder = has ? TEXT[lang].followPlaceholder : TEXT[lang].placeholder;
     autosize();
   }
-  function updatePlaceholder() {
-    var t = TEXT[lang];
-    inputEl.placeholder = askMainEl.classList.contains("has-chat") ? t.followPlaceholder : t.placeholder;
-  }
+
   new MutationObserver(syncHasChat).observe(chatEl, { childList: true });
-  function scrollChat() { askMainEl.scrollTop = askMainEl.scrollHeight; }
+  function scrollChat() { 
+    setTimeout(function () { askMainEl.scrollTop = askMainEl.scrollHeight; }, 60); 
+  }
 
   var loginForm = document.getElementById("login-form");
   var loginTitle = document.getElementById("login-title");
@@ -374,7 +373,7 @@
     return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
   }
 
-  // ===== অল-ইন-ওয়ান শক্তিশালী MCQ কার্ড রেন্ডারার (ব্যাগ ও ব্যাকটিক ফিল্টারড) =====
+  // ===== অল-ইন-ওয়ান শক্তিশালী MCQ কার্ড রেন্ডারার =====
   function buildMcqHtml(question, options, explanation, whyWrong, trick) {
     var cleanQ = question.replace(/```(?:mcq)?/gi, "").replace(/^MCQ\s*/i, "").trim();
 
@@ -558,14 +557,13 @@
     for (var i = 0; i < old.length; i++) old[i].remove();
   }
 
-  // ===== ২য় ছবির মতো রিভিউ (👍 / 👎) ও কুইক অ্যাকশন বাটন ফিক্সড =====
+  // ===== ২য় ছবির মতো রিভিউ (👍 / 👎) ও কুইক অ্যাকশন বাটন =====
   function addAnswerActions(answerText) {
     removeActions();
     var t = TEXT[lang];
     var bar = document.createElement("div");
     bar.className = "actions";
 
-    // কপি বাটন
     var copyBtn = document.createElement("button");
     copyBtn.type = "button";
     copyBtn.className = "action-btn";
@@ -577,7 +575,6 @@
     });
     bar.appendChild(copyBtn);
 
-    // দ্রুত ফলো-আপ প্রশ্ন বাটন ("আরও সহজ করে বলো", "একটা উদাহরণ দাও", ইত্যাদি)
     t.followups.forEach(function (label) {
       var b = document.createElement("button");
       b.type = "button";
@@ -587,7 +584,6 @@
       bar.appendChild(b);
     });
 
-    // 👍 / 👎 রিভিউ বাটন
     var entry = history[history.length - 1];
     if (entry && entry.role === "assistant") {
       var thumb = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3z"/><path d="M7 11l4-8a2.2 2.2 0 0 1 2.2 2.5L12.6 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>';
@@ -623,6 +619,7 @@
     homeSend.disabled = state;
     homeAttach.disabled = state;
     previewRemoveEl.disabled = state;
+    if (!state) inputEl.focus();
   }
 
   function showPreview(nameText, statusText) {
@@ -849,6 +846,17 @@
     langEn.classList.toggle("active", lang === "en");
   }
 
+  function resetChat() {
+    history = [];
+    chatId = null;
+    chatTitle = "";
+    chatCtx = null;
+    clearPendingImage();
+    chatEl.innerHTML = "";
+    suggestionsEl.classList.remove("hidden");
+    syncHasChat();
+  }
+
   function goToLogin(after) {
     afterLogin = after || null;
     setView("login");
@@ -923,7 +931,7 @@
           if (line.startsWith("data:")) {
             try {
               var ev = JSON.parse(line.slice(5).trim());
-              if (ev.t) { text += ev.t; botEl.innerHTML = renderMarkdown(text, false); }
+              if (ev.t) { text += ev.t; botEl.innerHTML = renderMarkdown(text, false); scrollChat(); }
             } catch (err) {}
           }
         }
@@ -935,6 +943,7 @@
       addMessage("error", "উত্তর আনতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
     } finally {
       setBusy(false);
+      scrollChat();
     }
   }
 
@@ -948,6 +957,10 @@
   });
   inputEl.addEventListener("input", autosize);
 
+  // নতুন চ্যাট বাটন
+  newChatEl.addEventListener("click", resetChat);
+
+  // ছবি আপলোড বাটন
   attachEl.addEventListener("click", function () { if (!busy && !preparing) fileEl.click(); });
   homeAttach.addEventListener("click", function () {
     setView("ask");
