@@ -31,7 +31,7 @@
       getAnswer: "উত্তর দেখুন",
       diagramTitle: "ফ্লোচার্ট / ডায়াগ্রাম",
       diagramLoading: "ডায়াগ্রাম আঁকা হচ্ছে…",
-      diagramFailed: "ডায়াগ্রাম আঁকা যায়নি।",
+      diagramFailed: "ডায়াগ্রামটা আঁকা যায়নি। কোডটা নিচে দেওয়া হলো।",
       outputTitle: "আউটপুট — ব্রাউজারে যেমন দেখাবে",
       runOutput: "আউটপুট চালান",
       treeTitle: "ট্যাগের কাঠামো (ডায়াগ্রাম)",
@@ -87,26 +87,26 @@
       errors: {
         rate_limited: "এই মুহূর্তে অনেক অনুরোধ এসেছে। এক মিনিট পরে আবার চেষ্টা করুন।",
         network: "ইন্টারনেট সংযোগে সমস্যা হচ্ছে। সংযোগ দেখে আবার চেষ্টা করুন।",
-        server_not_configured: "সার্ভার এখনো ঠিকমতো সেট করা হয়নি।",
+        server_not_configured: "সার্ভার এখনো ঠিকমতো সেট করা হয়নি (লগইন বা সংরক্ষণের সেটিং বাকি)।",
         invalid_login: "নাম বা পাসওয়ার্ড ভুল।",
-        signup_closed: "নতুন আইডি খোলা বন্ধ আছে।",
+        signup_closed: "এখন নতুন আইডি খোলা বন্ধ আছে। অ্যাডমিনের সঙ্গে কথা বলুন।",
         signup_full: "আইডি খোলার সব জায়গা ভরে গেছে।",
         invalid_invite: "ইনভাইট কোড ভুল।",
-        name_taken: "এই ইউজারনেম আগেই নেওয়া হয়েছে।",
-        bad_name: "ইউজারনেম ৩–২০ অক্ষরের হতে হবে।",
+        name_taken: "এই ইউজারনেম আগেই নেওয়া হয়েছে। অন্য একটা বেছে নিন।",
+        bad_name: "ইউজারনেম ৩–২০ অক্ষরের হতে হবে, শুধু a-z, ০-৯, _ বা - চলবে।",
         weak_password: "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।",
         password_mismatch: "দুইবার লেখা পাসওয়ার্ড মিলছে না।",
-        too_many_attempts: "অনেকবার ভুল চেষ্টা হয়েছে।",
-        unauthorized: "লগইনের মেয়াদ শেষ।",
+        too_many_attempts: "অনেকবার ভুল চেষ্টা হয়েছে। এক ঘণ্টা পরে আবার চেষ্টা করুন।",
+        unauthorized: "লগইনের মেয়াদ শেষ। আবার লগইন করুন।",
         daily_limit: "আজকের প্রশ্নের সীমা শেষ। কাল আবার চেষ্টা করুন।",
-        global_limit: "আজকের জন্য মোট সীমা শেষ।",
+        global_limit: "আজকের জন্য সাইটের মোট সীমা শেষ। কাল আবার চেষ্টা করুন।",
         bad_image: "ছবিটা পাঠানো যায়নি। অন্য একটা ছবি দিয়ে আবার চেষ্টা করুন।",
-        image_type: "এই ধরনের ফাইল চলবে না। JPG, PNG, WebP বা HEIC দিন।",
-        image_too_big: "ছবি অনেক বড় (সর্বোচ্চ ২০ MB)।",
-        image_failed: "ছবি খুলতে পারিনি।",
-        history_not_configured: "ইতিহাস ডাটাবেস যুক্ত করা বাকি।",
-        history_failed: "ইতিহাস লোড করতে সমস্যা হয়েছে।",
-        generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে।"
+        image_type: "এই ধরনের ফাইল চলবে না। JPG, PNG, WebP, GIF বা HEIC ছবি দিন।",
+        image_too_big: "ছবিটা অনেক বড় (সর্বোচ্চ ২০ MB)। ছোট একটা ছবি দিন।",
+        image_failed: "ছবিটা খুলতে পারিনি। অন্য ছবি বা JPG/PNG ফরম্যাটে চেষ্টা করুন।",
+        history_not_configured: "ইতিহাস সংরক্ষণ এখনো চালু করা হয়নি (Cloudflare-এ D1 ডাটাবেস যুক্ত করা বাকি)।",
+        history_failed: "ইতিহাস লোড করতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।",
+        generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
       }
     },
     en: {
@@ -139,7 +139,7 @@
       getAnswer: "Get answer",
       diagramTitle: "Flowchart / diagram",
       diagramLoading: "Drawing the diagram…",
-      diagramFailed: "The diagram could not be drawn.",
+      diagramFailed: "The diagram could not be drawn. Here is its code.",
       outputTitle: "Output — how it looks in a browser",
       runOutput: "Run output",
       treeTitle: "Tag structure (diagram)",
@@ -160,7 +160,7 @@
         if (subj) parts.push("Subject: " + subj);
         return "[Context — " + parts.join("; ") + ". Answer at this level.]\n";
       },
-      defaultImageQuestion: "Look carefully at this image and explain it.",
+      defaultImageQuestion: "Look carefully at this image and explain it. If it contains a question, solve it.",
       historyTitle: "Chat history",
       noChats: "No saved chats yet.",
       loadingChats: "Loading…",
@@ -171,14 +171,14 @@
       usage: function (user, used, limit) { return user + " · " + used + "/" + limit + " questions today"; },
       loginTitle: "Log in",
       loginOpen: "Log in",
-      loginHint: "For approved members only.",
+      loginHint: "For approved members only. Enter your name and password.",
       toSignup: "Create a new ID",
       toLogin: "Already have an ID? Log in",
       signupTitle: "Create a new ID",
       signupHint: "You need the invite code from your teacher.",
-      signupNameLabel: "Username",
-      signupPassLabel: "Password",
-      signupPass2Label: "Repeat password",
+      signupNameLabel: "Username (3-20 characters: a-z, 0-9, _ or -)",
+      signupPassLabel: "Password (at least 8 characters)",
+      signupPass2Label: "Repeat the password",
       signupInviteLabel: "Invite code",
       signupBtn: "Create ID",
       signingUp: "Please wait…",
@@ -186,8 +186,36 @@
       codeLabel: "Password",
       loginBtn: "Enter",
       loggingIn: "Please wait…",
-      suggestions: ["What is photosynthesis?", "How do I solve quadratic equations?"],
-      errors: { generic: "Sorry, something went wrong getting the answer." }
+      suggestions: [
+        "What is photosynthesis?",
+        "How do I solve a quadratic equation?",
+        "নিউটনের গতিসূত্র সহজ করে বলো",
+        "Explain the present perfect tense"
+      ],
+      errors: {
+        rate_limited: "Too many requests right now. Please wait a minute and try again.",
+        network: "Network problem. Check your connection and try again.",
+        server_not_configured: "The server isn't fully set up yet.",
+        invalid_login: "Wrong name or password.",
+        signup_closed: "Creating new IDs is closed right now.",
+        signup_full: "All the places for new IDs are taken.",
+        invalid_invite: "The invite code is wrong.",
+        name_taken: "That username is already taken.",
+        bad_name: "The username must be 3-20 characters.",
+        weak_password: "The password must be at least 8 characters.",
+        password_mismatch: "The two passwords do not match.",
+        too_many_attempts: "Too many failed attempts. Try again in an hour.",
+        unauthorized: "Your login has expired. Please log in again.",
+        daily_limit: "You've used all of today's questions.",
+        global_limit: "The site's total limit for today has been reached.",
+        bad_image: "The picture couldn't be sent.",
+        image_type: "That file type isn't supported.",
+        image_too_big: "That picture is too large (max 20 MB).",
+        image_failed: "Couldn't open that picture.",
+        history_not_configured: "Chat history isn't switched on yet.",
+        history_failed: "Couldn't load the chat history.",
+        generic: "Sorry, something went wrong getting the answer."
+      }
     }
   };
 
@@ -257,15 +285,18 @@
   var answerCardEl = document.querySelector(".answer-card");
   var welcomeEl = document.getElementById("welcome");
 
-  // ===== চ্যাট শুরু হলে ইনপুট বক্সকে নিচে পাঠানোর কন্ট্রোলার =====
+  // ===== চ্যাট শুরু হলে ইনপুট বক্সকে নিচে পাঠানো এবং স্লিম রাখা =====
   function syncHasChat() {
     var has = chatEl.children.length > 0;
     askMainEl.classList.toggle("has-chat", has);
     inputEl.rows = has ? 1 : 3;
-    inputEl.placeholder = has ? TEXT[lang].followPlaceholder : TEXT[lang].placeholder;
+    updatePlaceholder();
     autosize();
   }
-
+  function updatePlaceholder() {
+    var t = TEXT[lang];
+    inputEl.placeholder = askMainEl.classList.contains("has-chat") ? t.followPlaceholder : t.placeholder;
+  }
   new MutationObserver(syncHasChat).observe(chatEl, { childList: true });
   function scrollChat() { 
     setTimeout(function () { askMainEl.scrollTop = askMainEl.scrollHeight; }, 60); 
@@ -324,6 +355,43 @@
       .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   }
 
+  var LATEX_MAP = {
+    "\\rightarrow": "→", "\\to": "→", "\\leftarrow": "←", "\\Rightarrow": "⇒", "\\leftrightarrow": "↔",
+    "\\times": "×", "\\cdot": "·", "\\div": "÷", "\\pm": "±",
+    "\\leq": "≤", "\\le": "≤", "\\geq": "≥", "\\ge": "≥", "\\neq": "≠", "\\approx": "≈",
+    "\\pi": "π", "\\theta": "θ", "\\alpha": "α", "\\beta": "β", "\\gamma": "γ", "\\delta": "δ",
+    "\\Delta": "Δ", "\\lambda": "λ", "\\mu": "μ", "\\sigma": "σ", "\\omega": "ω", "\\infty": "∞",
+    "\\degree": "°", "\\circ": "°"
+  };
+  var SUPERSCRIPT = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "+": "⁺" };
+  var SUBSCRIPT = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉" };
+
+  function mapChars(str, table) {
+    var out = "";
+    for (var i = 0; i < str.length; i++) {
+      if (!table[str[i]]) return null;
+      out += table[str[i]];
+    }
+    return out;
+  }
+
+  function latexToText(inner) {
+    var s = inner;
+    s = s.replace(/\\text\{([^{}]*)\}/g, "$1").replace(/\\mathrm\{([^{}]*)\}/g, "$1");
+    s = s.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1)/($2)");
+    s = s.replace(/\\sqrt\{([^{}]*)\}/g, "√($1)");
+    s = s.replace(/\\[a-zA-Z]+/g, function (cmd) { return LATEX_MAP[cmd] || cmd; });
+    s = s.replace(/\^\{?([0-9+-]+)\}?/g, function (m, d) { return mapChars(d, SUPERSCRIPT) || m; });
+    s = s.replace(/_\{?([0-9]+)\}?/g, function (m, d) { return mapChars(d, SUBSCRIPT) || m; });
+    return s.replace(/[{}]/g, "").replace(/\s+/g, " ").trim();
+  }
+
+  function cleanLatex(raw) {
+    return raw
+      .replace(/\$\$([^$]*\\[^$]*)\$\$/g, function (m, inner) { return latexToText(inner); })
+      .replace(/\$([^$\n]*\\[^$\n]*)\$/g, function (m, inner) { return latexToText(inner); });
+  }
+
   function mathToken(maths, tex, display) {
     maths.push({ tex: tex.trim(), display: display });
     return "\uE000" + (maths.length - 1) + "\uE001";
@@ -371,6 +439,16 @@
 
   function unescapeHtml(s) {
     return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+  }
+
+  function plainAnswer(text) {
+    return cleanLatex(text)
+      .replace(/\*\*([^*\n]+)\*\*/g, "$1")
+      .replace(/`([^`\n]+)`/g, "$1")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/^\s*([-*_])(\s*\1){2,}\s*$/gm, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
   }
 
   // ===== অল-ইন-ওয়ান শক্তিশালী MCQ কার্ড রেন্ডারার =====
@@ -569,7 +647,7 @@
     copyBtn.className = "action-btn";
     copyBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg> <span>' + t.copy + '</span>';
     copyBtn.addEventListener("click", function () {
-      navigator.clipboard.writeText(answerText);
+      navigator.clipboard.writeText(plainAnswer(answerText));
       copyBtn.querySelector("span").textContent = t.copied;
       setTimeout(function () { copyBtn.querySelector("span").textContent = t.copy; }, 1600);
     });
@@ -599,6 +677,7 @@
         fb.addEventListener("click", function () {
           entry.fb = entry.fb === kind ? undefined : kind;
           fbBtns.forEach(function (x) { x.btn.setAttribute("aria-pressed", entry.fb === x.kind ? "true" : "false"); });
+          saveChat();
         });
         fbBtns.push({ kind: kind, btn: fb });
         bar.appendChild(fb);
@@ -622,6 +701,7 @@
     if (!state) inputEl.focus();
   }
 
+  // ================= ছবি আপলোড ও প্রসেসিং লজিক =================
   function showPreview(nameText, statusText) {
     previewEl.classList.remove("hidden");
     previewEl.classList.toggle("loading", preparing);
@@ -824,12 +904,19 @@
     markSubject();
   }
 
+  function renderUsage() {
+    usageEl.textContent = authed ? TEXT[lang].usage(user, usage.used, usage.limit) : "";
+  }
+
   function applyLanguage() {
     var t = TEXT[lang];
     sendLabelEl.textContent = t.getAnswer;
+    newChatEl.textContent = t.newChat;
+    logoutLabelEl.textContent = t.logout;
+    loginOpenLabelEl.textContent = t.loginOpen;
+    historyLabelEl.textContent = t.historyBtn;
     navHomeLabel.textContent = t.navHome;
     navAskLabel.textContent = t.navAsk;
-    historyLabelEl.textContent = t.historyBtn;
     heroT1.textContent = t.heroTitle1;
     heroSub.textContent = t.heroSub;
     homeInput.placeholder = t.homePlaceholder;
@@ -844,6 +931,7 @@
     drawerNewEl.textContent = "+ " + t.newChat;
     langBn.classList.toggle("active", lang === "bn");
     langEn.classList.toggle("active", lang === "en");
+    renderUsage();
   }
 
   function resetChat() {
@@ -857,15 +945,32 @@
     syncHasChat();
   }
 
+  function setAuthMode(mode) {
+    var signup = mode === "signup";
+    loginForm.hidden = signup;
+    signupForm.hidden = !signup;
+    signupError.textContent = "";
+  }
+
   function goToLogin(after) {
     afterLogin = after || null;
+    setAuthMode("login");
     setView("login");
   }
 
   function showApp(data) {
     authed = true;
     user = data.user || "";
+    usage = { used: data.used || 0, limit: data.limit || 0 };
     appEl.classList.remove("logged-out");
+    applyLanguage();
+    setView("home");
+  }
+
+  function showGuest() {
+    authed = false;
+    user = "";
+    appEl.classList.add("logged-out");
     applyLanguage();
     setView("home");
   }
@@ -875,12 +980,79 @@
       var res = await fetch("/api/me");
       var data = await res.json();
       if (res.ok && data && data.ok) showApp(data);
-      else setView("home");
+      else showGuest();
     } catch (e) {
-      setView("home");
+      showGuest();
     } finally {
       appEl.classList.remove("checking");
     }
+  }
+
+  async function doLogin(e) {
+    e.preventDefault();
+    loginBtn.disabled = true;
+    try {
+      var res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: loginName.value, code: loginCode.value })
+      });
+      var data = await res.json();
+      if (res.ok && data && data.ok) {
+        showApp(data);
+      } else {
+        loginError.textContent = TEXT[lang].errors[data.error] || TEXT[lang].errors.generic;
+      }
+    } catch (err) {
+      loginError.textContent = TEXT[lang].errors.network;
+    } finally {
+      loginBtn.disabled = false;
+    }
+  }
+
+  async function doSignup(e) {
+    e.preventDefault();
+    signupBtn.disabled = true;
+    try {
+      var res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: signupName.value, code: signupPass.value, invite: signupInvite.value })
+      });
+      var data = await res.json();
+      if (res.ok && data && data.ok) {
+        showApp(data);
+      } else {
+        signupError.textContent = TEXT[lang].errors[data.error] || TEXT[lang].errors.generic;
+      }
+    } catch (err) {
+      signupError.textContent = TEXT[lang].errors.network;
+    } finally {
+      signupBtn.disabled = false;
+    }
+  }
+
+  async function doLogout() {
+    try { await fetch("/api/logout", { method: "POST" }); } catch (e) {}
+    showGuest();
+  }
+
+  // ===== চ্যাট হিস্ট্রি সেভ (D1 ডাটাবেস) =====
+  function newChatId() {
+    return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  async function saveChat() {
+    if (!authed || !history.length) return;
+    if (!chatId) chatId = newChatId();
+    if (!chatTitle && history[0]) chatTitle = history[0].text.slice(0, 40) || "Chat";
+    try {
+      await fetch("/api/chats", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: chatId, title: chatTitle, messages: history })
+      });
+    } catch (e) {}
   }
 
   async function ask(question) {
@@ -932,12 +1104,17 @@
             try {
               var ev = JSON.parse(line.slice(5).trim());
               if (ev.t) { text += ev.t; botEl.innerHTML = renderMarkdown(text, false); scrollChat(); }
+              if (ev.done && typeof ev.used === "number") {
+                usage.used = ev.used;
+                renderUsage();
+              }
             } catch (err) {}
           }
         }
       }
       botEl.innerHTML = renderMarkdown(text, true);
       history.push({ role: "assistant", text: text });
+      saveChat();
       addAnswerActions(text);
     } catch (e) {
       addMessage("error", "উত্তর আনতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
@@ -957,8 +1134,14 @@
   });
   inputEl.addEventListener("input", autosize);
 
-  // নতুন চ্যাট বাটন
+  // নতুন চ্যাট ও লগইন ইভেন্টস
   newChatEl.addEventListener("click", resetChat);
+  loginForm.addEventListener("submit", doLogin);
+  signupForm.addEventListener("submit", doSignup);
+  toSignupEl.addEventListener("click", function (e) { e.preventDefault(); setAuthMode("signup"); });
+  toLoginEl.addEventListener("click", function (e) { e.preventDefault(); setAuthMode("login"); });
+  logoutEl.addEventListener("click", doLogout);
+  loginOpenEl.addEventListener("click", function () { goToLogin({ view: "home" }); });
 
   // ছবি আপলোড বাটন
   attachEl.addEventListener("click", function () { if (!busy && !preparing) fileEl.click(); });
@@ -975,6 +1158,9 @@
 
   navHome.addEventListener("click", function () { setView("home"); });
   navAsk.addEventListener("click", function () { setView("ask"); });
+
+  langBn.addEventListener("click", function () { lang = "bn"; applyLanguage(); });
+  langEn.addEventListener("click", function () { lang = "en"; applyLanguage(); });
 
   subjectSel.addEventListener("change", markSubject);
 
