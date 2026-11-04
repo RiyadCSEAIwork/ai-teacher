@@ -31,7 +31,7 @@
       getAnswer: "উত্তর দেখুন",
       diagramTitle: "ফ্লোচার্ট / ডায়াগ্রাম",
       diagramLoading: "ডায়াগ্রাম আঁকা হচ্ছে…",
-      diagramFailed: "ডায়াগ্রাম আঁকা যায়নি। কোডটা নিচে দেওয়া হলো।",
+      diagramFailed: "ডায়াগ্রাম আঁকা যায়নি।",
       outputTitle: "আউটপুট — ব্রাউজারে যেমন দেখাবে",
       runOutput: "আউটপুট চালান",
       treeTitle: "ট্যাগের কাঠামো (ডায়াগ্রাম)",
@@ -102,8 +102,8 @@
         global_limit: "আজকের জন্য মোট সীমা শেষ।",
         bad_image: "ছবিটা পাঠানো যায়নি। অন্য একটা ছবি দিয়ে আবার চেষ্টা করুন।",
         image_type: "এই ধরনের ফাইল চলবে না। JPG, PNG, WebP বা HEIC দিন।",
-        image_too_big: "ছবিটা অনেক বড় (সর্বোচ্চ ২০ MB)।",
-        image_failed: "ছবিটা খুলতে পারিনি।",
+        image_too_big: "ছবি অনেক বড় (সর্বোচ্চ ২০ MB)।",
+        image_failed: "ছবি খুলতে পারিনি।",
         history_not_configured: "ইতিহাস ডাটাবেস যুক্ত করা বাকি।",
         history_failed: "ইতিহাস লোড করতে সমস্যা হয়েছে।",
         generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে।"
@@ -374,11 +374,13 @@
     return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
   }
 
-  // ===== অল-ইন-ওয়ান শক্তিশালী MCQ কার্ড রেন্ডারার =====
+  // ===== অল-ইন-ওয়ান শক্তিশালী MCQ কার্ড রেন্ডারার (ব্যাগ ও ব্যাকটিক ফিল্টারড) =====
   function buildMcqHtml(question, options, explanation, whyWrong, trick) {
+    var cleanQ = question.replace(/```(?:mcq)?/gi, "").replace(/^MCQ\s*/i, "").trim();
+
     var html = '<div class="mcq-card-ui">';
-    if (question) {
-      html += '<div class="mcq-header"><span class="mcq-badge">MCQ</span><h4 class="mcq-q-title">' + formatRichText(question) + '</h4></div>';
+    if (cleanQ) {
+      html += '<div class="mcq-header"><span class="mcq-badge">MCQ</span><h4 class="mcq-q-title">' + formatRichText(cleanQ) + '</h4></div>';
     }
 
     if (options.length) {
@@ -397,8 +399,9 @@
     }
 
     if (explanation.length) {
+      var cleanExp = explanation.join("<br>").replace(/```/g, "").trim();
       html += '<div class="mcq-exp-box"><div class="mcq-exp-head">ব্যাখ্যা</div>';
-      html += '<div class="mcq-exp-body">' + formatRichText(explanation.join("<br>")) + '</div></div>';
+      html += '<div class="mcq-exp-body">' + formatRichText(cleanExp) + '</div></div>';
     }
 
     if (whyWrong.length) {
@@ -406,20 +409,21 @@
       html += '<span>অন্যান্য অপশন কেন ভুল?</span>';
       html += '<span class="mcq-plus-icon">+</span></summary><div class="mcq-wrong-body"><ul>';
       whyWrong.forEach(function (w) {
-        html += '<li>' + formatRichText(w) + '</li>';
+        var cleanW = w.replace(/```/g, "").trim();
+        html += '<li>' + formatRichText(cleanW) + '</li>';
       });
       html += '</ul></div></details>';
     }
 
     if (trick.length) {
-      html += '<div class="mcq-trick-box"><strong>💡 মনে রাখার কৌশল / স্বর্ণসূত্র:</strong> ' + formatRichText(trick.join(" ")) + '</div>';
+      var cleanTrick = trick.join(" ").replace(/```/g, "").trim();
+      html += '<div class="mcq-trick-box"><strong>💡 মনে রাখার কৌশল / স্বর্ণসূত্র:</strong> ' + formatRichText(cleanTrick) + '</div>';
     }
 
     html += '</div>';
     return html;
   }
 
-  // যেভাবেই লিখুক ( *(a), ক), 1), (ক) ) চিনে কার্ড বানানোর বুলেটপ্রুফ পার্সার
   function parseNaturalMcq(text) {
     if (!/\[QUESTION\]|\[OPTIONS\]/i.test(text) && !/(\(?\*?[কখগঘA-Da-d1-4]\)?\s*[\).:-]).*(\(?\*?[কখগঘA-Da-d1-4]\)?\s*[\).:-])/s.test(text)) {
       return null;
@@ -435,22 +439,20 @@
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
-      if (!line || line === "MCQ") continue;
+      if (!line || line === "MCQ" || line === "```mcq" || line === "```") continue;
 
-      // সেকশন ট্যাগ শনাক্তকরণ
       if (/^\[QUESTION\]/i.test(line)) { section = "q"; continue; }
       if (/^\[OPTIONS\]/i.test(line)) { section = "o"; continue; }
       if (/^\[EXPLANATION\]/i.test(line) || /^(ব্যাখ্যা|Explanation)/i.test(line)) { section = "e"; continue; }
       if (/^\[WHY_WRONG\]/i.test(line) || /^(অন্যান্য অপশন|বাকি অপশন|অন্য অপশন|Why other)/i.test(line)) { section = "w"; continue; }
       if (/^\[TRICK\]/i.test(line) || /^(মনে রাখার কৌশল|শর্টকাট|স্বর্ণসূত্র|Memory trick)/i.test(line)) { section = "t"; continue; }
 
-      // অপশন শনাক্তকরণ: *(a), (b), *ক), খ., গ) সবকিছু সাপোর্ট করবে
       var optMatch = line.match(/^(\*?\s*)\(?([কখগঘA-Da-d1-4])\)?[\).:-]?\s*(.*)$/);
       if (optMatch && (section === "o" || section === "q")) {
         section = "o";
         var isCorrect = optMatch[1].indexOf("*") !== -1 || line.indexOf("✓") !== -1 || line.indexOf("✔") !== -1 || line.indexOf("(সঠিক)") !== -1;
         var keyLabel = line.indexOf("(") === 0 || optMatch[0].indexOf("(") !== -1 ? "(" + optMatch[2] + ")" : optMatch[2] + ")";
-        var optText = optMatch[3].replace(/[✓✔]/g, "").replace(/\(সঠিক\)/g, "").trim();
+        var optText = optMatch[3].replace(/[✓✔]/g, "").replace(/\(সঠিক\)/g, "").replace(/```/g, "").trim();
         options.push({ key: keyLabel, text: optText, correct: isCorrect });
         continue;
       }
@@ -551,22 +553,65 @@
     return el;
   }
 
-  function addAnswerActions(answerText) {
+  function removeActions() {
     var old = chatEl.querySelectorAll(".actions");
     for (var i = 0; i < old.length; i++) old[i].remove();
+  }
+
+  // ===== ২য় ছবির মতো রিভিউ (👍 / 👎) ও কুইক অ্যাকশন বাটন ফিক্সড =====
+  function addAnswerActions(answerText) {
+    removeActions();
+    var t = TEXT[lang];
     var bar = document.createElement("div");
     bar.className = "actions";
+
+    // কপি বাটন
     var copyBtn = document.createElement("button");
     copyBtn.type = "button";
     copyBtn.className = "action-btn";
-    copyBtn.textContent = "কপি";
+    copyBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg> <span>' + t.copy + '</span>';
     copyBtn.addEventListener("click", function () {
       navigator.clipboard.writeText(answerText);
-      copyBtn.textContent = "কপি হয়েছে";
-      setTimeout(function () { copyBtn.textContent = "কপি"; }, 1500);
+      copyBtn.querySelector("span").textContent = t.copied;
+      setTimeout(function () { copyBtn.querySelector("span").textContent = t.copy; }, 1600);
     });
     bar.appendChild(copyBtn);
+
+    // দ্রুত ফলো-আপ প্রশ্ন বাটন ("আরও সহজ করে বলো", "একটা উদাহরণ দাও", ইত্যাদি)
+    t.followups.forEach(function (label) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "action-btn";
+      b.textContent = label;
+      b.addEventListener("click", function () { ask(label); });
+      bar.appendChild(b);
+    });
+
+    // 👍 / 👎 রিভিউ বাটন
+    var entry = history[history.length - 1];
+    if (entry && entry.role === "assistant") {
+      var thumb = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3z"/><path d="M7 11l4-8a2.2 2.2 0 0 1 2.2 2.5L12.6 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>';
+      var fbBtns = [];
+      [["up", t.likeTip], ["down", t.dislikeTip]].forEach(function (pair) {
+        var kind = pair[0];
+        var fb = document.createElement("button");
+        fb.type = "button";
+        fb.className = "action-btn fb-btn fb-" + kind;
+        fb.innerHTML = thumb;
+        fb.title = pair[1];
+        fb.setAttribute("aria-label", pair[1]);
+        fb.addEventListener("click", function () {
+          entry.fb = entry.fb === kind ? undefined : kind;
+          fbBtns.forEach(function (x) { x.btn.setAttribute("aria-pressed", entry.fb === x.kind ? "true" : "false"); });
+        });
+        fbBtns.push({ kind: kind, btn: fb });
+        bar.appendChild(fb);
+      });
+      fbBtns.forEach(function (x) { x.btn.setAttribute("aria-pressed", entry.fb === x.kind ? "true" : "false"); });
+    }
+
     chatEl.appendChild(bar);
+    scrollChat();
   }
 
   function setBusy(state) {
@@ -580,7 +625,6 @@
     previewRemoveEl.disabled = state;
   }
 
-  // ================= ছবি আপলোড ও প্রসেসিং লজিক =================
   function showPreview(nameText, statusText) {
     previewEl.classList.remove("hidden");
     previewEl.classList.toggle("loading", preparing);
@@ -713,7 +757,6 @@
     inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + "px";
   }
 
-  // ================= বিষয়ের SVG আইকন =================
   var SUBJECT_IDS = ["math", "physics", "chemistry", "biology", "ict"];
   var SVG_OPEN = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
   var SUBJECT_ICONS = {
@@ -895,7 +938,6 @@
     }
   }
 
-  // ইভেন্ট লিসেনার
   formEl.addEventListener("submit", function (e) { e.preventDefault(); ask(inputEl.value); });
   homeForm.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -906,7 +948,6 @@
   });
   inputEl.addEventListener("input", autosize);
 
-  // ছবি আপলোড বাটন
   attachEl.addEventListener("click", function () { if (!busy && !preparing) fileEl.click(); });
   homeAttach.addEventListener("click", function () {
     setView("ask");
