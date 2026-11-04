@@ -1,5 +1,5 @@
 /* ========================================================
-   AI Teacher - Full Stylesheet (Chat-Bottom Flow Fixed)
+   AI Teacher - Master CSS (Top Bar & Responsive Fix)
    ======================================================== */
 
 :root {
@@ -38,9 +38,10 @@ body {
   background-color: var(--bg-page);
   color: var(--text-main);
   line-height: 1.6;
+  overflow-x: hidden;
 }
 
-/* ================= Top Navigation ================= */
+/* ================= Top Navigation (সম্পূর্ণ দৃশ্যমান ও ফিক্সড) ================= */
 .top {
   position: sticky;
   top: 0;
@@ -48,22 +49,23 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 24px;
+  padding: 10px 20px;
   background: #ffffff;
   border-bottom: 1px solid var(--border-color);
+  width: 100%;
 }
 
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-name { font-size: 1.15rem; font-weight: 700; color: var(--text-main); }
 .brand-ai { color: var(--primary); }
-.usage { font-size: 0.75rem; color: var(--text-muted); }
+.usage { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
 
-.nav { display: flex; align-items: center; gap: 8px; }
+.nav { display: flex; align-items: center; gap: 6px; }
 .nav-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 14px;
+  padding: 7px 12px;
   border: 1px solid transparent;
   background: transparent;
   border-radius: var(--radius-sm);
@@ -78,11 +80,30 @@ body {
   border-color: rgba(11, 99, 246, 0.15);
 }
 
-.top-right { display: flex; align-items: center; gap: 8px; }
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .lang { display: inline-flex; background: #f1f5f9; padding: 3px; border-radius: var(--radius-sm); }
-.lang button { padding: 4px 10px; border: none; background: transparent; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); border-radius: 6px; cursor: pointer; }
+.lang button { padding: 4px 8px; border: none; background: transparent; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); border-radius: 6px; cursor: pointer; }
 .lang button.active { background: #ffffff; color: var(--primary); box-shadow: var(--shadow-sm); }
-.btn-soft { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--border-color); background: #ffffff; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; color: var(--text-muted); cursor: pointer; }
+
+.btn-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  background: #ffffff;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
 
 /* ================= View Controllers ================= */
 .app[data-view="home"] #home-view { display: block; }
@@ -126,7 +147,7 @@ body {
 .chip svg { color: var(--sub-color); }
 .chip:hover { border-color: var(--sub-color); background: var(--sub-bg); color: var(--sub-color); }
 
-/* ================= Ask View (Sidebar & Layout) ================= */
+/* ================= Ask View ================= */
 .ask-view { display: flex; height: calc(100vh - 65px); overflow: hidden; }
 .side { width: 240px; background: #ffffff; border-right: 1px solid var(--border-color); padding: 18px 14px; overflow-y: auto; flex-shrink: 0; }
 .subject-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
@@ -135,32 +156,13 @@ body {
 .subject-item:hover button { background: var(--sub-bg); color: var(--sub-color); }
 .subject-item.active button { background: var(--sub-bg); color: var(--sub-color); border-color: var(--sub-color); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04); }
 
-/* মূল চ্যাট এরিয়া */
-.ask-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  padding: 20px 30px;
-  max-width: 960px;
-  margin: 0 auto;
-  width: 100%;
-}
+.ask-main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; max-width: 960px; margin: 0 auto; width: 100%; }
 
-/* ================= চ্যাট চলাকালীন ২য় ছবির মতো ইনপুট বক্স নিচে পাঠানোর লজিক ================= */
-.ask-main.has-chat {
-  display: flex;
-  flex-direction: column;
-}
-
-.ask-main.has-chat .answer-card {
-  order: 1; /* উত্তর উপরে থাকবে */
-  display: block;
-  margin-bottom: 20px;
-}
-
+/* ================= চ্যাট শুরু হলে ইনপুট বক্স নিচে পাঠানোর লজিক ================= */
+.ask-main.has-chat { display: flex; flex-direction: column; }
+.ask-main.has-chat .answer-card { order: 1; display: block; margin-bottom: 20px; }
 .ask-main.has-chat .ask-card {
-  order: 2; /* ইনপুট বক্স উত্তরের নিচে চলে আসবে */
+  order: 2;
   position: sticky;
   bottom: 10px;
   z-index: 30;
@@ -175,24 +177,13 @@ body {
 .ask-main.has-chat .ask-card #ask-title,
 .ask-main.has-chat .ask-card .welcome,
 .ask-main.has-chat .ask-card .suggestions {
-  display: none !important; /* চ্যাট শুরু হলে বড় টাইটেল ও ওয়েলকাম টেক্সট হাইড হয়ে যাবে */
+  display: none !important;
 }
 
-.ask-main.has-chat .note {
-  order: 3;
-  margin-top: 4px;
-}
+.ask-main.has-chat .note { order: 3; margin-top: 4px; }
 
 /* সাধারণ ইনপুট কার্ড (শুরুতে) */
-.ask-card {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 20px;
-}
-
+.ask-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm); margin-bottom: 20px; }
 .welcome { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 16px; }
 .ta-wrap { position: relative; margin-bottom: 12px; }
 .ta-wrap textarea { width: 100%; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 14px; font-size: 1rem; font-family: inherit; outline: none; resize: none; }
@@ -217,14 +208,8 @@ body {
 .suggestions button { padding: 6px 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 9999px; font-size: 0.8rem; color: #475569; cursor: pointer; }
 
 /* ================= Chat Area & Answer Card ================= */
-.answer-card {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 22px;
-  box-shadow: var(--shadow-sm);
-  display: none;
-}
+.answer-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); display: none; }
+.has-chat .answer-card { display: block; }
 
 .answer-head {
   display: flex;
@@ -232,13 +217,31 @@ body {
   gap: 8px;
   margin-bottom: 16px;
   color: var(--primary);
+  width: 100%;
 }
 
 .answer-head h3 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
-.ghost { margin-left: auto; background: transparent; border: none; color: var(--primary); font-weight: 600; cursor: pointer; }
+
+/* নতুন চ্যাট বাটন (স্পষ্ট ও দৃশ্যমান) */
+.ghost {
+  margin-left: auto;
+  background: var(--primary-soft);
+  border: 1px solid rgba(11, 99, 246, 0.2);
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.88rem;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.ghost:hover {
+  background: var(--primary);
+  color: #ffffff;
+}
 
 .chat { display: flex; flex-direction: column; gap: 16px; }
-
 .msg { padding: 14px 18px; border-radius: var(--radius-md); font-size: 0.95rem; line-height: 1.6; }
 .msg.user { align-self: flex-end; background: var(--primary); color: #ffffff; border-bottom-right-radius: 4px; max-width: 80%; }
 .msg.bot { align-self: flex-start; background: #f8fafc; border: 1px solid var(--border-color); color: var(--text-main); border-bottom-left-radius: 4px; width: 100%; }
@@ -249,32 +252,9 @@ body {
 .msg-meta.from-bot { align-self: flex-start; }
 .msg-img { max-width: 220px; border-radius: 8px; cursor: pointer; margin-bottom: 8px; }
 
-/* ================= অ্যাকশন ও রিভিউ বাটন (২য় ছবির মতো) ================= */
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 6px;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  color: #475569;
-  cursor: pointer;
-  font-weight: 500;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: all 0.15s ease;
-}
-
+/* অ্যাকশন ও রিভিউ বাটন */
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding-top: 6px; }
+.action-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 9999px; font-size: 0.85rem; color: #475569; cursor: pointer; font-weight: 500; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); transition: all 0.15s ease; }
 .action-btn:hover { background: #f1f5f9; color: var(--primary); border-color: #cbd5e1; }
 .fb-btn { padding: 6px 10px; border-radius: 50%; }
 .fb-down svg { transform: rotate(180deg); }
@@ -282,25 +262,13 @@ body {
 
 .note { text-align: center; font-size: 0.78rem; color: #94a3b8; margin-top: 18px; }
 
-/* ================= MCQ Interactive Card ================= */
-.mcq-card-ui {
-  background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 20px;
-  margin: 14px 0;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
-}
-
+/* MCQ Interactive Card */
+.mcq-card-ui { background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 20px; margin: 14px 0; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); }
 .mcq-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
 .mcq-badge { background: #4f46e5; color: #ffffff; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 8px; flex-shrink: 0; }
 .mcq-q-title { margin: 0; font-size: 16.5px; font-weight: 700; color: #1e293b; line-height: 1.5; }
 .mcq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 18px; }
-
-@media (max-width: 600px) {
-  .mcq-grid { grid-template-columns: 1fr; }
-}
-
+@media (max-width: 600px) { .mcq-grid { grid-template-columns: 1fr; } }
 .mcq-opt-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #ffffff; border: 1.5px solid #fecdd3; border-radius: 12px; font-size: 15px; color: #334155; }
 .mcq-opt-key { color: #e11d48; font-weight: 700; }
 .mcq-opt-text { flex: 1; }
@@ -322,10 +290,9 @@ body {
 .mcq-wrong-body { padding: 14px 18px; color: #334155; font-size: 14px; line-height: 1.6; }
 .mcq-wrong-body ul { margin: 0; padding-left: 20px; }
 .mcq-wrong-body li { margin-bottom: 6px; }
-
 .mcq-trick-box { background: #fefce8; border: 1px dashed #eab308; border-radius: 10px; padding: 12px 16px; color: #854d0e; font-size: 14px; }
 
-/* ================= Drawer ================= */
+/* Drawer */
 .drawer { position: fixed !important; top: 0 !important; left: 0 !important; width: 300px; height: 100vh; background: #ffffff; border-right: 1px solid var(--border-color); box-shadow: var(--shadow-lg); z-index: 100; transform: translateX(-100%); transition: transform 0.3s ease; display: flex; flex-direction: column; padding: 20px 16px; }
 .drawer.open { transform: translateX(0) !important; }
 .backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
