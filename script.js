@@ -31,7 +31,7 @@
       getAnswer: "উত্তর দেখুন",
       diagramTitle: "ফ্লোচার্ট / ডায়াগ্রাম",
       diagramLoading: "ডায়াগ্রাম আঁকা হচ্ছে…",
-      diagramFailed: "ডায়াগ্রামটা আঁকা যায়নি। কোডটা নিচে দেওয়া হলো।",
+      diagramFailed: "ডায়াগ্রাম আঁকা যায়নি।",
       outputTitle: "আউটপুট — ব্রাউজারে যেমন দেখাবে",
       runOutput: "আউটপুট চালান",
       treeTitle: "ট্যাগের কাঠামো (ডায়াগ্রাম)",
@@ -87,25 +87,25 @@
       errors: {
         rate_limited: "এই মুহূর্তে অনেক অনুরোধ এসেছে। এক মিনিট পরে আবার চেষ্টা করুন।",
         network: "ইন্টারনেট সংযোগে সমস্যা হচ্ছে। সংযোগ দেখে আবার চেষ্টা করুন।",
-        server_not_configured: "সার্ভার এখনো ঠিকমতো সেট করা হয়নি (লগইন বা সংরক্ষণের সেটিং বাকি)।",
+        server_not_configured: "সার্ভার এখনো ঠিকমতো সেট করা হয়নি।",
         invalid_login: "নাম বা পাসওয়ার্ড ভুল।",
-        signup_closed: "এখন নতুন আইডি খোলা বন্ধ আছে। অ্যাডমিনের সঙ্গে কথা বলুন।",
+        signup_closed: "নতুন আইডি খোলা বন্ধ আছে।",
         signup_full: "আইডি খোলার সব জায়গা ভরে গেছে।",
         invalid_invite: "ইনভাইট কোড ভুল।",
-        name_taken: "এই ইউজারনেম আগেই নেওয়া হয়েছে। অন্য একটা বেছে নিন।",
-        bad_name: "ইউজারনেম ৩–২০ অক্ষরের হতে হবে, শুধু a-z, ০-৯, _ বা - চলবে।",
+        name_taken: "এই ইউজারনেম আগেই নেওয়া হয়েছে।",
+        bad_name: "ইউজারনেম ৩–২০ অক্ষরের হতে হবে।",
         weak_password: "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।",
         password_mismatch: "দুইবার লেখা পাসওয়ার্ড মিলছে না।",
-        too_many_attempts: "অনেকবার ভুল চেষ্টা হয়েছে। এক ঘণ্টা পরে আবার চেষ্টা করুন।",
+        too_many_attempts: "অনেকবার ভুল চেষ্টা হয়েছে।",
         unauthorized: "লগইনের মেয়াদ শেষ। আবার লগইন করুন।",
         daily_limit: "আজকের প্রশ্নের সীমা শেষ। কাল আবার চেষ্টা করুন।",
         global_limit: "আজকের জন্য সাইটের মোট সীমা শেষ। কাল আবার চেষ্টা করুন।",
         bad_image: "ছবিটা পাঠানো যায়নি। অন্য একটা ছবি দিয়ে আবার চেষ্টা করুন।",
-        image_type: "এই ধরনের ফাইল চলবে না। JPG, PNG, WebP, GIF বা HEIC ছবি দিন।",
-        image_too_big: "ছবিটা অনেক বড় (সর্বোচ্চ ২০ MB)। ছোট একটা ছবি দিন।",
-        image_failed: "ছবিটা খুলতে পারিনি। অন্য ছবি বা JPG/PNG ফরম্যাটে চেষ্টা করুন।",
-        history_not_configured: "ইতিহাস সংরক্ষণ এখনো চালু করা হয়নি (Cloudflare-এ D1 ডাটাবেস যুক্ত করা বাকি)।",
-        history_failed: "ইতিহাস লোড করতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।",
+        image_type: "এই ধরনের ফাইল চলবে না। JPG, PNG, WebP বা HEIC দিন।",
+        image_too_big: "ছবি অনেক বড় (সর্বোচ্চ ২০ MB)।",
+        image_failed: "ছবি খুলতে পারিনি।",
+        history_not_configured: "ইতিহাস ডাটাবেস যুক্ত করা বাকি।",
+        history_failed: "ইতিহাস লোড করতে সমস্যা হয়েছে।",
         generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
       }
     },
@@ -139,7 +139,7 @@
       getAnswer: "Get answer",
       diagramTitle: "Flowchart / diagram",
       diagramLoading: "Drawing the diagram…",
-      diagramFailed: "The diagram could not be drawn. Here is its code.",
+      diagramFailed: "The diagram could not be drawn.",
       outputTitle: "Output — how it looks in a browser",
       runOutput: "Run output",
       treeTitle: "Tag structure (diagram)",
@@ -160,7 +160,7 @@
         if (subj) parts.push("Subject: " + subj);
         return "[Context — " + parts.join("; ") + ". Answer at this level.]\n";
       },
-      defaultImageQuestion: "Look carefully at this image and explain it. If it contains a question, solve it.",
+      defaultImageQuestion: "Look carefully at this image and explain it.",
       historyTitle: "Chat history",
       noChats: "No saved chats yet.",
       loadingChats: "Loading…",
@@ -171,14 +171,14 @@
       usage: function (user, used, limit) { return user + " · " + used + "/" + limit + " questions today"; },
       loginTitle: "Log in",
       loginOpen: "Log in",
-      loginHint: "For approved members only. Enter your name and password.",
+      loginHint: "For approved members only.",
       toSignup: "Create a new ID",
       toLogin: "Already have an ID? Log in",
       signupTitle: "Create a new ID",
       signupHint: "You need the invite code from your teacher.",
-      signupNameLabel: "Username (3-20 characters: a-z, 0-9, _ or -)",
-      signupPassLabel: "Password (at least 8 characters)",
-      signupPass2Label: "Repeat the password",
+      signupNameLabel: "Username",
+      signupPassLabel: "Password",
+      signupPass2Label: "Repeat password",
       signupInviteLabel: "Invite code",
       signupBtn: "Create ID",
       signingUp: "Please wait…",
@@ -186,36 +186,8 @@
       codeLabel: "Password",
       loginBtn: "Enter",
       loggingIn: "Please wait…",
-      suggestions: [
-        "What is photosynthesis?",
-        "How do I solve a quadratic equation?",
-        "নিউটনের গতিসূত্র সহজ করে বলো",
-        "Explain the present perfect tense"
-      ],
-      errors: {
-        rate_limited: "Too many requests right now. Please wait a minute and try again.",
-        network: "Network problem. Check your connection and try again.",
-        server_not_configured: "The server isn't fully set up yet.",
-        invalid_login: "Wrong name or password.",
-        signup_closed: "Creating new IDs is closed right now.",
-        signup_full: "All the places for new IDs are taken.",
-        invalid_invite: "The invite code is wrong.",
-        name_taken: "That username is already taken.",
-        bad_name: "The username must be 3-20 characters.",
-        weak_password: "The password must be at least 8 characters.",
-        password_mismatch: "The two passwords do not match.",
-        too_many_attempts: "Too many failed attempts. Try again in an hour.",
-        unauthorized: "Your login has expired. Please log in again.",
-        daily_limit: "You've used all of today's questions.",
-        global_limit: "The site's total limit for today has been reached.",
-        bad_image: "The picture couldn't be sent.",
-        image_type: "That file type isn't supported.",
-        image_too_big: "That picture is too large (max 20 MB).",
-        image_failed: "Couldn't open that picture.",
-        history_not_configured: "Chat history isn't switched on yet.",
-        history_failed: "Couldn't load the chat history.",
-        generic: "Sorry, something went wrong getting the answer."
-      }
+      suggestions: ["What is photosynthesis?", "How do I solve quadratic equations?"],
+      errors: { generic: "Sorry, something went wrong getting the answer." }
     }
   };
 
@@ -290,13 +262,10 @@
     var has = chatEl.children.length > 0;
     askMainEl.classList.toggle("has-chat", has);
     inputEl.rows = has ? 1 : 3;
-    updatePlaceholder();
+    inputEl.placeholder = has ? TEXT[lang].followPlaceholder : TEXT[lang].placeholder;
     autosize();
   }
-  function updatePlaceholder() {
-    var t = TEXT[lang];
-    inputEl.placeholder = askMainEl.classList.contains("has-chat") ? t.followPlaceholder : t.placeholder;
-  }
+
   new MutationObserver(syncHasChat).observe(chatEl, { childList: true });
   function scrollChat() { 
     setTimeout(function () { askMainEl.scrollTop = askMainEl.scrollHeight; }, 60); 
@@ -355,43 +324,6 @@
       .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   }
 
-  var LATEX_MAP = {
-    "\\rightarrow": "→", "\\to": "→", "\\leftarrow": "←", "\\Rightarrow": "⇒", "\\leftrightarrow": "↔",
-    "\\times": "×", "\\cdot": "·", "\\div": "÷", "\\pm": "±",
-    "\\leq": "≤", "\\le": "≤", "\\geq": "≥", "\\ge": "≥", "\\neq": "≠", "\\approx": "≈",
-    "\\pi": "π", "\\theta": "θ", "\\alpha": "α", "\\beta": "β", "\\gamma": "γ", "\\delta": "δ",
-    "\\Delta": "Δ", "\\lambda": "λ", "\\mu": "μ", "\\sigma": "σ", "\\omega": "ω", "\\infty": "∞",
-    "\\degree": "°", "\\circ": "°"
-  };
-  var SUPERSCRIPT = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "+": "⁺" };
-  var SUBSCRIPT = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉" };
-
-  function mapChars(str, table) {
-    var out = "";
-    for (var i = 0; i < str.length; i++) {
-      if (!table[str[i]]) return null;
-      out += table[str[i]];
-    }
-    return out;
-  }
-
-  function latexToText(inner) {
-    var s = inner;
-    s = s.replace(/\\text\{([^{}]*)\}/g, "$1").replace(/\\mathrm\{([^{}]*)\}/g, "$1");
-    s = s.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1)/($2)");
-    s = s.replace(/\\sqrt\{([^{}]*)\}/g, "√($1)");
-    s = s.replace(/\\[a-zA-Z]+/g, function (cmd) { return LATEX_MAP[cmd] || cmd; });
-    s = s.replace(/\^\{?([0-9+-]+)\}?/g, function (m, d) { return mapChars(d, SUPERSCRIPT) || m; });
-    s = s.replace(/_\{?([0-9]+)\}?/g, function (m, d) { return mapChars(d, SUBSCRIPT) || m; });
-    return s.replace(/[{}]/g, "").replace(/\s+/g, " ").trim();
-  }
-
-  function cleanLatex(raw) {
-    return raw
-      .replace(/\$\$([^$]*\\[^$]*)\$\$/g, function (m, inner) { return latexToText(inner); })
-      .replace(/\$([^$\n]*\\[^$\n]*)\$/g, function (m, inner) { return latexToText(inner); });
-  }
-
   function mathToken(maths, tex, display) {
     maths.push({ tex: tex.trim(), display: display });
     return "\uE000" + (maths.length - 1) + "\uE001";
@@ -442,16 +374,17 @@
   }
 
   function plainAnswer(text) {
-    return cleanLatex(text)
+    return text
+      .replace(/\[\/?(QUESTION|OPTIONS|EXPLANATION|WHY_WRONG|TRICK)\]/gi, "")
+      .replace(/```(?:mcq)?/gi, "")
       .replace(/\*\*([^*\n]+)\*\*/g, "$1")
       .replace(/`([^`\n]+)`/g, "$1")
       .replace(/^#{1,6}\s+/gm, "")
-      .replace(/^\s*([-*_])(\s*\1){2,}\s*$/gm, "")
       .replace(/\n{3,}/g, "\n\n")
       .trim();
   }
 
-  // ===== অল-ইন-ওয়ান শক্তিশালী MCQ কার্ড রেন্ডারার =====
+  // ===== MCQ কার্ড বিল্ডার =====
   function buildMcqHtml(question, options, explanation, whyWrong, trick) {
     var cleanQ = question.replace(/```(?:mcq)?/gi, "").replace(/^MCQ\s*/i, "").trim();
 
@@ -552,8 +485,10 @@
   }
 
   function renderMarkdown(raw, final) {
-    var naturalMcq = parseNaturalMcq(raw);
-    if (naturalMcq) return naturalMcq;
+    if (final === true) {
+      var naturalMcq = parseNaturalMcq(raw);
+      if (naturalMcq) return naturalMcq;
+    }
 
     var maths = [];
     var source = extractMath(raw, maths);
@@ -588,8 +523,11 @@
   function addMessage(kind, text) {
     var el = document.createElement("div");
     el.className = "msg " + (kind === "user" ? "user" : "bot") + (kind === "error" ? " error" : "");
-    if (kind === "bot") { el.innerHTML = renderMarkdown(text, true); }
-    else el.textContent = text;
+    if (kind === "bot") { 
+      if (text) el.innerHTML = renderMarkdown(text, true); 
+    } else {
+      el.textContent = text;
+    }
     chatEl.appendChild(el);
     scrollChat();
     return el;
@@ -635,9 +573,9 @@
     for (var i = 0; i < old.length; i++) old[i].remove();
   }
 
-  // ===== ২য় ছবির মতো রিভিউ (👍 / 👎) ও কুইক অ্যাকশন বাটন =====
   function addAnswerActions(answerText) {
     removeActions();
+    if (!answerText) return;
     var t = TEXT[lang];
     var bar = document.createElement("div");
     bar.className = "actions";
@@ -701,7 +639,6 @@
     if (!state) inputEl.focus();
   }
 
-  // ================= ছবি আপলোড ও প্রসেসিং লজিক =================
   function showPreview(nameText, statusText) {
     previewEl.classList.remove("hidden");
     previewEl.classList.toggle("loading", preparing);
@@ -1037,7 +974,6 @@
     showGuest();
   }
 
-  // ===== চ্যাট হিস্ট্রি সেভ (D1 ডাটাবেস) =====
   function newChatId() {
     return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
@@ -1055,6 +991,7 @@
     } catch (e) {}
   }
 
+  // ===== মূল ask ফাংশন (ডিফেন্সিভ ও এরর-প্রুফ) =====
   async function ask(question) {
     var q = (question || "").trim();
     var image = pendingImage;
@@ -1084,10 +1021,20 @@
         })
       });
 
-      var text = "";
-      typing.remove();
-      var botEl = addMessage("bot", "");
+      var contentType = res.headers.get("Content-Type") || "";
 
+      // সার্ভার কোনো এরর দিলে খালি বক্স না দিয়ে এরর দেখাবে
+      if (!res.ok || contentType.indexOf("text/event-stream") === -1) {
+        typing.remove();
+        var errData = null;
+        try { errData = await res.json(); } catch (err) {}
+        history.pop();
+        addMessage("error", (errData && errData.detail) || (errData && TEXT[lang].errors[errData.error]) || TEXT[lang].errors.generic);
+        return;
+      }
+
+      var text = "";
+      var botEl = null; // প্রথম শব্দ আসার আগ পর্যন্ত বক্স তৈরি হবে না
       var reader = res.body.getReader();
       var decoder = new TextDecoder("utf-8");
       var buffer = "";
@@ -1103,7 +1050,16 @@
           if (line.startsWith("data:")) {
             try {
               var ev = JSON.parse(line.slice(5).trim());
-              if (ev.t) { text += ev.t; botEl.innerHTML = renderMarkdown(text, false); scrollChat(); }
+              if (ev.t) {
+                if (!botEl) {
+                  typing.remove();
+                  addMeta("bot");
+                  botEl = addMessage("bot", "");
+                }
+                text += ev.t;
+                botEl.innerHTML = renderMarkdown(text, false);
+                scrollChat();
+              }
               if (ev.done && typeof ev.used === "number") {
                 usage.used = ev.used;
                 renderUsage();
@@ -1112,12 +1068,21 @@
           }
         }
       }
-      botEl.innerHTML = renderMarkdown(text, true);
-      history.push({ role: "assistant", text: text });
-      saveChat();
-      addAnswerActions(text);
+
+      if (botEl && text) {
+        botEl.innerHTML = renderMarkdown(text, true);
+        history.push({ role: "assistant", text: text });
+        saveChat();
+        addAnswerActions(text);
+      } else {
+        typing.remove();
+        history.pop();
+        addMessage("error", TEXT[lang].errors.generic);
+      }
     } catch (e) {
-      addMessage("error", "উত্তর আনতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+      typing.remove();
+      history.pop();
+      addMessage("error", "ইন্টারনেট সংযোগে সমস্যা হচ্ছে। আবার চেষ্টা করুন।");
     } finally {
       setBusy(false);
       scrollChat();
@@ -1134,7 +1099,6 @@
   });
   inputEl.addEventListener("input", autosize);
 
-  // নতুন চ্যাট ও লগইন ইভেন্টস
   newChatEl.addEventListener("click", resetChat);
   loginForm.addEventListener("submit", doLogin);
   signupForm.addEventListener("submit", doSignup);
@@ -1143,7 +1107,6 @@
   logoutEl.addEventListener("click", doLogout);
   loginOpenEl.addEventListener("click", function () { goToLogin({ view: "home" }); });
 
-  // ছবি আপলোড বাটন
   attachEl.addEventListener("click", function () { if (!busy && !preparing) fileEl.click(); });
   homeAttach.addEventListener("click", function () {
     setView("ask");
