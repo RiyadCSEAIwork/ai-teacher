@@ -97,7 +97,7 @@
         weak_password: "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।",
         password_mismatch: "দুইবার লেখা পাসওয়ার্ড মিলছে না।",
         too_many_attempts: "অনেকবার ভুল চেষ্টা হয়েছে।",
-        unauthorized: "লগইনের মেয়াদ শেষ। আবার লগইন করুন।",
+        unauthorized: "লগইনের মেয়াদ শেষ।",
         daily_limit: "আজকের প্রশ্নের সীমা শেষ। কাল আবার চেষ্টা করুন।",
         global_limit: "আজকের জন্য সাইটের মোট সীমা শেষ। কাল আবার চেষ্টা করুন।",
         bad_image: "ছবিটা পাঠানো যায়নি। অন্য একটা ছবি দিয়ে আবার চেষ্টা করুন।",
@@ -106,7 +106,7 @@
         image_failed: "ছবি খুলতে পারিনি।",
         history_not_configured: "ইতিহাস ডাটাবেস যুক্ত করা বাকি।",
         history_failed: "ইতিহাস লোড করতে সমস্যা হয়েছে।",
-        generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
+        generic: "দুঃখিত, উত্তর আনতে সমস্যা হয়েছে।"
       }
     },
     en: {
@@ -203,7 +203,8 @@
   var formEl = document.getElementById("form");
   var inputEl = document.getElementById("input");
   var sendEl = document.getElementById("send");
-  var newChatEl = document.getElementById("new-chat");
+  var navNewChatEl = document.getElementById("nav-new-chat");
+  var navNewLabelEl = document.getElementById("nav-new-label");
   var logoutEl = document.getElementById("logout");
   var usageEl = document.getElementById("usage");
   var suggestionsEl = document.getElementById("suggestions");
@@ -253,23 +254,8 @@
   var subjectSel = document.getElementById("subject-sel");
   var counterEl = document.getElementById("counter");
   var askMainEl = document.querySelector(".ask-main");
-  var ctxChipEl = document.getElementById("ctx-chip");
   var answerCardEl = document.querySelector(".answer-card");
   var welcomeEl = document.getElementById("welcome");
-
-  // ===== চ্যাট শুরু হলে ইনপুট বক্সকে নিচে পাঠানো এবং স্লিম রাখা =====
-  function syncHasChat() {
-    var has = chatEl.children.length > 0;
-    askMainEl.classList.toggle("has-chat", has);
-    inputEl.rows = has ? 1 : 3;
-    inputEl.placeholder = has ? TEXT[lang].followPlaceholder : TEXT[lang].placeholder;
-    autosize();
-  }
-
-  new MutationObserver(syncHasChat).observe(chatEl, { childList: true });
-  function scrollChat() { 
-    setTimeout(function () { askMainEl.scrollTop = askMainEl.scrollHeight; }, 60); 
-  }
 
   var loginForm = document.getElementById("login-form");
   var loginTitle = document.getElementById("login-title");
@@ -281,6 +267,12 @@
   var loginError = document.getElementById("login-error");
   var loginBtn = document.getElementById("login-btn");
   var signupForm = document.getElementById("signup-form");
+  var signupTitle = document.getElementById("signup-title");
+  var signupHint = document.getElementById("signup-hint");
+  var signupNameLabel = document.getElementById("signup-name-label");
+  var signupPassLabel = document.getElementById("signup-pass-label");
+  var signupPass2Label = document.getElementById("signup-pass2-label");
+  var signupInviteLabel = document.getElementById("signup-invite-label");
   var signupName = document.getElementById("signup-name");
   var signupPass = document.getElementById("signup-pass");
   var signupPass2 = document.getElementById("signup-pass2");
@@ -301,14 +293,25 @@
   var authed = false;
   var user = "";
   var usage = { used: 0, limit: 0 };
-  var loginErrorKey = null;
   var pendingImage = null;
   var preparing = false;
   var view = "home";
   var afterLogin = null;
   var chatId = null;
   var chatTitle = "";
-  var chatCtx = null;
+
+  function syncHasChat() {
+    var has = chatEl.children.length > 0;
+    askMainEl.classList.toggle("has-chat", has);
+    inputEl.rows = has ? 1 : 3;
+    inputEl.placeholder = has ? TEXT[lang].followPlaceholder : TEXT[lang].placeholder;
+    autosize();
+  }
+
+  new MutationObserver(syncHasChat).observe(chatEl, { childList: true });
+  function scrollChat() { 
+    setTimeout(function () { askMainEl.scrollTop = askMainEl.scrollHeight; }, 60); 
+  }
 
   function escapeHtml(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -369,10 +372,6 @@
     return html;
   }
 
-  function unescapeHtml(s) {
-    return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
-  }
-
   function plainAnswer(text) {
     return text
       .replace(/\[\/?(QUESTION|OPTIONS|EXPLANATION|WHY_WRONG|TRICK)\]/gi, "")
@@ -384,7 +383,6 @@
       .trim();
   }
 
-  // ===== MCQ কার্ড বিল্ডার =====
   function buildMcqHtml(question, options, explanation, whyWrong, trick) {
     var cleanQ = question.replace(/```(?:mcq)?/gi, "").replace(/^MCQ\s*/i, "").trim();
 
@@ -498,7 +496,7 @@
 
     for (var i = 0; i < parts.length; i++) {
       if (i % 2 === 1) {
-        var codeRaw = unescapeHtml(parts[i].replace(/^[a-zA-Z0-9_+#-]*\n/, "")).replace(/\n$/, "");
+        var codeRaw = parts[i].replace(/^[a-zA-Z0-9_+#-]*\n/, "").replace(/\n$/, "");
         out.push('<pre><code>' + escapeHtml(codeRaw) + '</code></pre>');
         continue;
       }
@@ -742,6 +740,34 @@
     }
   }
 
+  async function makeThumb(dataUrl) {
+    if (!dataUrl) return "";
+    try {
+      var img = await new Promise(function (resolve, reject) {
+        var i = new Image();
+        i.onload = function () { resolve(i); };
+        i.onerror = function () { reject(new Error("thumb")); };
+        i.src = dataUrl;
+      });
+      var w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) return "";
+      var scale = Math.min(1, 900 / Math.max(w, h));
+      var canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(w * scale));
+      canvas.height = Math.max(1, Math.round(h * scale));
+      var ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      var qualities = [0.72, 0.58, 0.45, 0.35];
+      for (var q = 0; q < qualities.length; q++) {
+        var out = (canvas.toDataURL("image/jpeg", qualities[q]).split(",")[1]) || "";
+        if (out && out.length <= 250000) return out;
+      }
+    } catch (e) {}
+    return "";
+  }
+
   async function handleFileChosen() {
     var file = fileEl.files && fileEl.files[0];
     if (!file || busy) return;
@@ -753,6 +779,7 @@
 
     try {
       var prepared = await prepareImage(file);
+      prepared.thumb = await makeThumb(prepared.url);
       if (!preparing) return;
       pendingImage = prepared;
       preparing = false;
@@ -845,10 +872,11 @@
     usageEl.textContent = authed ? TEXT[lang].usage(user, usage.used, usage.limit) : "";
   }
 
+  // ===== ১ নম্বর পয়েন্ট সমাধান: লগইন ও সাইনআপের সব টেক্সট পূর্ণাঙ্গভাবে সেট করা =====
   function applyLanguage() {
     var t = TEXT[lang];
     sendLabelEl.textContent = t.getAnswer;
-    newChatEl.textContent = t.newChat;
+    navNewLabelEl.textContent = t.newChat;
     logoutLabelEl.textContent = t.logout;
     loginOpenLabelEl.textContent = t.loginOpen;
     historyLabelEl.textContent = t.historyBtn;
@@ -866,6 +894,25 @@
     renderSubjects();
     drawerTitleEl.textContent = t.historyTitle;
     drawerNewEl.textContent = "+ " + t.newChat;
+
+    // লগইন পেজের লেবেল ও বাটন ফিক্স
+    loginTitle.textContent = t.loginTitle;
+    loginHint.textContent = t.loginHint;
+    loginNameLabel.textContent = t.nameLabel;
+    loginCodeLabel.textContent = t.codeLabel;
+    loginBtn.textContent = t.loginBtn;
+    toSignupEl.textContent = t.toSignup;
+    toLoginEl.textContent = t.toLogin;
+
+    // সাইনআপ পেজের লেবেল ও বাটন ফিক্স
+    signupTitle.textContent = t.signupTitle;
+    signupHint.textContent = t.signupHint;
+    signupNameLabel.textContent = t.signupNameLabel;
+    signupPassLabel.textContent = t.signupPassLabel;
+    signupPass2Label.textContent = t.signupPass2Label;
+    signupInviteLabel.textContent = t.signupInviteLabel;
+    signupBtn.textContent = t.signupBtn;
+
     langBn.classList.toggle("active", lang === "bn");
     langEn.classList.toggle("active", lang === "en");
     renderUsage();
@@ -875,11 +922,11 @@
     history = [];
     chatId = null;
     chatTitle = "";
-    chatCtx = null;
     clearPendingImage();
     chatEl.innerHTML = "";
     suggestionsEl.classList.remove("hidden");
     syncHasChat();
+    setView("ask");
   }
 
   function setAuthMode(mode) {
@@ -887,6 +934,7 @@
     loginForm.hidden = signup;
     signupForm.hidden = !signup;
     signupError.textContent = "";
+    loginError.textContent = "";
   }
 
   function goToLogin(after) {
@@ -974,24 +1022,125 @@
     showGuest();
   }
 
+  // ===== ৪ নম্বর পয়েন্ট সমাধান: D1 ডাটাবেসে চ্যাট হিস্ট্রি পারফেক্ট সেভ লজিক =====
   function newChatId() {
     return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  async function uploadImage(chat, imgId, base64) {
+    try {
+      var res = await fetch("/api/chats?img=" + encodeURIComponent(imgId) + "&chat=" + encodeURIComponent(chat), {
+        method: "PUT",
+        headers: { "Content-Type": "text/plain" },
+        body: base64
+      });
+      return res.ok;
+    } catch (e) {
+      return false;
+    }
   }
 
   async function saveChat() {
     if (!authed || !history.length) return;
     if (!chatId) chatId = newChatId();
-    if (!chatTitle && history[0]) chatTitle = history[0].text.slice(0, 40) || "Chat";
+    if (!chatTitle) {
+      var first = history.find(function (m) { return m.role === "user"; });
+      chatTitle = first ? (first.text.slice(0, 45) || "Chat") : "Chat";
+    }
+
+    // ইমেজ থাম্বনেইল আলাদা আপলোড যাতে D1 এ 413 পে-লোড এরর না আসে
+    for (var k = 0; k < history.length; k++) {
+      var im = history[k].image;
+      if (im && im.thumb && !im.imgId) {
+        var newImgId = newChatId();
+        if (await uploadImage(chatId, newImgId, im.thumb)) {
+          im.imgId = newImgId;
+        }
+      }
+    }
+
+    var cleanMsgs = history.slice(-40).map(function (m) {
+      return {
+        role: m.role,
+        text: m.text || "",
+        img: !!(m.image || m.img),
+        imgId: (m.image && m.image.imgId) || m.imgId || undefined,
+        fb: m.fb || undefined
+      };
+    });
+
     try {
       await fetch("/api/chats", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: chatId, title: chatTitle, messages: history })
+        body: JSON.stringify({ id: chatId, title: chatTitle, messages: cleanMsgs })
       });
     } catch (e) {}
   }
 
-  // ===== মূল ask ফাংশন (ডিফেন্সিভ ও এরর-প্রুফ) =====
+  async function loadChatList() {
+    drawerMsgEl.textContent = TEXT[lang].loadingChats;
+    chatListEl.innerHTML = "";
+    try {
+      var res = await fetch("/api/chats");
+      var data = await res.json();
+      if (!res.ok || !data || !data.ok) {
+        drawerMsgEl.textContent = TEXT[lang].errors.history_failed;
+        return;
+      }
+      var chats = data.chats || [];
+      drawerMsgEl.textContent = chats.length ? "" : TEXT[lang].noChats;
+      chats.forEach(function (c) {
+        var li = document.createElement("li");
+        li.className = "chat-item" + (c.id === chatId ? " active" : "");
+        li.innerHTML = '<button type="button" class="chat-open">' + escapeHtml(c.title || TEXT[lang].untitled) + '</button>' +
+          '<button type="button" class="chat-del"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>';
+
+        li.querySelector(".chat-open").addEventListener("click", function () { openChat(c.id); });
+        li.querySelector(".chat-del").addEventListener("click", function () { deleteChat(c.id); });
+        chatListEl.appendChild(li);
+      });
+    } catch (e) {
+      drawerMsgEl.textContent = TEXT[lang].errors.network;
+    }
+  }
+
+  async function openChat(id) {
+    try {
+      var res = await fetch("/api/chats?id=" + encodeURIComponent(id));
+      var data = await res.json();
+      if (!res.ok || !data || !data.ok || !data.chat) return;
+      resetChat();
+      chatId = data.chat.id;
+      chatTitle = data.chat.title;
+      (data.chat.messages || []).forEach(function (m) {
+        if (m.role === "user") {
+          addMeta("user");
+          addUserMessage(m.text, m.imgId ? { url: "/api/chats?img=" + encodeURIComponent(m.imgId) } : null);
+          history.push({ role: "user", text: m.text, imgId: m.imgId });
+        } else {
+          addMeta("bot");
+          addMessage("bot", m.text);
+          history.push({ role: "assistant", text: m.text, fb: m.fb });
+        }
+      });
+      var last = history[history.length - 1];
+      if (last && last.role === "assistant") addAnswerActions(last.text);
+      drawerEl.classList.remove("open");
+      backdropEl.classList.remove("show");
+    } catch (e) {}
+  }
+
+  async function deleteChat(id) {
+    if (!window.confirm(TEXT[lang].deleteAsk)) return;
+    try {
+      await fetch("/api/chats?id=" + encodeURIComponent(id), { method: "DELETE" });
+      if (id === chatId) resetChat();
+      loadChatList();
+    } catch (e) {}
+  }
+
+  // ===== মূল ask ফাংশন =====
   async function ask(question) {
     var q = (question || "").trim();
     var image = pendingImage;
@@ -1023,7 +1172,6 @@
 
       var contentType = res.headers.get("Content-Type") || "";
 
-      // সার্ভার কোনো এরর দিলে খালি বক্স না দিয়ে এরর দেখাবে
       if (!res.ok || contentType.indexOf("text/event-stream") === -1) {
         typing.remove();
         var errData = null;
@@ -1034,7 +1182,7 @@
       }
 
       var text = "";
-      var botEl = null; // প্রথম শব্দ আসার আগ পর্যন্ত বক্স তৈরি হবে না
+      var botEl = null;
       var reader = res.body.getReader();
       var decoder = new TextDecoder("utf-8");
       var buffer = "";
@@ -1099,7 +1247,10 @@
   });
   inputEl.addEventListener("input", autosize);
 
-  newChatEl.addEventListener("click", resetChat);
+  // ২ নম্বর পয়েন্ট সমাধান: মেনুবারে নতুন চ্যাট বাটন অ্যাকশন
+  navNewChatEl.addEventListener("click", resetChat);
+  drawerNewEl.addEventListener("click", function () { resetChat(); drawerEl.classList.remove("open"); backdropEl.classList.remove("show"); });
+
   loginForm.addEventListener("submit", doLogin);
   signupForm.addEventListener("submit", doSignup);
   toSignupEl.addEventListener("click", function (e) { e.preventDefault(); setAuthMode("signup"); });
@@ -1115,7 +1266,11 @@
   fileEl.addEventListener("change", handleFileChosen);
   previewRemoveEl.addEventListener("click", function () { if (!busy) clearPendingImage(); });
 
-  historyBtn.addEventListener("click", function () { drawerEl.classList.add("open"); backdropEl.classList.add("show"); });
+  historyBtn.addEventListener("click", function () {
+    drawerEl.classList.add("open");
+    backdropEl.classList.add("show");
+    loadChatList();
+  });
   drawerCloseEl.addEventListener("click", function () { drawerEl.classList.remove("open"); backdropEl.classList.remove("show"); });
   backdropEl.addEventListener("click", function () { drawerEl.classList.remove("open"); backdropEl.classList.remove("show"); });
 
