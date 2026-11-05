@@ -87,7 +87,6 @@ const SUBJECTS = {
   biology: { bn: 'জীববিজ্ঞান', en: 'Biology' },
   ict: { bn: 'ICT', en: 'ICT' }
 };
-// Same order as the server (chat.js) — the number sent is the index in this list.
 const CLASS_NAMES = [
   { bn: 'ষষ্ঠ শ্রেণি', en: 'Class 6' },
   { bn: 'সপ্তম শ্রেণি', en: 'Class 7' },
@@ -204,15 +203,15 @@ function tx() { return TEXT[currentLanguage] || TEXT.bn; }
    ======================================================== */
 let currentUser = null;
 let currentLanguage = 'bn';
-let pendingImage = null;          // { mime, data, url }
+let pendingImage = null;
 let preparingImage = false;
 let isStreamingResponse = false;
-let chatLog = [];                 // { role, text, image?, imgId?, ts, dur?, fb?, ctx?, skip? }
+let chatLog = [];
 let currentChatId = null;
 let currentChatTitle = '';
 let titleRequested = false;
-let selectedSubject = '';         // 'math' | 'physics' | ...
-let selectedClass = '';           // '' or '0'..'7'
+let selectedSubject = '';
+let selectedClass = '';
 let contextLocked = false;
 let resumeAfterAuth = false;
 let saveQueue = Promise.resolve();
@@ -299,7 +298,6 @@ async function checkAuth() {
     const res = await fetch('/api/me', { credentials: 'same-origin' });
     if (res.ok) {
       const data = await res.json();
-      // /api/me answers { ok, user: "riyad", gender, used, limit }
       const username = typeof data.user === 'string' ? data.user : (data.user && (data.user.username || data.user.name)) || data.username;
       if (username) {
         currentUser = {
@@ -384,7 +382,7 @@ function setLanguage(lang) {
 }
 
 /* ========================================================
-   CLASS + SUBJECT SELECTION (locked once a chat has an answer)
+   CLASS + SUBJECT SELECTION
    ======================================================== */
 function bindContextSelectors() {
   document.querySelectorAll('.chip-btn').forEach((btn) => {
@@ -396,7 +394,7 @@ function bindContextSelectors() {
         return;
       }
       const id = btn.dataset.subject;
-      selectedSubject = selectedSubject === id ? '' : id;   // click again to un-select
+      selectedSubject = selectedSubject === id ? '' : id;
       updateContextUI();
       userQuestionInput.focus();
     });
@@ -568,7 +566,6 @@ function readAsDataUrl(file) {
   });
 }
 
-// Shrinks the photo (long side <= MAX_IMAGE_SIDE) and turns it into JPEG base64 that the server accepts.
 async function prepareImage(file) {
   const type = (file.type || '').toLowerCase();
   const looksLikeImage = type.indexOf('image/') === 0 || /\.(jpe?g|png|webp|gif|heic|heif|bmp)$/i.test(file.name || '');
@@ -617,7 +614,6 @@ async function prepareImage(file) {
   }
 }
 
-// A small copy (<= ~190 KB) that is stored with the chat history.
 async function makeThumb(dataUrl) {
   if (!dataUrl) return '';
   try {
@@ -726,7 +722,6 @@ function toInt(str) {
   return parseInt(String(str).replace(/[০-৯]/g, (d) => bn.indexOf(d)), 10);
 }
 
-// Headings, bullet / numbered lists, tables and paragraphs (input is already HTML-escaped).
 function renderTextBlocks(text) {
   const lines = text.split('\n');
   const out = [];
@@ -803,10 +798,10 @@ function codeBlockHtml(lang, code, final) {
     '<span class="code-actions">' + buttons + '</span></div><pre><code>' + escapeHtml(code) + '</code></pre></div>';
 }
 
-/* ---- MCQ answer card: the AI replies in a ```mcq block with [QUESTION] [OPTIONS] ... tags ---- */
+/* ---- MCQ answer card (with compact math lines and separate multi-cards) ---- */
 function buildMcqHtml(question, options, explanation, whyWrong, trick, qNum) {
   const cleanQ = question.replace(/```(?:mcq)?/gi, '').replace(/^MCQ\s*/i, '').trim();
-  let html = '<div class="mcq-card-ui" style="' + (qNum ? 'margin-bottom:1.5rem;' : '') + '">';
+  let html = '<div class="mcq-card-ui" style="' + (qNum ? 'margin-bottom:1.25rem;' : '') + '">';
   if (cleanQ) {
     let badgeText = 'MCQ';
     if (qNum) {
@@ -829,8 +824,16 @@ function buildMcqHtml(question, options, explanation, whyWrong, trick, qNum) {
     html += '</div>';
   }
   if (explanation.length) {
+    // Filter out redundant empty lines to compress vertical spacing
+    const cleanExp = explanation
+      .map(l => l.trim())
+      .filter((l, idx, arr) => !(l === '' && arr[idx - 1] === ''))
+      .join('<br>')
+      .replace(/```/g, '')
+      .trim();
+
     html += '<div class="mcq-exp-box"><div class="mcq-exp-head">' + (currentLanguage === 'en' ? 'Explanation' : 'ব্যাখ্যা') + '</div>';
-    html += '<div class="mcq-exp-body">' + formatRichText(explanation.join('<br>').replace(/```/g, '').trim()) + '</div></div>';
+    html += '<div class="mcq-exp-body">' + formatRichText(cleanExp) + '</div></div>';
   }
   if (whyWrong.length) {
     html += '<details class="mcq-wrong-details"><summary class="mcq-wrong-summary"><span>' +
@@ -946,7 +949,7 @@ function parseNaturalMcq(text) {
 function renderRich(raw, final) {
   const mcq = parseNaturalMcq(raw);
   if (mcq) return mcq;
-  // While an MCQ answer is still arriving, hide the raw [TAGS] until the card can be drawn.
+
   if (/\[(QUESTION|OPTIONS)\]|```mcq/i.test(raw)) {
     raw = raw.replace(/^\s*\[(QUESTION|OPTIONS|EXPLANATION|WHY_WRONG|TRICK)\]\s*$/gim, '').replace(/```mcq/gi, '');
   }
@@ -983,7 +986,7 @@ function runMermaid(container) {
   try {
     const res = window.mermaid.run({ nodes: Array.from(nodes) });
     if (res && res.catch) res.catch(() => {});
-  } catch (e) { /* the diagram text stays visible */ }
+  } catch (e) { /* ignore */ }
 }
 
 function plainAnswer(text) {
@@ -997,7 +1000,6 @@ function plainAnswer(text) {
     .trim();
 }
 
-// Copy / preview buttons that live inside code blocks
 function bindChatClicks() {
   chatMessages.addEventListener('click', (e) => {
     const btn = e.target.closest('.code-btn');
@@ -1143,7 +1145,7 @@ function handleQuestionSubmit() {
 
 function buildMessages() {
   const list = chatLog.filter((m) => !m.skip);
-  let imagesLeft = 2;   // the server only reads the two newest pictures
+  let imagesLeft = 2;
   const out = [];
   for (let i = list.length - 1; i >= 0; i--) {
     const m = list[i];
@@ -1164,7 +1166,6 @@ async function submitQuestion(rawText, imageObj) {
   if (isStreamingResponse || preparingImage) return;
   if (!text && !imageObj) return;
 
-  // Login is needed only when someone actually asks.
   if (!currentUser) {
     resumeAfterAuth = true;
     openAuthModal();
@@ -1208,7 +1209,7 @@ async function submitQuestion(rawText, imageObj) {
     const contentType = res.headers.get('Content-Type') || '';
     if (!res.ok || contentType.indexOf('text/event-stream') === -1) {
       let errData = null;
-      try { errData = await res.json(); } catch (err) { /* not json */ }
+      try { errData = await res.json(); } catch (err) { /* ignore */ }
       throw { api: true, code: (errData && errData.error) || (res.status === 401 ? 'unauthorized' : 'generic'), detail: errData && errData.detail };
     }
 
@@ -1249,7 +1250,6 @@ async function submitQuestion(rawText, imageObj) {
 
     if (!answer) throw { api: true, code: streamError || 'empty_reply' };
   } catch (err) {
-    // Nothing was answered: take the question back out so the student can simply try again.
     chatLog = chatLog.filter((m) => m !== userEntry);
     const code = err && err.api ? err.code : 'network';
     let message = tx().errors[code] || tx().errors.generic;
@@ -1270,7 +1270,6 @@ async function submitQuestion(rawText, imageObj) {
     return;
   }
 
-  // ---- answer complete ----
   const dur = Date.now() - started;
   ai.body.innerHTML = renderRich(answer, true);
   runMermaid(ai.body);
@@ -1278,7 +1277,6 @@ async function submitQuestion(rawText, imageObj) {
 
   const aiEntry = { role: 'assistant', text: answer, ts: Date.now(), dur };
   if (mismatch) {
-    // Wrong class/subject: show the advice, but don't count it, send it again, or save it.
     userEntry.skip = true;
     aiEntry.skip = true;
   }
@@ -1293,7 +1291,7 @@ async function submitQuestion(rawText, imageObj) {
       generateTitle(text, answer);
     }
   } else if (!chatLog.some((m) => !m.skip)) {
-    setContextLocked(false);   // the first question didn't match: let the student change class/subject
+    setContextLocked(false);
   }
 
   setBusy(false);
@@ -1339,7 +1337,6 @@ async function doSaveChat() {
     currentChatTitle = (first && first.text.slice(0, 45)) || tx().pictureQuestion;
   }
 
-  // Pictures are saved separately as small copies, so the chat save itself stays small.
   for (const m of list) {
     if (m.image && m.image.url && !m.imgId) {
       const thumb = await makeThumb(m.image.url);
@@ -1371,7 +1368,7 @@ async function doSaveChat() {
       credentials: 'same-origin',
       body: JSON.stringify({ id: currentChatId, title: currentChatTitle, messages })
     });
-  } catch (e) { /* history is best-effort */ }
+  } catch (e) { /* ignore */ }
 }
 
 async function generateTitle(question, answer) {
@@ -1387,7 +1384,7 @@ async function generateTitle(question, answer) {
       currentChatTitle = data.title;
       await saveChat();
     }
-  } catch (e) { /* the first words of the question stay as the title */ }
+  } catch (e) { /* ignore */ }
 }
 
 /* ========================================================
@@ -1501,7 +1498,6 @@ async function deleteChat(id) {
 /* ========================================================
    AUTH MODAL & LOGIN/SIGNUP
    ======================================================== */
-// Turns the server's error codes into Bengali messages.
 function authErrorText(code, fallback) {
   const map = {
     invalid_login: 'ইউজারনেম/ইমেইল বা পাসওয়ার্ড সঠিক নয়।',
@@ -1530,7 +1526,7 @@ function afterAuthSuccess() {
   checkAuth().then(() => {
     if (resumeAfterAuth) {
       resumeAfterAuth = false;
-      handleQuestionSubmit();   // sends the question the student had typed before logging in
+      handleQuestionSubmit();
     }
   });
 }
