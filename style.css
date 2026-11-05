@@ -1200,3 +1200,128 @@ body.chat-active .subject-chips.unlocked { display: flex; margin-top: 0.6rem; ga
 body.chat-active .subject-chips.unlocked .chip-btn,
 body.chat-active .subject-chips.unlocked .class-select { padding: 0.3rem 0.65rem; font-size: 0.8rem; }
 .chip-btn:disabled, .class-select:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ========================================================
+   SEPARATE MCQ CARDS STYLING
+   ======================================================== */
+.multi-mcq-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.mcq-card-item {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+
+.mcq-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.mcq-card-header .mcq-badge {
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.mcq-question-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.45;
+}
+
+.mcq-card-item .mcq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.mcq-card-item .mcq-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0.95rem;
+  background: #ffffff;
+  border: 1.2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.93rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.mcq-card-item .mcq-opt:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.mcq-card-item .mcq-opt.correct {
+  background: #f0fdf4 !important;
+  border-color: #22c55e !important;
+  color: #15803d !important;
+  font-weight: 600;
+}
+
+.mcq-card-item .mcq-opt .opt-prefix {
+  color: #dc2626;
+  margin-right: 4px;
+}
+
+.mcq-card-item .mcq-opt.correct .opt-prefix {
+  color: #16a34a;
+}
+
+.mcq-check-badge {
+  color: #22c55e;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mcq-explanation-box {
+  padding: 0.9rem 1.1rem;
+  background: #eff6ff;
+  border-left: 4px solid #2563eb;
+  border-radius: 6px;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.mcq-explanation-box strong {
+  color: #1d4ed8;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.mcq-golden-tip-box {
+  background: #fefce8;
+  border: 1px dashed #eab308;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+  color: #854d0e;
+  line-height: 1.5;
+}
+
+@media (max-width: 680px) {
+  .mcq-card-item .mcq-grid {
+    grid-template-columns: 1fr;
+  }
+}
