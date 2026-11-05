@@ -1,16 +1,8 @@
 /**
  * AI Teacher - Client Side Application Logic
- * Full implementation: Auth (Universal Payload), D1 History Save, Title Maker,
- * Gender Avatar, Smart Notes, SSE Streaming, KaTeX, Mermaid & MCQ Parser.
+ * Login/Signup, class+subject selection, streaming chat (SSE), MCQ cards, KaTeX, Mermaid,
+ * code blocks, chat history + titles (D1), Smart Notes, gender avatar.
  */
-
-// Global State
-let currentUser = null;
-let currentLanguage = 'bn';
-let attachedImageBase64 = null;
-let isStreamingResponse = false;
-let currentChatHistory = [];
-let currentChatId = null;
 
 // DOM Elements
 const brandLogo = document.getElementById('brandLogo');
@@ -86,27 +78,217 @@ const FEMALE_AVATAR_SVG = `
 `;
 
 /* ========================================================
-   HELPER: AUTH HEADERS (COOKIE + BEARER TOKEN SUPPORT)
+   CONSTANTS
    ======================================================== */
-function getAuthHeaders() {
-  const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+const SUBJECTS = {
+  math: { bn: 'গণিত', en: 'Math' },
+  physics: { bn: 'পদার্থবিজ্ঞান', en: 'Physics' },
+  chemistry: { bn: 'রসায়ন', en: 'Chemistry' },
+  biology: { bn: 'জীববিজ্ঞান', en: 'Biology' },
+  ict: { bn: 'ICT', en: 'ICT' }
+};
+// Same order as the server (chat.js) — the number sent is the index in this list.
+const CLASS_NAMES = [
+  { bn: 'ষষ্ঠ শ্রেণি', en: 'Class 6' },
+  { bn: 'সপ্তম শ্রেণি', en: 'Class 7' },
+  { bn: 'অষ্টম শ্রেণি', en: 'Class 8' },
+  { bn: 'নবম শ্রেণি', en: 'Class 9' },
+  { bn: 'দশম শ্রেণি (SSC)', en: 'Class 10 (SSC)' },
+  { bn: 'একাদশ শ্রেণি', en: 'Class 11' },
+  { bn: 'দ্বাদশ শ্রেণি (HSC)', en: 'Class 12 (HSC)' },
+  { bn: 'ভর্তি পরীক্ষা', en: 'Admission test' }
+];
+
+const MAX_IMAGE_SIDE = 1600;
+const MAX_IMAGE_BASE64 = 5400000;
+const MAX_IMAGE_FILE_BYTES = 25 * 1024 * 1024;
+
+const TEXT = {
+  bn: {
+    placeholder: 'আপনার প্রশ্ন লিখুন বা ছবি যুক্ত করুন...',
+    follow: 'আপনার পরের প্রশ্নটি লিখুন...',
+    submit: 'প্রশ্ন করুন',
+    classLabel: 'শ্রেণি নির্বাচন',
+    quota: (u, l) => `আজ ${u}/${l} প্রশ্ন`,
+    thinking: 'AI উত্তর তৈরি করছে...',
+    classWord: 'শ্রেণি',
+    subjectWord: 'বিষয়',
+    copy: '📋 কপি',
+    copied: '✅ কপি হয়েছে!',
+    simple: '💡 আরও সহজ করে বলো',
+    example: '📖 একটি উদাহরণ দাও',
+    quiz: '❓ আমাকে একটি প্রশ্ন করো',
+    simplePrompt: 'এটি আরও সহজ ও সাবলীল ভাষায় বুঝিয়ে বলো।',
+    examplePrompt: 'এর সাথে প্রাসঙ্গিক একটি বাস্তব উদাহরণ দাও।',
+    quizPrompt: 'এই টপিকের ওপর আমাকে একটি গুরুত্বপূর্ণ MCQ বা সংক্ষিপ্ত প্রশ্ন জিজ্ঞাসা করো।',
+    like: 'ভালো লেগেছে',
+    dislike: 'উত্তরে ভুল আছে',
+    preview: 'প্রিভিউ',
+    hidePreview: 'প্রিভিউ বন্ধ',
+    copyCode: 'কপি',
+    imageReady: 'ছবি যুক্ত হয়েছে',
+    imagePreparing: 'ছবি প্রস্তুত হচ্ছে…',
+    pictureQuestion: 'ছবির প্রশ্ন',
+    pictureTag: '🖼️ (ছবি)',
+    oldImageNote: '(আগে একটি ছবি পাঠানো হয়েছিল)',
+    noChats: 'কোনো পূর্ববর্তী আলোচনা পাওয়া যায়নি।',
+    loadingChats: 'লোড হচ্ছে...',
+    untitled: 'পূর্ববর্তী প্রশ্ন',
+    deleteAsk: 'এই আলোচনাটি মুছে ফেলবেন?',
+    errors: {
+      unauthorized: 'প্রশ্ন করতে আগে লগইন করুন।',
+      daily_limit: 'আজকের প্রশ্ন করার কোটা শেষ হয়েছে। আগামীকাল আবার চেষ্টা করুন।',
+      global_limit: 'আজ পুরো সাইটের প্রশ্নের সীমা শেষ হয়ে গেছে। আগামীকাল আবার চেষ্টা করুন।',
+      rate_limited: 'এখন অনেকে একসাথে প্রশ্ন করছে। এক মিনিট পরে আবার চেষ্টা করুন।',
+      server_not_configured: 'সার্ভারের সেটিং অসম্পূর্ণ আছে (GEMINI_API_KEY / লগইন সেটিং দেখুন)।',
+      bad_image: 'ছবিটি পাঠানো গেল না। অন্য একটি ছবি দিয়ে চেষ্টা করুন।',
+      empty_reply: 'AI এবার কোনো উত্তর দেয়নি। আবার চেষ্টা করুন।',
+      network: 'ইন্টারনেট সংযোগে সমস্যা হচ্ছে। আবার চেষ্টা করুন।',
+      generic: 'দুঃখিত, উত্তর আনতে সমস্যা হয়েছে। আবার চেষ্টা করুন।',
+      image_type: 'শুধু ছবির ফাইল (JPG, PNG, WebP, HEIC) দেওয়া যাবে।',
+      image_too_big: 'ছবিটি অনেক বড়। ছোট সাইজের ছবি দিন।',
+      image_failed: 'ছবিটি পড়া গেল না। অন্য একটি ছবি দিন।'
+    }
+  },
+  en: {
+    placeholder: 'Ask your question or upload an image...',
+    follow: 'Type your next question...',
+    submit: 'Ask',
+    classLabel: 'Select class',
+    quota: (u, l) => `Today ${u}/${l}`,
+    thinking: 'AI is preparing the answer...',
+    classWord: 'Class',
+    subjectWord: 'Subject',
+    copy: '📋 Copy',
+    copied: '✅ Copied!',
+    simple: '💡 Explain more simply',
+    example: '📖 Give an example',
+    quiz: '❓ Quiz me',
+    simplePrompt: 'Explain this again in simpler words.',
+    examplePrompt: 'Give a real-life example related to this.',
+    quizPrompt: 'Ask me one important MCQ or short question on this topic.',
+    like: 'Good answer',
+    dislike: 'Answer has a mistake',
+    preview: 'Preview',
+    hidePreview: 'Hide preview',
+    copyCode: 'Copy',
+    imageReady: 'Image attached',
+    imagePreparing: 'Preparing image…',
+    pictureQuestion: 'Picture question',
+    pictureTag: '🖼️ (image)',
+    oldImageNote: '(an image was sent earlier)',
+    noChats: 'No earlier chats found.',
+    loadingChats: 'Loading...',
+    untitled: 'Earlier question',
+    deleteAsk: 'Delete this chat?',
+    errors: {
+      unauthorized: 'Please log in first to ask a question.',
+      daily_limit: "You have used today's question quota. Please try again tomorrow.",
+      global_limit: "The site's daily question limit is used up. Please try again tomorrow.",
+      rate_limited: 'Many people are asking right now. Please try again in a minute.',
+      server_not_configured: 'Server settings are incomplete (check GEMINI_API_KEY / login settings).',
+      bad_image: 'The image could not be sent. Try a different one.',
+      empty_reply: 'The AI gave no answer this time. Please try again.',
+      network: 'Connection problem. Please try again.',
+      generic: 'Sorry, something went wrong. Please try again.',
+      image_type: 'Only image files (JPG, PNG, WebP, HEIC) are allowed.',
+      image_too_big: 'That image is too large. Use a smaller one.',
+      image_failed: 'That image could not be read. Try another.'
+    }
   }
-  return headers;
+};
+function tx() { return TEXT[currentLanguage] || TEXT.bn; }
+
+/* ========================================================
+   STATE
+   ======================================================== */
+let currentUser = null;
+let currentLanguage = 'bn';
+let pendingImage = null;          // { mime, data, url }
+let preparingImage = false;
+let isStreamingResponse = false;
+let chatLog = [];                 // { role, text, image?, imgId?, ts, dur?, fb?, ctx?, skip? }
+let currentChatId = null;
+let currentChatTitle = '';
+let titleRequested = false;
+let selectedSubject = '';         // 'math' | 'physics' | ...
+let selectedClass = '';           // '' or '0'..'7'
+let contextLocked = false;
+let resumeAfterAuth = false;
+let saveQueue = Promise.resolve();
+let heroBn = null;
+
+const classSelect = document.getElementById('classSelect');
+const ctxBadge = document.getElementById('ctxBadge');
+const previewInfo = document.getElementById('previewInfo');
+const txtHeroTitle = document.getElementById('txtHeroTitle');
+const txtHeroSub = document.getElementById('txtHeroSub');
+const txtSubmit = document.getElementById('txtSubmit');
+
+/* ========================================================
+   SMALL HELPERS
+   ======================================================== */
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function showToast(message) {
+  const el = document.createElement('div');
+  el.className = 'toast-msg';
+  el.textContent = message;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function scrollToBottom(smooth) {
+  window.scrollTo({ top: document.body.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+}
+
+function timeLabel(ts, dur) {
+  if (!ts) return '';
+  let label = '';
+  try {
+    label = new Date(ts).toLocaleTimeString(currentLanguage === 'en' ? 'en-US' : 'bn-BD', { hour: '2-digit', minute: '2-digit' });
+  } catch (e) { label = ''; }
+  if (dur && dur > 0) label += ' · ' + (dur / 1000).toFixed(1) + (currentLanguage === 'en' ? 's' : ' সেকেন্ড');
+  return label;
+}
+
+function avatarFor(user) {
+  return user && user.gender === 'female' ? FEMALE_AVATAR_SVG : MALE_AVATAR_SVG;
+}
+
+function newChatId() {
+  return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function currentCtx() {
+  const ctx = {};
+  if (selectedSubject) ctx.s = selectedSubject;
+  if (selectedClass !== '') ctx.c = Number(selectedClass);
+  return ctx;
 }
 
 /* ========================================================
    INITIALIZATION
    ======================================================== */
 document.addEventListener('DOMContentLoaded', () => {
+  heroBn = {
+    title: txtHeroTitle ? txtHeroTitle.textContent : '',
+    sub: txtHeroSub ? txtHeroSub.textContent : ''
+  };
+  if (window.mermaid) {
+    try { window.mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' }); } catch (e) { /* ignore */ }
+  }
   checkAuth();
   bindNavbarEvents();
   bindInputEvents();
   bindSmartNotesEvents();
   bindAuthModalEvents();
-  bindSubjectChips();
+  bindContextSelectors();
+  bindChatClicks();
+  applyLanguageTexts();
 });
 
 /* ========================================================
@@ -114,10 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
    ======================================================== */
 async function checkAuth() {
   try {
-    const res = await fetch('/api/me', {
-      headers: getAuthHeaders(),
-      credentials: 'include'
-    });
+    const res = await fetch('/api/me', { credentials: 'same-origin' });
     if (res.ok) {
       const data = await res.json();
       // /api/me answers { ok, user: "riyad", gender, used, limit }
@@ -140,30 +319,120 @@ async function checkAuth() {
   renderUserNav(null);
 }
 
+function updateQuota() {
+  if (!currentUser) return;
+  quotaText.textContent = tx().quota(currentUser.used || 0, currentUser.daily_limit || 30);
+}
+
 function renderUserNav(user) {
   if (user) {
     btnOpenLogin.style.display = 'none';
     userProfilePill.style.display = 'flex';
     userQuotaBadge.style.display = 'inline-flex';
-
-    userNameLabel.textContent = user.username || user.name || 'ইউজার';
-
-    // Gender based Avatar Icon system
-    const userGender = (user.gender || 'male').toLowerCase();
-    if (userGender === 'female') {
-      userAvatarWrap.innerHTML = FEMALE_AVATAR_SVG;
-    } else {
-      userAvatarWrap.innerHTML = MALE_AVATAR_SVG;
-    }
-
-    // Daily Quota Count
-    const used = user.questions_today ?? user.today_questions ?? user.used ?? 0;
-    const max = user.daily_limit ?? user.quota ?? 30;
-    quotaText.textContent = `আজ ${used}/${max} প্রশ্ন`;
+    userNameLabel.textContent = user.username || 'ইউজার';
+    userAvatarWrap.innerHTML = avatarFor(user);
+    updateQuota();
   } else {
     btnOpenLogin.style.display = 'inline-block';
     userProfilePill.style.display = 'none';
     userQuotaBadge.style.display = 'none';
+  }
+}
+
+/* ========================================================
+   LANGUAGE
+   ======================================================== */
+function buildClassOptions() {
+  const lang = currentLanguage;
+  classSelect.innerHTML = '<option value="">' + escapeHtml(tx().classLabel) + '</option>' +
+    CLASS_NAMES.map((c, i) => '<option value="' + i + '">' + escapeHtml(c[lang]) + '</option>').join('');
+  classSelect.value = selectedClass;
+}
+
+function applyLanguageTexts() {
+  const lang = currentLanguage;
+  document.body.classList.remove('lang-bn', 'lang-en');
+  document.body.classList.add('lang-' + lang);
+  btnLangBn.classList.toggle('active', lang === 'bn');
+  btnLangEn.classList.toggle('active', lang === 'en');
+  userQuestionInput.placeholder = chatLog.length ? tx().follow : tx().placeholder;
+  if (txtSubmit) txtSubmit.textContent = tx().submit;
+
+  document.querySelectorAll('.chip-btn').forEach((btn) => {
+    const label = btn.querySelector('.chip-label');
+    const s = SUBJECTS[btn.dataset.subject];
+    if (label && s) label.textContent = s[lang];
+  });
+  buildClassOptions();
+
+  if (txtHeroTitle && txtHeroSub && heroBn) {
+    if (lang === 'en') {
+      txtHeroTitle.textContent = 'Make studying easier and smarter';
+      txtHeroSub.textContent = 'Ask about any subject and the AI gives a simple, accurate answer.';
+    } else {
+      txtHeroTitle.textContent = heroBn.title;
+      txtHeroSub.textContent = heroBn.sub;
+    }
+  }
+  updateQuota();
+  updateContextUI();
+}
+
+function setLanguage(lang) {
+  currentLanguage = lang;
+  applyLanguageTexts();
+}
+
+/* ========================================================
+   CLASS + SUBJECT SELECTION (locked once a chat has an answer)
+   ======================================================== */
+function bindContextSelectors() {
+  document.querySelectorAll('.chip-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (contextLocked) {
+        showToast(currentLanguage === 'en'
+          ? 'Class and subject are fixed for this chat. Start a new chat to change them.'
+          : 'এই চ্যাটের শ্রেণি ও বিষয় ঠিক করা আছে। বদলাতে নতুন চ্যাট শুরু করুন।');
+        return;
+      }
+      const id = btn.dataset.subject;
+      selectedSubject = selectedSubject === id ? '' : id;   // click again to un-select
+      updateContextUI();
+      userQuestionInput.focus();
+    });
+  });
+
+  classSelect.addEventListener('change', () => {
+    if (contextLocked) { classSelect.value = selectedClass; return; }
+    selectedClass = classSelect.value;
+    updateContextUI();
+  });
+}
+
+function setContextLocked(locked) {
+  contextLocked = locked;
+  updateContextUI();
+}
+
+function updateContextUI() {
+  document.querySelectorAll('.chip-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.subject === selectedSubject);
+    btn.disabled = contextLocked;
+  });
+  classSelect.value = selectedClass;
+  classSelect.disabled = contextLocked;
+
+  const chipsRow = document.getElementById('subjectChips');
+  if (chipsRow) chipsRow.classList.toggle('unlocked', !contextLocked);
+
+  const parts = [];
+  if (selectedClass !== '' && CLASS_NAMES[Number(selectedClass)]) parts.push(tx().classWord + ': ' + CLASS_NAMES[Number(selectedClass)][currentLanguage]);
+  if (selectedSubject && SUBJECTS[selectedSubject]) parts.push(tx().subjectWord + ': ' + SUBJECTS[selectedSubject][currentLanguage]);
+  if (contextLocked && parts.length) {
+    ctxBadge.textContent = '🔒 ' + parts.join(' · ');
+    ctxBadge.style.display = 'inline-flex';
+  } else {
+    ctxBadge.style.display = 'none';
   }
 }
 
@@ -196,11 +465,7 @@ function bindNavbarEvents() {
 
   btnLogout.addEventListener('click', async () => {
     try {
-      await fetch('/api/logout', { 
-        method: 'POST',
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
+      await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
     } catch (e) {
       console.error(e);
     }
@@ -210,22 +475,6 @@ function bindNavbarEvents() {
     renderUserNav(null);
     window.location.reload();
   });
-}
-
-function setLanguage(lang) {
-  currentLanguage = lang;
-  document.body.className = `lang-${lang}`;
-  if (lang === 'bn') {
-    btnLangBn.classList.add('active');
-    btnLangEn.classList.remove('active');
-    userQuestionInput.placeholder = 'আপনার প্রশ্ন লিখুন বা ছবি যুক্ত করুন...';
-    document.getElementById('txtSubmit').textContent = 'প্রশ্ন করুন';
-  } else {
-    btnLangEn.classList.add('active');
-    btnLangBn.classList.remove('active');
-    userQuestionInput.placeholder = 'Ask your question or upload an image...';
-    document.getElementById('txtSubmit').textContent = 'Ask';
-  }
 }
 
 /* ========================================================
@@ -254,77 +503,570 @@ function bindSmartNotesEvents() {
     smartNotesModal.style.display = 'none';
     smartNotesContent.value = '';
 
-    const generatedPrompt = `নিচের বিষয়টির একটি সম্পূর্ণ ও নির্ভুল 'Smart Notes' (সারসংক্ষেপ) তৈরি করে দাও। মূল বিষয়, প্রয়োজনীয় সূত্রাবলি, গুরুত্বপূর্ণ পয়েন্ট এবং পরীক্ষার জন্য প্রয়োজনীয় তথ্যগুলো বুলেট পয়েন্ট আকারে সুন্দরভাবে উপস্থাপন করো:\n\n${text}`;
+    const generatedPrompt = `নিচের বিষয়টির একটি সম্পূর্ণ ও নির্ভুল 'Smart Notes' (সারসংক্ষেপ) তৈরি করে দাও। মূল বিষয়, প্রয়োজনীয় সূত্রাবলি, গুরুত্বপূর্ণ পয়েন্ট এবং পরীক্ষার জন্য প্রয়োজনীয় তথ্যগুলো বুলেট পয়েন্ট আকারে সুন্দরভাবে উপস্থাপন করো:\n\n${text}`;
 
-    submitQuestion(generatedPrompt);
+    submitQuestion(generatedPrompt, null);
   });
 }
 
 /* ========================================================
-   INPUT & IMAGE UPLOAD LOGIC
+   INPUT & IMAGE UPLOAD
    ======================================================== */
+function autosizeInput() {
+  userQuestionInput.style.height = 'auto';
+  userQuestionInput.style.height = Math.min(userQuestionInput.scrollHeight, 140) + 'px';
+}
+
 function bindInputEvents() {
-  userQuestionInput.addEventListener('input', () => {
-    userQuestionInput.style.height = 'auto';
-    userQuestionInput.style.height = Math.min(userQuestionInput.scrollHeight, 140) + 'px';
-  });
+  userQuestionInput.addEventListener('input', autosizeInput);
 
   userQuestionInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
       e.preventDefault();
       handleQuestionSubmit();
     }
   });
 
   btnSubmitQuestion.addEventListener('click', handleQuestionSubmit);
-
-  fileImageInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1200;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > MAX_WIDTH) {
-          height = Math.round((height * MAX_WIDTH) / width);
-          width = MAX_WIDTH;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        attachedImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
-        previewImg.src = attachedImageBase64;
-        imagePreviewBar.style.display = 'flex';
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
+  fileImageInput.addEventListener('change', handleFileChosen);
 
   btnRemovePreview.addEventListener('click', () => {
-    attachedImageBase64 = null;
-    fileImageInput.value = '';
-    imagePreviewBar.style.display = 'none';
+    if (!isStreamingResponse) clearPendingImage();
   });
 }
 
-function bindSubjectChips() {
-  document.querySelectorAll('.chip-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const subject = btn.dataset.subject;
-      userQuestionInput.value = `[${subject}] `;
-      userQuestionInput.focus();
-    });
+function setPendingImage(img) {
+  pendingImage = img;
+  previewImg.src = img.url || '';
+  previewInfo.textContent = tx().imageReady;
+  imagePreviewBar.style.display = 'flex';
+}
+
+function clearPendingImage() {
+  pendingImage = null;
+  fileImageInput.value = '';
+  previewImg.removeAttribute('src');
+  imagePreviewBar.style.display = 'none';
+}
+
+function loadImageElement(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => resolve({ img, url });
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image_failed')); };
+    img.src = url;
   });
+}
+
+function readAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error('image_failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+// Shrinks the photo (long side <= MAX_IMAGE_SIDE) and turns it into JPEG base64 that the server accepts.
+async function prepareImage(file) {
+  const type = (file.type || '').toLowerCase();
+  const looksLikeImage = type.indexOf('image/') === 0 || /\.(jpe?g|png|webp|gif|heic|heif|bmp)$/i.test(file.name || '');
+  if (!looksLikeImage) throw new Error('image_type');
+  if (file.size > MAX_IMAGE_FILE_BYTES) throw new Error('image_too_big');
+
+  let loaded = null;
+  try {
+    loaded = await loadImageElement(file);
+  } catch (e) {
+    const isHeic = /heic|heif/.test(type) || /\.(heic|heif)$/i.test(file.name || '');
+    if (isHeic && file.size <= 3.5 * 1024 * 1024) {
+      const rawUrl = await readAsDataUrl(file);
+      return { mime: /heif$/.test(type) ? 'image/heif' : 'image/heic', data: rawUrl.split(',')[1], url: '' };
+    }
+    throw new Error('image_failed');
+  }
+
+  try {
+    const img = loaded.img;
+    const w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h) throw new Error('image_failed');
+    const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(w, h));
+    const cw = Math.max(1, Math.round(w * scale));
+    const ch = Math.max(1, Math.round(h * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = cw;
+    canvas.height = ch;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, cw, ch);
+    ctx.drawImage(img, 0, 0, cw, ch);
+
+    const qualities = [0.92, 0.85, 0.75, 0.6];
+    let dataUrl = '';
+    for (let i = 0; i < qualities.length; i++) {
+      dataUrl = canvas.toDataURL('image/jpeg', qualities[i]);
+      if (dataUrl.length - 23 <= MAX_IMAGE_BASE64) break;
+    }
+    const base64 = dataUrl.split(',')[1] || '';
+    if (!base64 || base64.length > MAX_IMAGE_BASE64) throw new Error('image_too_big');
+    return { mime: 'image/jpeg', data: base64, url: dataUrl };
+  } finally {
+    URL.revokeObjectURL(loaded.url);
+  }
+}
+
+// A small copy (<= ~190 KB) that is stored with the chat history.
+async function makeThumb(dataUrl) {
+  if (!dataUrl) return '';
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error('thumb'));
+      i.src = dataUrl;
+    });
+    const w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h) return '';
+    const scale = Math.min(1, 900 / Math.max(w, h));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(w * scale));
+    canvas.height = Math.max(1, Math.round(h * scale));
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const qualities = [0.72, 0.58, 0.45, 0.35];
+    for (let q = 0; q < qualities.length; q++) {
+      const out = canvas.toDataURL('image/jpeg', qualities[q]).split(',')[1] || '';
+      if (out && out.length <= 250000) return out;
+    }
+  } catch (e) { /* no thumbnail */ }
+  return '';
+}
+
+async function handleFileChosen(e) {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file || isStreamingResponse) return;
+  preparingImage = true;
+  previewImg.removeAttribute('src');
+  previewInfo.textContent = tx().imagePreparing;
+  imagePreviewBar.style.display = 'flex';
+  try {
+    setPendingImage(await prepareImage(file));
+  } catch (err) {
+    clearPendingImage();
+    showToast(tx().errors[err && err.message] || tx().errors.image_failed);
+  } finally {
+    preparingImage = false;
+  }
+}
+
+/* ========================================================
+   RICH TEXT: MARKDOWN, MATH (KaTeX), CODE, MERMAID, MCQ CARD
+   ======================================================== */
+function inline(s) {
+  return s
+    .replace(/&lt;br\s*\/?&gt;/gi, '<br>')
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[\s(])\*(?!\s)([^*\n]*[^\s*])\*(?![\w*])/g, '$1<em>$2</em>')
+    .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+
+function mathToken(maths, tex, display) {
+  maths.push({ tex: tex.trim(), display });
+  return '' + (maths.length - 1) + '';
+}
+
+function extractMath(raw, maths) {
+  const parts = raw.split('```');
+  for (let i = 0; i < parts.length; i += 2) {
+    parts[i] = parts[i]
+      .replace(/\$\$([\s\S]+?)\$\$/g, (m, tex) => mathToken(maths, tex, true))
+      .replace(/\\\[([\s\S]+?)\\\]/g, (m, tex) => mathToken(maths, tex, true))
+      .replace(/\\\(([\s\S]+?)\\\)/g, (m, tex) => mathToken(maths, tex, false))
+      .replace(/\$(?!\s)([^$\n]*?[^\s$])\$(?!\d)/g, (m, tex) => mathToken(maths, tex, false));
+  }
+  return parts.join('```');
+}
+
+const mathCache = {};
+function renderTex(item) {
+  const key = (item.display ? 'D:' : 'I:') + item.tex;
+  if (mathCache[key]) return mathCache[key];
+  let html;
+  try {
+    if (window.katex && window.katex.renderToString) {
+      html = window.katex.renderToString(item.tex, { displayMode: item.display, throwOnError: false, strict: 'ignore', output: 'html' });
+    } else {
+      html = '<code>' + escapeHtml(item.tex) + '</code>';
+    }
+  } catch (e) {
+    html = '<code>' + escapeHtml(item.tex) + '</code>';
+  }
+  mathCache[key] = html;
+  return html;
+}
+
+function putMathBack(html, maths) {
+  return html.replace(/(\d+)/g, (m, n) => (maths[Number(n)] ? renderTex(maths[Number(n)]) : ''));
+}
+
+function formatRichText(raw) {
+  const maths = [];
+  const source = extractMath(raw, maths);
+  return putMathBack(inline(escapeHtml(source)), maths);
+}
+
+function toInt(str) {
+  const bn = '০১২৩৪৫৬৭৮৯';
+  return parseInt(String(str).replace(/[০-৯]/g, (d) => bn.indexOf(d)), 10);
+}
+
+// Headings, bullet / numbered lists, tables and paragraphs (input is already HTML-escaped).
+function renderTextBlocks(text) {
+  const lines = text.split('\n');
+  const out = [];
+  let para = [];
+  let list = null;
+  let table = null;
+
+  const flushPara = () => { if (para.length) { out.push('<p>' + inline(para.join('<br>')) + '</p>'); para = []; } };
+  const flushList = () => {
+    if (!list) return;
+    const start = list.type === 'ol' && list.start > 1 ? ' start="' + list.start + '"' : '';
+    out.push('<' + list.type + start + '>' + list.items.map((i) => '<li>' + inline(i) + '</li>').join('') + '</' + list.type + '>');
+    list = null;
+  };
+  const flushTable = () => {
+    if (!table) return;
+    const rows = table.map((r) => r.replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim()));
+    const isSep = rows.length > 1 && rows[1].every((c) => /^:?-{2,}:?$/.test(c));
+    let html = '<div class="table-wrap"><table>';
+    rows.forEach((cells, idx) => {
+      if (isSep && idx === 1) return;
+      const tag = isSep && idx === 0 ? 'th' : 'td';
+      html += '<tr>' + cells.map((c) => '<' + tag + '>' + inline(c) + '</' + tag + '>').join('') + '</tr>';
+    });
+    out.push(html + '</table></div>');
+    table = null;
+  };
+  const flushAll = () => { flushPara(); flushList(); flushTable(); };
+
+  for (const raw of lines) {
+    const t = raw.trim();
+    if (!t) { flushAll(); continue; }
+    let m;
+    if ((m = t.match(/^(#{1,4})\s+(.*)$/))) {
+      flushAll();
+      const level = Math.min(5, m[1].length + 2);
+      out.push('<h' + level + '>' + inline(m[2]) + '</h' + level + '>');
+      continue;
+    }
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(t)) { flushAll(); out.push('<hr>'); continue; }
+    if (t.length > 1 && t.charAt(0) === '|' && t.charAt(t.length - 1) === '|') {
+      flushPara(); flushList();
+      (table = table || []).push(t);
+      continue;
+    }
+    flushTable();
+    if ((m = t.match(/^[-*•]\s+(.*)$/))) {
+      flushPara();
+      if (!list || list.type !== 'ul') { flushList(); list = { type: 'ul', items: [] }; }
+      list.items.push(m[1]);
+      continue;
+    }
+    if ((m = t.match(/^([0-9০-৯]+)[.)]\s+(.*)$/))) {
+      flushPara();
+      if (!list || list.type !== 'ol') { flushList(); list = { type: 'ol', items: [], start: toInt(m[1]) || 1 }; }
+      list.items.push(m[2]);
+      continue;
+    }
+    flushList();
+    para.push(raw.replace(/\s+$/, ''));
+  }
+  flushAll();
+  return out.join('');
+}
+
+function codeBlockHtml(lang, code, final) {
+  if (lang === 'mermaid' && final) {
+    return '<div class="mermaid-box"><div class="mermaid">' + escapeHtml(code) + '</div></div>';
+  }
+  const T = tx();
+  let buttons = '<button type="button" class="code-btn" data-act="copy-code">' + T.copyCode + '</button>';
+  if (lang === 'html' && final) buttons = '<button type="button" class="code-btn" data-act="preview">' + T.preview + '</button>' + buttons;
+  return '<div class="code-block"><div class="code-head"><span class="code-lang">' + escapeHtml(lang || 'code') + '</span>' +
+    '<span class="code-actions">' + buttons + '</span></div><pre><code>' + escapeHtml(code) + '</code></pre></div>';
+}
+
+/* ---- MCQ answer card: the AI replies in a ```mcq block with [QUESTION] [OPTIONS] ... tags ---- */
+function buildMcqHtml(question, options, explanation, whyWrong, trick) {
+  const cleanQ = question.replace(/```(?:mcq)?/gi, '').replace(/^MCQ\s*/i, '').trim();
+  let html = '<div class="mcq-card-ui">';
+  if (cleanQ) {
+    html += '<div class="mcq-header"><span class="mcq-badge">MCQ</span><h4 class="mcq-q-title">' + formatRichText(cleanQ) + '</h4></div>';
+  }
+  if (options.length) {
+    html += '<div class="mcq-grid">';
+    options.forEach((opt) => {
+      html += '<div class="mcq-opt-item' + (opt.correct ? ' is-correct' : '') + '">';
+      html += '<span class="mcq-opt-key">' + escapeHtml(opt.key) + '</span>';
+      html += '<span class="mcq-opt-text">' + formatRichText(opt.text) + '</span>';
+      if (opt.correct) {
+        html += '<span class="mcq-check-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  if (explanation.length) {
+    html += '<div class="mcq-exp-box"><div class="mcq-exp-head">' + (currentLanguage === 'en' ? 'Explanation' : 'ব্যাখ্যা') + '</div>';
+    html += '<div class="mcq-exp-body">' + formatRichText(explanation.join('<br>').replace(/```/g, '').trim()) + '</div></div>';
+  }
+  if (whyWrong.length) {
+    html += '<details class="mcq-wrong-details"><summary class="mcq-wrong-summary"><span>' +
+      (currentLanguage === 'en' ? 'Why are the other options wrong?' : 'অন্যান্য অপশন কেন ভুল?') +
+      '</span><span class="mcq-plus-icon">+</span></summary><div class="mcq-wrong-body"><ul>';
+    whyWrong.forEach((w) => { html += '<li>' + formatRichText(w.replace(/```/g, '').trim()) + '</li>'; });
+    html += '</ul></div></details>';
+  }
+  if (trick.length) {
+    html += '<div class="mcq-trick-box"><strong>💡 ' + (currentLanguage === 'en' ? 'Memory trick:' : 'মনে রাখার কৌশল / স্বর্ণসূত্র:') + '</strong> ' +
+      formatRichText(trick.join(' ').replace(/```/g, '').trim()) + '</div>';
+  }
+  return html + '</div>';
+}
+
+function parseNaturalMcq(text) {
+  if (!/\[OPTIONS\]|```mcq/i.test(text)) return null;
+  const lines = text.split(/\r?\n/);
+  let question = '';
+  const options = [], explanation = [], whyWrong = [], trick = [];
+  let section = 'q';
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line || line === 'MCQ' || line === '```mcq' || line === '```') continue;
+
+    if (/^\[QUESTION\]/i.test(line)) { section = 'q'; continue; }
+    if (/^\[OPTIONS\]/i.test(line)) { section = 'o'; continue; }
+    if (/^\[EXPLANATION\]/i.test(line)) { section = 'e'; continue; }
+    if (/^\[WHY_WRONG\]/i.test(line)) { section = 'w'; continue; }
+    if (/^\[TRICK\]/i.test(line)) { section = 't'; continue; }
+
+    if (section === 'o' || section === 'q') {
+      const optMatch = line.match(/^(\*?\s*)\(?([কখগঘA-Da-d1-4])\)?[).:-]?\s*(.*)$/);
+      if (optMatch && section === 'o') {
+        const isCorrect = optMatch[1].indexOf('*') !== -1 || /[✓✔]|\(সঠিক\)/.test(line);
+        const keyLabel = optMatch[2] + ')';
+        const optText = optMatch[3].replace(/[✓✔]/g, '').replace(/\(সঠিক\)/g, '').replace(/```/g, '').trim();
+        options.push({ key: keyLabel, text: optText, correct: isCorrect });
+        continue;
+      }
+    }
+
+    if (section === 'q') question += (question ? ' ' : '') + line;
+    else if (section === 'e') explanation.push(line);
+    else if (section === 'w') whyWrong.push(line.replace(/^[-*•▶\s]+/, ''));
+    else if (section === 't') trick.push(line.replace(/^(💡|🧠)\s*/, ''));
+    else if (section === 'o' && options.length) options[options.length - 1].text += ' ' + line;
+  }
+
+  if (options.length >= 2) return buildMcqHtml(question, options, explanation, whyWrong, trick);
+  return null;
+}
+
+function renderRich(raw, final) {
+  const mcq = parseNaturalMcq(raw);
+  if (mcq) return mcq;
+  // While an MCQ answer is still arriving, hide the raw [TAGS] until the card can be drawn.
+  if (/\[(QUESTION|OPTIONS)\]|```mcq/i.test(raw)) {
+    raw = raw.replace(/^\s*\[(QUESTION|OPTIONS|EXPLANATION|WHY_WRONG|TRICK)\]\s*$/gim, '').replace(/```mcq/gi, '');
+  }
+
+  const maths = [];
+  const source = extractMath(raw, maths).replace(/\r\n/g, '\n');
+  const parts = source.split('```');
+  const out = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 0) {
+      out.push(renderTextBlocks(escapeHtml(parts[i])));
+      continue;
+    }
+    const part = parts[i];
+    let lang = '';
+    let code = part;
+    const nl = part.indexOf('\n');
+    if (nl !== -1) {
+      const first = part.slice(0, nl).trim();
+      if (/^[A-Za-z0-9_+#-]*$/.test(first)) { lang = first.toLowerCase(); code = part.slice(nl + 1); }
+    } else if (/^[A-Za-z0-9_+#-]*$/.test(part.trim())) {
+      lang = part.trim().toLowerCase();
+      code = '';
+    }
+    out.push(codeBlockHtml(lang, code.replace(/\n$/, ''), final));
+  }
+  return putMathBack(out.join(''), maths);
+}
+
+function runMermaid(container) {
+  if (!window.mermaid) return;
+  const nodes = container.querySelectorAll('.mermaid');
+  if (!nodes.length) return;
+  try {
+    const res = window.mermaid.run({ nodes: Array.from(nodes) });
+    if (res && res.catch) res.catch(() => {});
+  } catch (e) { /* the diagram text stays visible */ }
+}
+
+function plainAnswer(text) {
+  return text
+    .replace(/\[\/?(QUESTION|OPTIONS|EXPLANATION|WHY_WRONG|TRICK)\]/gi, '')
+    .replace(/```(?:mcq)?/gi, '')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/`([^`\n]+)`/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+// Copy / preview buttons that live inside code blocks
+function bindChatClicks() {
+  chatMessages.addEventListener('click', (e) => {
+    const btn = e.target.closest('.code-btn');
+    if (!btn) return;
+    const block = btn.closest('.code-block');
+    if (!block) return;
+    const code = block.querySelector('code').textContent;
+    if (btn.dataset.act === 'copy-code') {
+      try { navigator.clipboard.writeText(code); } catch (err) { /* ignore */ }
+      const old = btn.textContent;
+      btn.textContent = '✓';
+      setTimeout(() => { btn.textContent = old; }, 1400);
+    } else if (btn.dataset.act === 'preview') {
+      let prev = block.querySelector('.code-preview');
+      if (prev) { prev.remove(); btn.textContent = tx().preview; return; }
+      prev = document.createElement('div');
+      prev.className = 'code-preview';
+      const frame = document.createElement('iframe');
+      frame.setAttribute('sandbox', 'allow-scripts');
+      frame.srcdoc = code;
+      prev.appendChild(frame);
+      block.appendChild(prev);
+      btn.textContent = tx().hidePreview;
+    }
+  });
+}
+
+/* ========================================================
+   MESSAGE DOM HELPERS
+   ======================================================== */
+function enterChatView() {
+  document.body.classList.add('chat-active');
+  heroSection.style.display = 'none';
+  chatThread.style.display = 'block';
+}
+
+function appendUserMessage(entry) {
+  const card = document.createElement('div');
+  card.className = 'message-card user-msg';
+  let imgSrc = '';
+  if (entry.image && entry.image.url) imgSrc = entry.image.url;
+  else if (entry.imgId) imgSrc = '/api/chats?img=' + encodeURIComponent(entry.imgId);
+  let imgHtml = '';
+  if (imgSrc) imgHtml = '<img src="' + imgSrc + '" alt="">';
+  else if (entry.hadImage) imgHtml = '<p>' + tx().pictureTag + '</p>';
+
+  card.innerHTML =
+    '<div class="msg-avatar">' + avatarFor(currentUser) + '</div>' +
+    '<div class="msg-bubble">' + imgHtml +
+    (entry.text ? '<p>' + escapeHtml(entry.text) + '</p>' : '') +
+    '<div class="msg-time">' + escapeHtml(timeLabel(entry.ts)) + '</div></div>';
+  chatMessages.appendChild(card);
+  scrollToBottom(true);
+}
+
+function appendAiMessage(showTyping) {
+  const card = document.createElement('div');
+  card.className = 'message-card ai-msg';
+  card.innerHTML =
+    '<div class="msg-avatar"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18C5 19.94 8.13 22 12 22C15.87 22 19 19.94 19 17.18V13.18L12 17L5 13.18Z"/></svg></div>' +
+    '<div class="ai-col"><div class="msg-bubble"><div class="ai-body">' +
+    (showTyping ? '<div class="typing-indicator">' + escapeHtml(tx().thinking) + '</div>' : '') +
+    '</div><div class="msg-time"></div></div></div>';
+  chatMessages.appendChild(card);
+  scrollToBottom(true);
+  return {
+    card,
+    col: card.querySelector('.ai-col'),
+    body: card.querySelector('.ai-body'),
+    timeEl: card.querySelector('.msg-time')
+  };
+}
+
+function removeQuickActions() {
+  chatMessages.querySelectorAll('.quick-actions-bar').forEach((el) => el.remove());
+}
+
+function appendQuickActions(ai, entry) {
+  removeQuickActions();
+  const T = tx();
+  const bar = document.createElement('div');
+  bar.className = 'quick-actions-bar';
+  bar.innerHTML =
+    '<button type="button" class="quick-btn" data-act="simple">' + T.simple + '</button>' +
+    '<button type="button" class="quick-btn" data-act="example">' + T.example + '</button>' +
+    '<button type="button" class="quick-btn" data-act="quiz">' + T.quiz + '</button>' +
+    '<button type="button" class="quick-btn" data-act="copy">' + T.copy + '</button>' +
+    '<div class="review-group">' +
+    '<button type="button" class="quick-btn btn-thumb fb-up" data-act="up" title="' + escapeHtml(T.like) + '">👍</button>' +
+    '<button type="button" class="quick-btn btn-thumb fb-down" data-act="down" title="' + escapeHtml(T.dislike) + '">👎</button>' +
+    '</div>';
+
+  const thumbs = bar.querySelectorAll('.btn-thumb');
+  const syncThumbs = () => thumbs.forEach((b) => b.setAttribute('aria-pressed', entry.fb === b.dataset.act ? 'true' : 'false'));
+  syncThumbs();
+
+  bar.addEventListener('click', (e) => {
+    const btn = e.target.closest('.quick-btn');
+    if (!btn) return;
+    const act = btn.dataset.act;
+    if (act === 'simple') submitQuestion(T.simplePrompt, null);
+    else if (act === 'example') submitQuestion(T.examplePrompt, null);
+    else if (act === 'quiz') submitQuestion(T.quizPrompt, null);
+    else if (act === 'copy') {
+      try { navigator.clipboard.writeText(plainAnswer(entry.text)); } catch (err) { /* ignore */ }
+      btn.textContent = T.copied;
+      setTimeout(() => { btn.textContent = T.copy; }, 1800);
+    } else if (act === 'up' || act === 'down') {
+      entry.fb = entry.fb === act ? undefined : act;
+      syncThumbs();
+      saveChat();
+    }
+  });
+
+  ai.col.appendChild(bar);
+}
+
+function resetChatSession() {
+  if (isStreamingResponse) return;
+  chatMessages.innerHTML = '';
+  chatLog = [];
+  currentChatId = null;
+  currentChatTitle = '';
+  titleRequested = false;
+  clearPendingImage();
+  setContextLocked(false);
+  document.body.classList.remove('chat-active');
+  heroSection.style.display = 'flex';
+  chatThread.style.display = 'none';
+  userQuestionInput.value = '';
+  autosizeInput();
+  userQuestionInput.placeholder = tx().placeholder;
 }
 
 /* ========================================================
@@ -332,341 +1074,280 @@ function bindSubjectChips() {
    ======================================================== */
 function handleQuestionSubmit() {
   const query = userQuestionInput.value.trim();
-  if (!query && !attachedImageBase64) return;
-  submitQuestion(query, attachedImageBase64);
+  if (!query && !pendingImage) return;
+  submitQuestion(query, pendingImage);
 }
 
-async function submitQuestion(text, imageBase64 = null) {
-  if (isStreamingResponse) return;
+function buildMessages() {
+  const list = chatLog.filter((m) => !m.skip);
+  let imagesLeft = 2;   // the server only reads the two newest pictures
+  const out = [];
+  for (let i = list.length - 1; i >= 0; i--) {
+    const m = list[i];
+    const o = { role: m.role, text: m.text || '' };
+    if (m.image && m.image.data && imagesLeft > 0) {
+      o.image = { mime: m.image.mime, data: m.image.data };
+      imagesLeft--;
+    } else if ((m.image || m.imgId || m.hadImage) && !o.text) {
+      o.text = tx().oldImageNote;
+    }
+    out.unshift(o);
+  }
+  return out;
+}
 
-  const userImg = imageBase64;
+async function submitQuestion(rawText, imageObj) {
+  const text = (rawText || '').trim();
+  if (isStreamingResponse || preparingImage) return;
+  if (!text && !imageObj) return;
+
+  // Login is needed only when someone actually asks.
+  if (!currentUser) {
+    resumeAfterAuth = true;
+    openAuthModal();
+    return;
+  }
+
+  const ctx = currentCtx();
+  const userEntry = { role: 'user', text, image: imageObj || null, ts: Date.now(), ctx };
+  const wasFirst = chatLog.filter((m) => !m.skip).length === 0;
+  chatLog.push(userEntry);
+
   userQuestionInput.value = '';
-  userQuestionInput.style.height = 'auto';
-  attachedImageBase64 = null;
-  imagePreviewBar.style.display = 'none';
-  fileImageInput.value = '';
+  autosizeInput();
+  clearPendingImage();
+  enterChatView();
+  userQuestionInput.placeholder = tx().follow;
+  removeQuickActions();
+  appendUserMessage(userEntry);
+  const ai = appendAiMessage(true);
 
-  document.body.classList.add('chat-active');
-  heroSection.style.display = 'none';
-  chatThread.style.display = 'block';
-
-  appendUserMessage(text, userImg);
-  const aiBubble = appendAiMessage();
-
-  isStreamingResponse = true;
+  setBusy(true);
+  const started = Date.now();
+  let answer = '';
+  let mismatch = false;
+  let streamError = '';
+  let lastPaint = 0;
 
   try {
-    const payload = {
-      message: text,
-      image: userImg,
-      history: currentChatHistory.slice(-8),
-      language: currentLanguage
-    };
-
-    const response = await fetch('/api/chat', {
+    const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: getAuthHeaders(),
-      credentials: 'include',
-      body: JSON.stringify(payload)
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        lang: currentLanguage,
+        subject: selectedSubject || '',
+        cls: selectedClass !== '' ? Number(selectedClass) : null,
+        messages: buildMessages()
+      })
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        aiBubble.innerHTML = `<span style="color:#ef4444; font-weight:600;">⚠️ আপনার দৈনিক প্রশ্ন করার কোটা শেষ হয়েছে। আগামীকাল আবার চেষ্টা করুন।</span>`;
-        return;
-      }
-      throw new Error('API server error');
+    const contentType = res.headers.get('Content-Type') || '';
+    if (!res.ok || contentType.indexOf('text/event-stream') === -1) {
+      let errData = null;
+      try { errData = await res.json(); } catch (err) { /* not json */ }
+      throw { api: true, code: (errData && errData.error) || (res.status === 401 ? 'unauthorized' : 'generic'), detail: errData && errData.detail };
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let accumulatedText = '';
-
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
     while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const content = line.replace('data: ', '');
-          if (content === '[DONE]') break;
-          accumulatedText += content;
-          aiBubble.innerHTML = formatMarkdown(accumulatedText);
-          renderMath(aiBubble);
-          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      buffer += decoder.decode(chunk.value, { stream: true });
+      const events = buffer.split(/\r?\n\r?\n/);
+      buffer = events.pop();
+      for (const evRaw of events) {
+        const line = evRaw.trim();
+        if (!line.startsWith('data:')) continue;
+        let ev;
+        try { ev = JSON.parse(line.slice(5).trim()); } catch (err) { continue; }
+        if (ev.t) {
+          answer += ev.t;
+          const now = Date.now();
+          if (now - lastPaint > 70) {
+            lastPaint = now;
+            ai.body.innerHTML = renderRich(answer, false);
+            scrollToBottom(false);
+          }
+        }
+        if (ev.e) streamError = ev.e;
+        if (ev.done) {
+          if (ev.mismatch) mismatch = true;
+          if (typeof ev.used === 'number' && currentUser) {
+            currentUser.used = ev.used;
+            if (typeof ev.limit === 'number') currentUser.daily_limit = ev.limit;
+            updateQuota();
+          }
         }
       }
     }
 
-    // Save to memory
-    currentChatHistory.push({ role: 'user', content: text, image: userImg });
-    currentChatHistory.push({ role: 'assistant', content: accumulatedText });
-
-    // Interactive MCQ Parsing
-    parseInteractiveMCQ(aiBubble);
-
-    // Quick Action Buttons (including 👍 / 👎 Review)
-    appendQuickActions(aiBubble, text, accumulatedText);
-
-    // Render Mermaid diagrams if present
-    if (window.mermaid && accumulatedText.includes('```mermaid')) {
-      window.mermaid.init(undefined, aiBubble.querySelectorAll('.mermaid'));
-    }
-
-    // Update Quota Count Locally
-    if (currentUser) {
-      currentUser.used = (currentUser.used || currentUser.questions_today || 0) + 1;
-      const max = currentUser.daily_limit || currentUser.quota || 30;
-      quotaText.textContent = `আজ ${currentUser.used}/${max} প্রশ্ন`;
-    }
-
-    // Save to Cloudflare D1 Chat History
-    saveChatToD1(text, accumulatedText, userImg);
-
-  } catch (error) {
-    console.error(error);
-    aiBubble.innerHTML = `<span style="color:#ef4444;">❌ দুঃখিত, সংযোগে সমস্যা হয়েছে। আবার চেষ্টা করুন।</span>`;
-  } finally {
-    isStreamingResponse = false;
-  }
-}
-
-/* ========================================================
-   SAVE CHAT & GENERATE TITLE IN D1
-   ======================================================== */
-async function saveChatToD1(userText, aiText, userImg) {
-  try {
-    if (!currentChatId) {
-      currentChatId = 'chat_' + Date.now();
-      // Generate 2-5 words title via /api/title
-      let chatTitle = userText.slice(0, 30);
-      try {
-        const titleRes = await fetch('/api/title', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          credentials: 'include',
-          body: JSON.stringify({ message: userText })
-        });
-        if (titleRes.ok) {
-          const titleData = await titleRes.json();
-          if (titleData.title) chatTitle = titleData.title;
-        }
-      } catch (tErr) {
-        console.warn('Auto-title fallback used', tErr);
-      }
-
-      await fetch('/api/chats', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({
-          id: currentChatId,
-          title: chatTitle,
-          thumbnail: userImg || null,
-          messages: currentChatHistory
-        })
-      });
-    } else {
-      await fetch('/api/chats', {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({
-          id: currentChatId,
-          messages: currentChatHistory
-        })
-      });
-    }
+    if (!answer) throw { api: true, code: streamError || 'empty_reply' };
   } catch (err) {
-    console.warn('Failed to save chat to D1', err);
+    // Nothing was answered: take the question back out so the student can simply try again.
+    chatLog = chatLog.filter((m) => m !== userEntry);
+    const code = err && err.api ? err.code : 'network';
+    let message = tx().errors[code] || tx().errors.generic;
+    if (err && err.detail) message = err.detail;
+    ai.body.innerHTML = '<span class="error-text">⚠️ ' + escapeHtml(message) + '</span>';
+    ai.timeEl.textContent = '';
+    userQuestionInput.value = text;
+    autosizeInput();
+    if (imageObj) setPendingImage(imageObj);
+    if (code === 'unauthorized') {
+      currentUser = null;
+      renderUserNav(null);
+      resumeAfterAuth = false;
+      openAuthModal();
+    }
+    if (!chatLog.filter((m) => !m.skip).length) userQuestionInput.placeholder = tx().placeholder;
+    setBusy(false);
+    return;
   }
+
+  // ---- answer complete ----
+  const dur = Date.now() - started;
+  ai.body.innerHTML = renderRich(answer, true);
+  runMermaid(ai.body);
+  ai.timeEl.textContent = timeLabel(Date.now(), dur);
+
+  const aiEntry = { role: 'assistant', text: answer, ts: Date.now(), dur };
+  if (mismatch) {
+    // Wrong class/subject: show the advice, but don't count it, send it again, or save it.
+    userEntry.skip = true;
+    aiEntry.skip = true;
+  }
+  chatLog.push(aiEntry);
+  appendQuickActions(ai, aiEntry);
+
+  if (!mismatch) {
+    setContextLocked(true);
+    await saveChat();
+    if (wasFirst && !titleRequested) {
+      titleRequested = true;
+      generateTitle(text, answer);
+    }
+  } else if (!chatLog.some((m) => !m.skip)) {
+    setContextLocked(false);   // the first question didn't match: let the student change class/subject
+  }
+
+  setBusy(false);
+  scrollToBottom(true);
+}
+
+function setBusy(state) {
+  isStreamingResponse = state;
+  btnSubmitQuestion.disabled = state;
+  userQuestionInput.disabled = state;
+  if (!state) userQuestionInput.focus();
 }
 
 /* ========================================================
-   MESSAGE DOM HELPERS
+   SAVE CHAT & TOPIC TITLE (Cloudflare D1)
    ======================================================== */
-function appendUserMessage(text, imageBase64) {
-  const card = document.createElement('div');
-  card.className = 'message-card user-msg';
-
-  let imgHtml = imageBase64 ? `<img src="${imageBase64}" alt="Uploaded question">` : '';
-
-  card.innerHTML = `
-    <div class="msg-avatar">
-      ${currentUser && currentUser.gender === 'female' ? FEMALE_AVATAR_SVG : MALE_AVATAR_SVG}
-    </div>
-    <div class="msg-bubble">
-      ${imgHtml}
-      <p>${escapeHtml(text)}</p>
-    </div>
-  `;
-  chatMessages.appendChild(card);
-  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+async function uploadImage(chat, imgId, base64) {
+  try {
+    const res = await fetch('/api/chats?img=' + encodeURIComponent(imgId) + '&chat=' + encodeURIComponent(chat), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'text/plain' },
+      credentials: 'same-origin',
+      body: base64
+    });
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
 }
 
-function appendAiMessage() {
-  const card = document.createElement('div');
-  card.className = 'message-card ai-msg';
-
-  card.innerHTML = `
-    <div class="msg-avatar">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18C5 19.94 8.13 22 12 22C15.87 22 19 19.94 19 17.18V13.18L12 17L5 13.18Z"/></svg>
-    </div>
-    <div class="msg-bubble">
-      <div class="typing-indicator">AI উত্তর তৈরি করছে...</div>
-    </div>
-  `;
-  chatMessages.appendChild(card);
-  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  return card.querySelector('.msg-bubble');
+function saveChat() {
+  saveQueue = saveQueue.then(doSaveChat).catch(() => {});
+  return saveQueue;
 }
 
-function appendQuickActions(container, originalQuestion, fullAnswer) {
-  const bar = document.createElement('div');
-  bar.className = 'quick-actions-bar';
+async function doSaveChat() {
+  if (!currentUser) return;
+  const list = chatLog.filter((m) => !m.skip);
+  if (!list.length) return;
+  if (!currentChatId) currentChatId = newChatId();
+  if (!currentChatTitle) {
+    const first = list.find((m) => m.role === 'user');
+    currentChatTitle = (first && first.text.slice(0, 45)) || tx().pictureQuestion;
+  }
 
-  bar.innerHTML = `
-    <button class="quick-btn" data-act="simple">💡 আরও সহজ করে বলো</button>
-    <button class="quick-btn" data-act="example">📖 একটি উদাহরণ দাও</button>
-    <button class="quick-btn" data-act="quiz">❓ আমাকে একটি প্রশ্ন করো</button>
-    <button class="quick-btn" data-act="copy">📋 কপি</button>
-    <div class="review-group">
-      <button class="quick-btn btn-thumb" data-act="thumbs-up" title="ভালো লেগেছে">👍</button>
-      <button class="quick-btn btn-thumb" data-act="thumbs-down" title="উত্তরে ভুল আছে">👎</button>
-    </div>
-  `;
+  // Pictures are saved separately as small copies, so the chat save itself stays small.
+  for (const m of list) {
+    if (m.image && m.image.url && !m.imgId) {
+      const thumb = await makeThumb(m.image.url);
+      if (thumb) {
+        const id = newChatId();
+        if (await uploadImage(currentChatId, id, thumb)) m.imgId = id;
+      }
+    }
+  }
 
-  bar.addEventListener('click', (e) => {
-    const act = e.target.dataset.act;
-    if (!act) return;
-
-    if (act === 'simple') submitQuestion(`এটি আরও সহজ ও সাবলীল ভাষায় বুঝিয়ে বলো।`);
-    if (act === 'example') submitQuestion(`এর সাথে প্রাসঙ্গিক একটি বাস্তব উদাহরণ দাও।`);
-    if (act === 'quiz') submitQuestion(`এই টপিকের ওপর আমাকে একটি গুরুত্বপূর্ণ MCQ বা সংক্ষিপ্ত প্রশ্ন জিজ্ঞাসা করো।`);
-    if (act === 'copy') {
-      navigator.clipboard.writeText(container.innerText);
-      e.target.textContent = '✅ কপি হয়েছে!';
-      setTimeout(() => e.target.textContent = '📋 কপি', 2000);
-    }
-    if (act === 'thumbs-up') {
-      e.target.style.backgroundColor = '#dcfce7';
-      e.target.style.borderColor = '#22c55e';
-      alert('আপনার ইতিবাচক ফিডব্যাকের জন্য ধন্যবাদ!');
-    }
-    if (act === 'thumbs-down') {
-      e.target.style.backgroundColor = '#fee2e2';
-      e.target.style.borderColor = '#ef4444';
-      submitQuestion(`আগের উত্তরটিতে কোনো অসঙ্গতি বা অস্পষ্টতা ছিল, অনুগ্রহ করে নির্ভুলভাবে পুনর্মূল্যায়ন করে বুঝিয়ে দাও।`);
-    }
+  const messages = list.slice(-40).map((m) => {
+    const o = {
+      role: m.role,
+      text: m.text || '',
+      img: !!(m.image || m.imgId || m.hadImage),
+      imgId: m.imgId || undefined,
+      ts: m.ts,
+      dur: m.dur,
+      fb: m.fb
+    };
+    if (m.role === 'user' && m.ctx) o.ctx = m.ctx;
+    return o;
   });
 
-  container.parentNode.appendChild(bar);
-}
-
-function resetChatSession() {
-  chatMessages.innerHTML = '';
-  currentChatHistory = [];
-  currentChatId = null;
-  document.body.classList.remove('chat-active');
-  heroSection.style.display = 'flex';
-  chatThread.style.display = 'none';
-  userQuestionInput.value = '';
-}
-
-/* ========================================================
-   MCQ PARSER WITH INTERACTIVE CARDS & WHY-WRONG ACCORDION
-   ======================================================== */
-function parseInteractiveMCQ(container) {
-  const text = container.innerHTML;
-  if (!text.includes('ক)') && !text.includes('A)') && !text.includes('(A)') && !text.includes('(ক)')) return;
-
-  const optRegex = /(?:\(|\[)?([A-Dক-ঘ])(?:\)|\]|\.|\:)\s*([^<\n]+)/g;
-  let matches = [...text.matchAll(optRegex)];
-
-  if (matches.length >= 4) {
-    const mcqBox = document.createElement('div');
-    mcqBox.className = 'mcq-container';
-    mcqBox.innerHTML = `
-      <div class="mcq-question">ইন্টারেক্টিভ MCQ প্র্যাকটিস: নিচের সঠিক অপশন নির্বাচন করুন</div>
-      <div class="mcq-grid">
-        ${matches.slice(0, 4).map(m => `<button class="mcq-opt" data-opt="${m[1]}">${m[1]}) ${m[2].trim()}</button>`).join('')}
-      </div>
-      <div class="mcq-feedback" style="display:none;"></div>
-      <details class="mcq-wrong-details" style="display:none;">
-        <summary>অন্যান্য অপশনগুলো কেন ভুল? (বিশ্লেষণ)</summary>
-        <div class="wrong-explanation-content">
-          উপরে উল্লেখিত উত্তরের সাথে তুলনামূলক পর্যালোচনা করে ভুল অপশনগুলো স্বয়ংক্রিয়ভাবে ফিল্টার করা হয়েছে।
-        </div>
-      </details>
-    `;
-
-    mcqBox.querySelectorAll('.mcq-opt').forEach(btn => {
-      btn.addEventListener('click', () => {
-        mcqBox.querySelectorAll('.mcq-opt').forEach(b => b.classList.remove('correct'));
-        btn.classList.add('correct');
-        const feedback = mcqBox.querySelector('.mcq-feedback');
-        feedback.style.display = 'block';
-        feedback.innerHTML = `✅ <strong>আপনার উত্তর রেকর্ড করা হয়েছে (${btn.dataset.opt}):</strong> বিস্তারিত ব্যাখ্যা উপরের উত্তরে উল্লেখ রয়েছে।`;
-        mcqBox.querySelector('.mcq-wrong-details').style.display = 'block';
-      });
+  try {
+    await fetch('/api/chats', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ id: currentChatId, title: currentChatTitle, messages })
     });
-
-    container.appendChild(mcqBox);
-  }
+  } catch (e) { /* history is best-effort */ }
 }
 
-/* ========================================================
-   KATEX & MARKDOWN FORMATTER
-   ======================================================== */
-function renderMath(element) {
-  if (window.renderMathInElement) {
-    window.renderMathInElement(element, {
-      delimiters: [
-        { left: '$$', right: '$$', display: true },
-        { left: '$', right: '$', display: false },
-        { left: '\\(', right: '\\)', display: false },
-        { left: '\\[', right: '\\]', display: true }
-      ],
-      throwOnError: false
+async function generateTitle(question, answer) {
+  try {
+    const res = await fetch('/api/title', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ lang: currentLanguage, question, answer })
     });
-  }
-}
-
-function formatMarkdown(text) {
-  let html = text
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-    .replace(/\*(.*)\*/gim, '<em>$1</em>')
-    .replace(/\n/gim, '<br>');
-  return html;
-}
-
-function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const data = await res.json();
+    if (res.ok && data && data.title) {
+      currentChatTitle = data.title;
+      await saveChat();
+    }
+  } catch (e) { /* the first words of the question stay as the title */ }
 }
 
 /* ========================================================
-   HISTORY DRAWER IMPLEMENTATION
+   HISTORY DRAWER
    ======================================================== */
 async function openHistoryDrawer() {
   historyDrawer.classList.add('open');
   drawerBackdrop.classList.add('active');
+  if (!currentUser) {
+    historyItemsList.innerHTML = '<p class="history-empty">' + (currentLanguage === 'en' ? 'Log in to see your earlier chats.' : 'পূর্ববর্তী আলোচনা দেখতে লগইন করুন।') + '</p>';
+    return;
+  }
+  historyItemsList.innerHTML = '<p class="history-empty">' + escapeHtml(tx().loadingChats) + '</p>';
   try {
-    const res = await fetch('/api/chats', {
-      headers: getAuthHeaders(),
-      credentials: 'include'
-    });
-    if (res.ok) {
-      const data = await res.json();
-      renderHistoryItems(data.chats || data || []);
+    const res = await fetch('/api/chats', { credentials: 'same-origin' });
+    const data = await res.json();
+    if (res.ok && data && data.ok) {
+      renderHistoryItems(data.chats || []);
+    } else {
+      historyItemsList.innerHTML = '<p class="history-empty">হিস্ট্রি লোড করা সম্ভব হয়নি।</p>';
     }
   } catch (e) {
-    historyItemsList.innerHTML = `<p class="history-empty">হিস্ট্রি লোড করা সম্ভব হয়নি।</p>`;
+    historyItemsList.innerHTML = '<p class="history-empty">হিস্ট্রি লোড করা সম্ভব হয়নি।</p>';
   }
 }
 
@@ -676,72 +1357,86 @@ function closeHistoryDrawer() {
 }
 
 function renderHistoryItems(items) {
-  if (!items || items.length === 0) {
-    historyItemsList.innerHTML = `<p class="history-empty">কোনো পূর্ববর্তী আলোচনা পাওয়া যায়নি।</p>`;
+  if (!items.length) {
+    historyItemsList.innerHTML = '<p class="history-empty">' + escapeHtml(tx().noChats) + '</p>';
     return;
   }
-
-  historyItemsList.innerHTML = items.map(chat => `
-    <div class="history-item" data-id="${chat.id}">
-      <span class="history-item-title">${escapeHtml(chat.title || 'পূর্ববর্তী প্রশ্ন')}</span>
-      <button class="btn-del-history" onclick="deleteHistoryChat('${chat.id}', event)">✕</button>
-    </div>
-  `).join('');
-
-  historyItemsList.querySelectorAll('.history-item').forEach(el => {
-    el.addEventListener('click', () => loadHistoricalChat(el.dataset.id));
+  historyItemsList.innerHTML = '';
+  items.forEach((chat) => {
+    const row = document.createElement('div');
+    row.className = 'history-item';
+    row.innerHTML = '<span class="history-item-title">' + escapeHtml(chat.title || tx().untitled) + '</span>' +
+      '<button type="button" class="btn-del-history" title="মুছুন">✕</button>';
+    row.addEventListener('click', () => openChat(chat.id));
+    row.querySelector('.btn-del-history').addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteChat(chat.id);
+    });
+    historyItemsList.appendChild(row);
   });
 }
 
-async function loadHistoricalChat(chatId) {
+async function openChat(id) {
+  if (isStreamingResponse) return;
   try {
-    const res = await fetch(`/api/chats?id=${chatId}`, {
-      headers: getAuthHeaders(),
-      credentials: 'include'
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const messages = data.messages || (Array.isArray(data) ? data : []);
-      if (messages.length > 0) {
-        currentChatId = chatId;
-        currentChatHistory = messages;
-        chatMessages.innerHTML = '';
-        document.body.classList.add('chat-active');
-        heroSection.style.display = 'none';
-        chatThread.style.display = 'block';
+    const res = await fetch('/api/chats?id=' + encodeURIComponent(id), { credentials: 'same-origin' });
+    const data = await res.json();
+    if (!res.ok || !data || !data.ok || !data.chat) return;
 
-        messages.forEach(m => {
-          if (m.role === 'user') appendUserMessage(m.content, m.image);
-          if (m.role === 'assistant') {
-            const ai = appendAiMessage();
-            ai.innerHTML = formatMarkdown(m.content);
-            renderMath(ai);
-          }
-        });
-        closeHistoryDrawer();
-      }
+    resetChatSession();
+    currentChatId = data.chat.id;
+    currentChatTitle = data.chat.title || '';
+    titleRequested = true;
+    enterChatView();
+
+    const msgs = data.chat.messages || [];
+    const firstCtx = (msgs.find((m) => m.role === 'user' && m.ctx) || {}).ctx;
+    if (firstCtx) {
+      selectedSubject = firstCtx.s || '';
+      selectedClass = firstCtx.c !== undefined ? String(firstCtx.c) : '';
     }
+
+    let lastAi = null;
+    let lastEntry = null;
+    msgs.forEach((m) => {
+      if (m.role === 'user') {
+        const entry = { role: 'user', text: m.text || '', imgId: m.imgId, hadImage: !!m.img, ts: m.ts, ctx: m.ctx };
+        chatLog.push(entry);
+        appendUserMessage(entry);
+      } else {
+        const entry = { role: 'assistant', text: m.text || '', ts: m.ts, dur: m.dur, fb: m.fb };
+        chatLog.push(entry);
+        const ai = appendAiMessage(false);
+        ai.body.innerHTML = renderRich(entry.text, true);
+        runMermaid(ai.body);
+        ai.timeEl.textContent = timeLabel(entry.ts, entry.dur);
+        lastAi = ai;
+        lastEntry = entry;
+      }
+    });
+    if (lastAi) appendQuickActions(lastAi, lastEntry);
+    setContextLocked(chatLog.length > 0);
+    userQuestionInput.placeholder = tx().follow;
+    closeHistoryDrawer();
+    scrollToBottom(false);
   } catch (e) {
     console.error('Failed to load past chat', e);
   }
 }
 
-window.deleteHistoryChat = async function(chatId, event) {
-  event.stopPropagation();
+async function deleteChat(id) {
+  if (!window.confirm(tx().deleteAsk)) return;
   try {
-    await fetch(`/api/chats?id=${chatId}`, { 
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-      credentials: 'include'
-    });
+    await fetch('/api/chats?id=' + encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin' });
+    if (id === currentChatId) resetChatSession();
     openHistoryDrawer();
   } catch (e) {
     console.error(e);
   }
-};
+}
 
 /* ========================================================
-   AUTH MODAL & LOGIN/SIGNUP FIX
+   AUTH MODAL & LOGIN/SIGNUP
    ======================================================== */
 // Turns the server's error codes into Bengali messages.
 function authErrorText(code, fallback) {
@@ -763,13 +1458,29 @@ function authErrorText(code, fallback) {
   return map[code] || fallback;
 }
 
+function openAuthModal() {
+  authModal.style.display = 'flex';
+}
+
+function afterAuthSuccess() {
+  authModal.style.display = 'none';
+  checkAuth().then(() => {
+    if (resumeAfterAuth) {
+      resumeAfterAuth = false;
+      handleQuestionSubmit();   // sends the question the student had typed before logging in
+    }
+  });
+}
+
 function bindAuthModalEvents() {
   btnOpenLogin.addEventListener('click', () => {
-    authModal.style.display = 'flex';
+    resumeAfterAuth = false;
+    openAuthModal();
   });
 
   btnCloseAuth.addEventListener('click', () => {
     authModal.style.display = 'none';
+    resumeAfterAuth = false;
   });
 
   tabLogin.addEventListener('click', () => {
@@ -786,7 +1497,6 @@ function bindAuthModalEvents() {
     formLogin.classList.remove('active');
   });
 
-  // Login Form Submission - UNIVERSAL KEY MATCH
   formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
     const identifier = document.getElementById('loginIdentifier').value.trim();
@@ -794,33 +1504,25 @@ function bindAuthModalEvents() {
     const errorBox = document.getElementById('loginErrorMsg');
     errorBox.textContent = '';
 
-    // The server reads { identifier, password }. identifier can be a username or an email.
-    const payload = { identifier, password };
-
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload)
+        credentials: 'same-origin',
+        body: JSON.stringify({ identifier, password })
       });
       const data = await res.json().catch(() => ({}));
-
       if (!res.ok) {
         errorBox.textContent = authErrorText(data.error, 'লগইন ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
         return;
       }
-
       formLogin.reset();
-      authModal.style.display = 'none';
-      await checkAuth();
-
+      afterAuthSuccess();
     } catch (err) {
       errorBox.textContent = 'সার্ভার সংযোগে ত্রুটি হয়েছে।';
     }
   });
 
-  // Signup Form Submission
   formSignup.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('signupUsername').value.trim();
@@ -836,7 +1538,7 @@ function bindAuthModalEvents() {
       const res = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        credentials: 'same-origin',
         body: JSON.stringify({ username, email, password, gender, invite })
       });
       const data = await res.json().catch(() => ({}));
@@ -844,11 +1546,8 @@ function bindAuthModalEvents() {
         errorBox.textContent = authErrorText(data.error, 'সাইন-আপ ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
         return;
       }
-
       formSignup.reset();
-      authModal.style.display = 'none';
-      await checkAuth();
-
+      afterAuthSuccess();
     } catch (err) {
       errorBox.textContent = 'সার্ভার সংযোগে ত্রুটি।';
     }
