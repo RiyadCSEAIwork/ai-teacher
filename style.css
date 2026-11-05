@@ -703,13 +703,34 @@ body.chat-active .subject-chips {
   font-weight: 600;
 }
 
-.mcq-explanation {
+.mcq-feedback {
   margin-top: 0.85rem;
   padding: 0.75rem;
   background: #ffffff;
   border-left: 4px solid #22c55e;
   border-radius: 4px;
   font-size: 0.88rem;
+  color: var(--text-main);
+}
+
+.mcq-wrong-details {
+  margin-top: 0.65rem;
+  font-size: 0.85rem;
+  background: #ffffff;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.mcq-wrong-details summary {
+  font-weight: 600;
+  color: #64748b;
+  outline: none;
+}
+
+.wrong-explanation-content {
+  margin-top: 0.5rem;
   color: var(--text-muted);
 }
 
@@ -717,6 +738,7 @@ body.chat-active .subject-chips {
 .quick-actions-bar {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.45rem;
   margin-top: 0.75rem;
 }
@@ -739,6 +761,17 @@ body.chat-active .subject-chips {
   color: var(--text-main);
 }
 
+.review-group {
+  display: inline-flex;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+.btn-thumb {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+}
+
 /* ========================================================
    SMART NOTES MODAL & AUTH MODAL
    ======================================================== */
@@ -757,7 +790,7 @@ body.chat-active .subject-chips {
 .modal-card {
   background: #ffffff;
   width: 100%;
-  max-width: 540px;
+  max-width: 520px;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   position: relative;
