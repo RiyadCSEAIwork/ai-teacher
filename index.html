@@ -1,202 +1,272 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI Teacher</title>
-  <meta name="description" content="প্রশ্ন করুন, AI Teacher সহজ ভাষায় বুঝিয়ে দেবে।">
-  <meta name="robots" content="noindex">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Teacher - Academic Excellence & Admission Guidance</title>
+  
+  <!-- Inter & Hind Siliguri Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- KaTeX for Math & Science formulas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  
+  <!-- Mermaid.js for Flowcharts & Diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.4.0/dist/mermaid.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <div id="app" class="app logged-out checking" data-view="home">
+<body class="lang-bn">
 
-    <!-- ===== top bar ===== -->
-    <header class="top">
-      <div class="brand">
-        <svg class="logo" viewBox="0 0 48 48" width="40" height="40" aria-hidden="true">
-          <path d="M24 5 2 16.5 24 28l22-11.5z" fill="#0b63f6"/>
-          <path d="M11 24v9.5c0 3.3 5.8 6.5 13 6.5s13-3.2 13-6.5V24L24 30.5z" fill="#1c3f9e"/>
-          <path d="M43 18v11" stroke="#0b63f6" stroke-width="2.6" stroke-linecap="round"/>
-          <circle cx="43" cy="31" r="2.2" fill="#0b63f6"/>
-        </svg>
-        <div class="brand-text">
-          <h1 class="brand-name"><span class="brand-ai">AI</span> Teacher</h1>
-          <span id="usage" class="usage"></span>
+  <!-- ================= TOP NAVIGATION BAR ================= -->
+  <header class="top-nav">
+    <div class="nav-container">
+      
+      <!-- Brand Logo & Tagline -->
+      <a href="/" class="nav-brand" id="brandLogo">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18C5 19.94 8.13 22 12 22C15.87 22 19 19.94 19 17.18V13.18L12 17L5 13.18Z"/>
+          </svg>
         </div>
-      </div>
+        <div class="brand-text-group">
+          <span class="brand-title">AI Teacher</span>
+          <span class="brand-tagline">Academic Excellence &amp; Admission Guidance</span>
+        </div>
+      </a>
 
-      <!-- মেনুবার: নতুন চ্যাট মেনুতে যুক্ত করা হয়েছে -->
-      <nav class="nav" aria-label="Main">
-        <button id="nav-home" type="button" class="nav-item active">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
-          <span id="nav-home-label"></span>
+      <!-- Center Menus (Modern & Scalable) -->
+      <nav class="nav-center" id="navCenterMenu">
+        <!-- New Chat (CTA) -->
+        <button class="nav-btn nav-btn-primary" id="btnNewChat">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+          <span class="btn-text">নতুন চ্যাট</span>
         </button>
-        <button id="nav-ask" type="button" class="nav-item">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <span id="nav-ask-label"></span>
+
+        <!-- History Drawer Button -->
+        <button class="nav-btn nav-btn-outline" id="btnHistory">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          <span class="btn-text">পূর্ববর্তী হিস্ট্রি</span>
         </button>
-        <button id="nav-new-chat" type="button" class="nav-item btn-nav-new">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          <span id="nav-new-label">নতুন চ্যাট</span>
+
+        <!-- Smart Notes Button -->
+        <button class="nav-btn nav-btn-ghost" id="btnSmartNotes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span class="btn-text">Smart Notes</span>
         </button>
-        <button id="history-btn" type="button" class="nav-item">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-          <span id="history-label"></span>
+
+        <!-- MCQ Practice Button (Future Ready) -->
+        <button class="nav-btn nav-btn-ghost" id="btnMcqPractice">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span class="btn-text">MCQ প্র্যাকটিস</span>
+          <span class="nav-badge-soon">শীঘ্রই</span>
         </button>
       </nav>
 
-      <div class="top-right">
-        <div class="lang" role="group" aria-label="Language">
-          <button id="lang-bn" type="button">বাংলা</button>
-          <button id="lang-en" type="button">English</button>
+      <!-- Right Controls: Quota, Language & Profile -->
+      <div class="nav-right">
+        <!-- Daily Quota Badge -->
+        <div class="quota-pill" id="userQuotaBadge" style="display: none;">
+          <span class="quota-dot"></span>
+          <span class="quota-text" id="quotaText">আজ ০/৩০</span>
         </div>
-        <button id="login-open" type="button" class="btn-soft">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M8 8l-4 4 4 4M4 12h10"/></svg>
-          <span id="login-open-label"></span>
-        </button>
-        <button id="logout" type="button" class="btn-soft">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M20 12H10"/></svg>
-          <span id="logout-label"></span>
-        </button>
-      </div>
-    </header>
 
-    <!-- ===== login / signup ===== -->
-    <section class="login-wrap">
-      <form id="login-form" class="login-card" autocomplete="on">
-        <h2 id="login-title"></h2>
-        <p id="login-hint" class="login-hint"></p>
-        <label for="login-name" id="login-name-label"></label>
-        <input id="login-name" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required maxlength="32">
-        <label for="login-code" id="login-code-label"></label>
-        <input id="login-code" name="password" type="password" autocomplete="current-password" required maxlength="128">
-        <p id="login-error" class="login-error" role="alert"></p>
-        <button id="login-btn" type="submit"></button>
-        <a href="#" id="to-signup" class="login-switch" role="button"></a>
-      </form>
-
-      <form id="signup-form" class="login-card" autocomplete="on" hidden>
-        <h2 id="signup-title"></h2>
-        <p id="signup-hint" class="login-hint"></p>
-        <label for="signup-name" id="signup-name-label"></label>
-        <input id="signup-name" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required minlength="3" maxlength="20">
-        <label for="signup-pass" id="signup-pass-label"></label>
-        <input id="signup-pass" name="new-password" type="password" autocomplete="new-password" required minlength="8" maxlength="128">
-        <label for="signup-pass2" id="signup-pass2-label"></label>
-        <input id="signup-pass2" name="new-password-again" type="password" autocomplete="new-password" required minlength="8" maxlength="128">
-        <label for="signup-invite" id="signup-invite-label"></label>
-        <input id="signup-invite" name="invite" type="password" autocomplete="off" required maxlength="128">
-        <p id="signup-error" class="login-error" role="alert"></p>
-        <button id="signup-btn" type="submit"></button>
-        <a href="#" id="to-login" class="login-switch" role="button"></a>
-      </form>
-    </section>
-
-    <!-- ===== home page ===== -->
-    <section id="home-view" class="view home-view">
-      <div class="hero">
-        <div class="hero-text">
-          <h2 class="hero-title"><span id="hero-t1"></span><br><span id="hero-t2"></span></h2>
-          <p id="hero-sub" class="hero-sub"></p>
+        <!-- Language Switcher -->
+        <div class="lang-switch">
+          <button type="button" class="lang-btn active" id="btnLangBn">বাং</button>
+          <button type="button" class="lang-btn" id="btnLangEn">EN</button>
         </div>
-        <div class="hero-art" aria-hidden="true">
-          <img src="hero.webp" alt="" width="1344" height="896" decoding="async">
-        </div>
-      </div>
 
-      <form id="home-form" class="home-ask" autocomplete="off">
-        <button id="home-attach" type="button" class="home-attach">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 9"/></svg>
-        </button>
-        <input id="home-input" type="text" maxlength="3000" enterkeyhint="send">
-        <button id="home-send" type="submit" class="btn-primary">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5.5 18-3.8-7.3z"/></svg>
-          <span id="home-send-label"></span>
-        </button>
-      </form>
+        <!-- Auth Section -->
+        <div class="auth-wrapper" id="authWrapper">
+          <button class="nav-login-btn" id="btnOpenLogin">লগইন</button>
 
-      <div id="home-chips" class="home-chips"></div>
-    </section>
-
-    <!-- ===== ask page ===== -->
-    <section id="ask-view" class="view ask-view">
-      <aside class="side">
-        <ul id="subject-list" class="subject-list"></ul>
-      </aside>
-
-      <div class="ask-main">
-        <form id="form" class="ask-card" autocomplete="off">
-          <h2 id="ask-title"></h2>
-          <p id="welcome" class="welcome"></p>
-
-          <div id="preview" class="preview hidden">
-            <div class="preview-thumb">
-              <img id="preview-img" alt="">
-              <span class="spinner" aria-hidden="true"></span>
+          <!-- User Profile Card with Gender Avatar -->
+          <div class="user-profile-pill" id="userProfilePill" style="display: none;">
+            <div class="user-avatar-wrap" id="userAvatarWrap" title="প্রোফাইল">
+              <!-- Dynamically populated with Male / Female SVG -->
             </div>
-            <div class="preview-info">
-              <span id="preview-name" class="preview-name"></span>
-              <span id="preview-status" class="preview-status"></span>
-            </div>
-            <button id="preview-remove" type="button" class="preview-remove">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            <span class="user-name" id="userNameLabel">ইউজার</span>
+            <button class="btn-logout-icon" id="btnLogout" title="লগআউট">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
           </div>
+        </div>
 
-          <div class="ta-wrap">
-            <textarea id="input" rows="3" maxlength="3000"></textarea>
-            <span id="counter" class="counter">0/3000</span>
-          </div>
+        <!-- Mobile Menu Toggle Button -->
+        <button class="mobile-toggle-btn" id="btnMobileToggle" aria-label="মেনু খুলুন">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
 
-          <div class="ask-controls">
-            <button id="attach" type="button" class="pill-btn">
-              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 9"/></svg>
-              <span id="attach-label"></span>
-            </button>
-            <input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden>
-            
-            <select id="class-sel" class="pill-select"></select>
-            <select id="subject-sel" class="pill-select"></select>
-            <button id="send" type="submit" class="btn-primary send-main">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5.5 18-3.8-7.3z"/></svg>
-              <span id="send-label"></span>
-            </button>
-          </div>
+      </div>
+    </div>
+  </header>
 
-          <section id="suggestions" class="suggestions"></section>
-        </form>
-
-        <section class="answer-card">
-          <div class="answer-head">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z"/><path d="M19 15l.9 2.6 2.6.9-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9z" opacity=".7"/></svg>
-            <h3 id="answer-title"></h3>
-          </div>
-          <div id="chat" class="chat" aria-live="polite"></div>
-        </section>
-        <p id="note" class="note"></p>
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="main-container">
+    
+    <!-- Hero / Welcome Section -->
+    <section class="hero-section" id="heroSection">
+      <div class="hero-content">
+        <h1 class="hero-title" id="txtHeroTitle">পড়াশোনা হোক আরও সহজ ও স্মার্ট</h1>
+        <p class="hero-subtitle" id="txtHeroSub">যে কোনো বিষয়ে আপনার প্রশ্ন করুন, AI দেবে সহজ ও নির্ভুল উত্তর।</p>
+      </div>
+      <div class="hero-media">
+        <img src="hero.webp" alt="AI Teacher Hero" class="hero-img" onerror="this.style.display='none'">
       </div>
     </section>
 
-    <!-- ===== chat history drawer ===== -->
-    <div id="backdrop" class="backdrop"></div>
-    <aside id="drawer" class="drawer" aria-hidden="true">
-      <div class="drawer-head">
-        <h2 id="drawer-title"></h2>
-        <button id="drawer-close" type="button" class="drawer-x">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    <!-- Chat Stream / Conversation Thread -->
+    <section class="chat-thread" id="chatThread" style="display: none;">
+      <div class="messages-container" id="chatMessages">
+        <!-- Dynamic chat bubbles will appear here -->
+      </div>
+    </section>
+
+    <!-- Interactive Input Dock -->
+    <div class="input-dock-wrapper" id="inputDockWrapper">
+      <div class="input-dock">
+        <!-- Image Preview Thumbnail Bar -->
+        <div class="image-preview-bar" id="imagePreviewBar" style="display: none;">
+          <div class="preview-thumbnail">
+            <img id="previewImg" src="" alt="আপলোডকৃত প্রশ্ন">
+            <button class="btn-remove-preview" id="btnRemovePreview">&times;</button>
+          </div>
+          <span class="preview-info" id="previewInfo">ছবি যুক্ত হয়েছে</span>
+        </div>
+
+        <div class="input-main-row">
+          <!-- Image upload button -->
+          <label class="btn-icon btn-upload-image" title="ছবি বা বইয়ের পাতার প্রশ্ন আপলোড করুন">
+            <input type="file" id="fileImageInput" accept="image/*" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </label>
+
+          <!-- Input Textarea -->
+          <textarea id="userQuestionInput" rows="1" placeholder="আপনার প্রশ্ন লিখুন বা ছবি যুক্ত করুন..."></textarea>
+
+          <!-- Submit Button -->
+          <button class="btn-submit-question" id="btnSubmitQuestion">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            <span class="submit-text" id="txtSubmit">প্রশ্ন করুন</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Subject Chips -->
+      <div class="subject-chips" id="subjectChips">
+        <button class="chip-btn chip-math" data-subject="গণিত">🧮 গণিত</button>
+        <button class="chip-btn chip-physics" data-subject="পদার্থবিজ্ঞান">⚛️ পদার্থবিজ্ঞান</button>
+        <button class="chip-btn chip-chemistry" data-subject="রসায়ন">🧪 রসায়ন</button>
+        <button class="chip-btn chip-biology" data-subject="জীববিজ্ঞান">🌿 জীববিজ্ঞান</button>
+        <button class="chip-btn chip-ict" data-subject="ICT">🖥️ ICT</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= SMART NOTES MODAL ================= -->
+  <div class="modal-overlay" id="smartNotesModal" style="display: none;">
+    <div class="modal-card modal-smart-notes">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge">📑</div>
+          <div>
+            <h3 class="modal-heading">Smart Notes (টপিক সারসংক্ষেপ)</h3>
+            <p class="modal-subheading">যেকোনো বড় অধ্যায়, থিওরি বা প্যারাগ্রাফ পেস্ট করুন। AI প্রয়োজনীয় সূত্র ও বুলেট পয়েন্টে সারসংক্ষেপ বানিয়ে দেবে।</p>
+          </div>
+        </div>
+        <button class="btn-modal-close" id="btnCloseSmartNotes">&times;</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="smartNotesContent" rows="6" placeholder="এখানে আপনার বইয়ের পাতার প্যারাগ্রাফ বা বড় বিষয়বস্তু পেস্ট করুন..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="btnCancelSmartNotes">বাতিল</button>
+        <button class="btn-generate-notes" id="btnProcessSmartNotes">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>নোট ও সারসংক্ষেপ তৈরি করো</span>
         </button>
       </div>
-      <button id="drawer-new" type="button" class="drawer-new"></button>
-      <p id="drawer-msg" class="drawer-msg"></p>
-      <ul id="chat-list" class="chat-list"></ul>
-    </aside>
+    </div>
   </div>
+
+  <!-- ================= HISTORY DRAWER ================= -->
+  <aside class="history-drawer" id="historyDrawer">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+        <span>পূর্ববর্তী আলোচনা</span>
+      </div>
+      <button class="btn-drawer-close" id="btnCloseHistory">&times;</button>
+    </div>
+    <div class="drawer-content" id="historyItemsList">
+      <p class="history-empty">কোনো পূর্ববর্তী আলোচনা পাওয়া যায়নি।</p>
+    </div>
+  </aside>
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+  <!-- ================= AUTH MODAL (LOGIN & SIGNUP) ================= -->
+  <div class="modal-overlay" id="authModal" style="display: none;">
+    <div class="modal-card auth-card">
+      <button class="btn-modal-close" id="btnCloseAuth">&times;</button>
+      
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" id="tabLogin">লগইন</button>
+        <button class="auth-tab-btn" id="tabSignup">সাইন-আপ</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="formLogin" class="auth-form active">
+        <div class="form-group">
+          <label>ইমেইল বা ইউজারনেম</label>
+          <input type="text" id="loginIdentifier" placeholder="যেমন: riyad বা user@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>পাসওয়ার্ড</label>
+          <input type="password" id="loginPassword" placeholder="আপনার পাসওয়ার্ড" required>
+        </div>
+        <div class="auth-error-msg" id="loginErrorMsg"></div>
+        <button type="submit" class="btn-auth-submit" id="btnSubmitLogin">লগইন করুন</button>
+      </form>
+
+      <!-- Signup Form with Gender Selection -->
+      <form id="formSignup" class="auth-form">
+        <div class="form-group">
+          <label>ইউজারনেম</label>
+          <input type="text" id="signupUsername" placeholder="যেমন: riyad" required>
+        </div>
+        <div class="form-group">
+          <label>ইমেইল</label>
+          <input type="email" id="signupEmail" placeholder="user@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)</label>
+          <input type="password" id="signupPassword" placeholder="পাসওয়ার্ড তৈরি করুন" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label>আপনার জেন্ডার (অ্যাভাটারের জন্য)</label>
+          <div class="gender-radio-group">
+            <label class="gender-option">
+              <input type="radio" name="signupGender" value="male" checked>
+              <span>👨 ছাত্র (Male)</span>
+            </label>
+            <label class="gender-option">
+              <input type="radio" name="signupGender" value="female">
+              <span>👩 ছাত্রী (Female)</span>
+            </label>
+          </div>
+        </div>
+        <div class="auth-error-msg" id="signupErrorMsg"></div>
+        <button type="submit" class="btn-auth-submit" id="btnSubmitSignup">নতুন অ্যাকাউন্ট খুলুন</button>
+      </form>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
