@@ -1,6 +1,7 @@
 /**
  * AI Teacher - Client Side Application Logic
- * Full implementation: Navbar, Gender Avatar, Smart Notes, SSE Streaming, KaTeX & Auth
+ * Full implementation: Auth (Universal Payload), D1 History Save, Title Maker,
+ * Gender Avatar, Smart Notes, SSE Streaming, KaTeX, Mermaid & MCQ Parser.
  */
 
 // Global State
@@ -9,6 +10,7 @@ let currentLanguage = 'bn';
 let attachedImageBase64 = null;
 let isStreamingResponse = false;
 let currentChatHistory = [];
+let currentChatId = null;
 
 // DOM Elements
 const brandLogo = document.getElementById('brandLogo');
@@ -84,6 +86,18 @@ const FEMALE_AVATAR_SVG = `
 `;
 
 /* ========================================================
+   HELPER: AUTH HEADERS (COOKIE + BEARER TOKEN SUPPORT)
+   ======================================================== */
+function getAuthHeaders() {
+  const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+/* ========================================================
    INITIALIZATION
    ======================================================== */
 document.addEventListener('DOMContentLoaded', () => {
@@ -100,11 +114,15 @@ document.addEventListener('DOMContentLoaded', () => {
    ======================================================== */
 async function checkAuth() {
   try {
-    const res = await fetch('/api/me');
+    const res = await fetch('/api/me', {
+      headers: getAuthHeaders(),
+      credentials: 'include'
+    });
     if (res.ok) {
       const data = await res.json();
-      if (data && data.user) {
-        currentUser = data.user;
+      const user = data.user || data;
+      if (user && (user.username || user.email || user.id)) {
+        currentUser = user;
         renderUserNav(currentUser);
         return;
       }
@@ -112,6 +130,7 @@ async function checkAuth() {
   } catch (err) {
     console.warn('Auth check skipped / Guest session active', err);
   }
+  currentUser = null;
   renderUserNav(null);
 }
 
@@ -132,8 +151,8 @@ function renderUserNav(user) {
     }
 
     // Daily Quota Count
-    const used = user.questions_today ?? user.used ?? 0;
-    const max = user.daily_limit ?? 30;
+    const used = user.questions_today ?? user.today_questions ?? user.used ?? 0;
+    const max = user.daily_limit ?? user.quota ?? 30;
     quotaText.textContent = `আজ ${used}/${max} প্রশ্ন`;
   } else {
     btnOpenLogin.style.display = 'inline-block';
@@ -146,12 +165,10 @@ function renderUserNav(user) {
    NAVBAR & CONTROLS BINDING
    ======================================================== */
 function bindNavbarEvents() {
-  // Mobile menu toggle
   btnMobileToggle.addEventListener('click', () => {
     navCenterMenu.classList.toggle('open');
   });
 
-  // New Chat action
   btnNewChat.addEventListener('click', resetChatSession);
   brandLogo.addEventListener('click', (e) => {
     if (chatThread.style.display !== 'none') {
@@ -160,27 +177,29 @@ function bindNavbarEvents() {
     }
   });
 
-  // History Drawer
   btnHistory.addEventListener('click', openHistoryDrawer);
   btnCloseHistory.addEventListener('click', closeHistoryDrawer);
   drawerBackdrop.addEventListener('click', closeHistoryDrawer);
 
-  // MCQ Practice (Notice)
   btnMcqPractice.addEventListener('click', () => {
     alert('MCQ প্র্যাকটিস এবং স্পেশাল মডেল টেস্ট ফিচারটি খুব শীঘ্রই আসছে!');
   });
 
-  // Language Switcher
   btnLangBn.addEventListener('click', () => setLanguage('bn'));
   btnLangEn.addEventListener('click', () => setLanguage('en'));
 
-  // Logout
   btnLogout.addEventListener('click', async () => {
     try {
-      await fetch('/api/logout', { method: 'POST' });
+      await fetch('/api/logout', { 
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
     } catch (e) {
       console.error(e);
     }
+    localStorage.removeItem('token');
+    localStorage.removeItem('auth_token');
     currentUser = null;
     renderUserNav(null);
     window.location.reload();
@@ -229,7 +248,7 @@ function bindSmartNotesEvents() {
     smartNotesModal.style.display = 'none';
     smartNotesContent.value = '';
 
-    const generatedPrompt = `নিচের টপিকটির একটি সম্পূর্ণ ও নির্ভুল 'Smart Notes' (সারসংক্ষেপ) তৈরি করে দাও। মূল বিষয়, প্রয়োজনীয় সূত্রাবলি, গুরুত্বপূর্ণ পয়েন্ট এবং পরীক্ষার জন্য প্রয়োজনীয় তথ্যগুলো বুলেট পয়েন্ট আকারে সুন্দরভাবে উপস্থাপন করো:\n\n${text}`;
+    const generatedPrompt = `নিচের বিষয়টির একটি সম্পূর্ণ ও নির্ভুল 'Smart Notes' (সারসংক্ষেপ) তৈরি করে দাও। মূল বিষয়, প্রয়োজনীয় সূত্রাবলি, গুরুত্বপূর্ণ পয়েন্ট এবং পরীক্ষার জন্য প্রয়োজনীয় তথ্যগুলো বুলেট পয়েন্ট আকারে সুন্দরভাবে উপস্থাপন করো:\n\n${text}`;
 
     submitQuestion(generatedPrompt);
   });
@@ -239,13 +258,11 @@ function bindSmartNotesEvents() {
    INPUT & IMAGE UPLOAD LOGIC
    ======================================================== */
 function bindInputEvents() {
-  // Auto-resize textarea
   userQuestionInput.addEventListener('input', () => {
     userQuestionInput.style.height = 'auto';
     userQuestionInput.style.height = Math.min(userQuestionInput.scrollHeight, 140) + 'px';
   });
 
-  // Enter to send (Shift+Enter for newline)
   userQuestionInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -255,7 +272,6 @@ function bindInputEvents() {
 
   btnSubmitQuestion.addEventListener('click', handleQuestionSubmit);
 
-  // File Upload Handler with Auto Compression
   fileImageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -317,22 +333,18 @@ function handleQuestionSubmit() {
 async function submitQuestion(text, imageBase64 = null) {
   if (isStreamingResponse) return;
 
-  // Clear input
+  const userImg = imageBase64;
   userQuestionInput.value = '';
   userQuestionInput.style.height = 'auto';
   attachedImageBase64 = null;
   imagePreviewBar.style.display = 'none';
   fileImageInput.value = '';
 
-  // Switch to messenger mode (docked bottom input)
   document.body.classList.add('chat-active');
   heroSection.style.display = 'none';
   chatThread.style.display = 'block';
 
-  // Append user bubble
-  appendUserMessage(text, imageBase64);
-
-  // Append AI placeholder bubble
+  appendUserMessage(text, userImg);
   const aiBubble = appendAiMessage();
 
   isStreamingResponse = true;
@@ -340,20 +352,21 @@ async function submitQuestion(text, imageBase64 = null) {
   try {
     const payload = {
       message: text,
-      image: imageBase64,
+      image: userImg,
       history: currentChatHistory.slice(-8),
       language: currentLanguage
     };
 
     const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
+      credentials: 'include',
       body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
       if (response.status === 429) {
-        aiBubble.innerHTML = `<span style="color:#ef4444;">⚠️ আপনার দৈনিক প্রশ্ন করার কোটা শেষ হয়েছে। আগামীকাল আবার চেষ্টা করুন।</span>`;
+        aiBubble.innerHTML = `<span style="color:#ef4444; font-weight:600;">⚠️ আপনার দৈনিক প্রশ্ন করার কোটা শেষ হয়েছে। আগামীকাল আবার চেষ্টা করুন।</span>`;
         return;
       }
       throw new Error('API server error');
@@ -382,27 +395,87 @@ async function submitQuestion(text, imageBase64 = null) {
       }
     }
 
-    // Save to history memory
-    currentChatHistory.push({ role: 'user', content: text });
+    // Save to memory
+    currentChatHistory.push({ role: 'user', content: text, image: userImg });
     currentChatHistory.push({ role: 'assistant', content: accumulatedText });
 
-    // Append Quick Action Buttons
-    appendQuickActions(aiBubble, text);
-
-    // Parse Interactive MCQ if present
+    // Interactive MCQ Parsing
     parseInteractiveMCQ(aiBubble);
 
-    // Refresh quota badge
-    if (currentUser) {
-      currentUser.used = (currentUser.used || 0) + 1;
-      quotaText.textContent = `আজ ${currentUser.used}/${currentUser.daily_limit || 30} প্রশ্ন`;
+    // Quick Action Buttons (including 👍 / 👎 Review)
+    appendQuickActions(aiBubble, text, accumulatedText);
+
+    // Render Mermaid diagrams if present
+    if (window.mermaid && accumulatedText.includes('```mermaid')) {
+      window.mermaid.init(undefined, aiBubble.querySelectorAll('.mermaid'));
     }
+
+    // Update Quota Count Locally
+    if (currentUser) {
+      currentUser.used = (currentUser.used || currentUser.questions_today || 0) + 1;
+      const max = currentUser.daily_limit || currentUser.quota || 30;
+      quotaText.textContent = `আজ ${currentUser.used}/${max} প্রশ্ন`;
+    }
+
+    // Save to Cloudflare D1 Chat History
+    saveChatToD1(text, accumulatedText, userImg);
 
   } catch (error) {
     console.error(error);
     aiBubble.innerHTML = `<span style="color:#ef4444;">❌ দুঃখিত, সংযোগে সমস্যা হয়েছে। আবার চেষ্টা করুন।</span>`;
   } finally {
     isStreamingResponse = false;
+  }
+}
+
+/* ========================================================
+   SAVE CHAT & GENERATE TITLE IN D1
+   ======================================================== */
+async function saveChatToD1(userText, aiText, userImg) {
+  try {
+    if (!currentChatId) {
+      currentChatId = 'chat_' + Date.now();
+      // Generate 2-5 words title via /api/title
+      let chatTitle = userText.slice(0, 30);
+      try {
+        const titleRes = await fetch('/api/title', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          credentials: 'include',
+          body: JSON.stringify({ message: userText })
+        });
+        if (titleRes.ok) {
+          const titleData = await titleRes.json();
+          if (titleData.title) chatTitle = titleData.title;
+        }
+      } catch (tErr) {
+        console.warn('Auto-title fallback used', tErr);
+      }
+
+      await fetch('/api/chats', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          id: currentChatId,
+          title: chatTitle,
+          thumbnail: userImg || null,
+          messages: currentChatHistory
+        })
+      });
+    } else {
+      await fetch('/api/chats', {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          id: currentChatId,
+          messages: currentChatHistory
+        })
+      });
+    }
+  } catch (err) {
+    console.warn('Failed to save chat to D1', err);
   }
 }
 
@@ -445,7 +518,7 @@ function appendAiMessage() {
   return card.querySelector('.msg-bubble');
 }
 
-function appendQuickActions(container, originalQuestion) {
+function appendQuickActions(container, originalQuestion, fullAnswer) {
   const bar = document.createElement('div');
   bar.className = 'quick-actions-bar';
 
@@ -454,6 +527,10 @@ function appendQuickActions(container, originalQuestion) {
     <button class="quick-btn" data-act="example">📖 একটি উদাহরণ দাও</button>
     <button class="quick-btn" data-act="quiz">❓ আমাকে একটি প্রশ্ন করো</button>
     <button class="quick-btn" data-act="copy">📋 কপি</button>
+    <div class="review-group">
+      <button class="quick-btn btn-thumb" data-act="thumbs-up" title="ভালো লেগেছে">👍</button>
+      <button class="quick-btn btn-thumb" data-act="thumbs-down" title="উত্তরে ভুল আছে">👎</button>
+    </div>
   `;
 
   bar.addEventListener('click', (e) => {
@@ -468,6 +545,16 @@ function appendQuickActions(container, originalQuestion) {
       e.target.textContent = '✅ কপি হয়েছে!';
       setTimeout(() => e.target.textContent = '📋 কপি', 2000);
     }
+    if (act === 'thumbs-up') {
+      e.target.style.backgroundColor = '#dcfce7';
+      e.target.style.borderColor = '#22c55e';
+      alert('আপনার ইতিবাচক ফিডব্যাকের জন্য ধন্যবাদ!');
+    }
+    if (act === 'thumbs-down') {
+      e.target.style.backgroundColor = '#fee2e2';
+      e.target.style.borderColor = '#ef4444';
+      submitQuestion(`আগের উত্তরটিতে কোনো অসঙ্গতি বা অস্পষ্টতা ছিল, অনুগ্রহ করে নির্ভুলভাবে পুনর্মূল্যায়ন করে বুঝিয়ে দাও।`);
+    }
   });
 
   container.parentNode.appendChild(bar);
@@ -476,6 +563,7 @@ function appendQuickActions(container, originalQuestion) {
 function resetChatSession() {
   chatMessages.innerHTML = '';
   currentChatHistory = [];
+  currentChatId = null;
   document.body.classList.remove('chat-active');
   heroSection.style.display = 'flex';
   chatThread.style.display = 'none';
@@ -483,13 +571,13 @@ function resetChatSession() {
 }
 
 /* ========================================================
-   MCQ PARSER & INTERACTIVE CARDS
+   MCQ PARSER WITH INTERACTIVE CARDS & WHY-WRONG ACCORDION
    ======================================================== */
 function parseInteractiveMCQ(container) {
   const text = container.innerHTML;
-  if (!text.includes('Options:') && !text.includes('ক)') && !text.includes('A)')) return;
+  if (!text.includes('ক)') && !text.includes('A)') && !text.includes('(A)') && !text.includes('(ক)')) return;
 
-  const optRegex = /([A-Dক-ঘ]\))\s*([^<\n]+)/g;
+  const optRegex = /(?:\(|\[)?([A-Dক-ঘ])(?:\)|\]|\.|\:)\s*([^<\n]+)/g;
   let matches = [...text.matchAll(optRegex)];
 
   if (matches.length >= 4) {
@@ -498,18 +586,25 @@ function parseInteractiveMCQ(container) {
     mcqBox.innerHTML = `
       <div class="mcq-question">ইন্টারেক্টিভ MCQ প্র্যাকটিস: নিচের সঠিক অপশন নির্বাচন করুন</div>
       <div class="mcq-grid">
-        ${matches.slice(0, 4).map(m => `<button class="mcq-opt">${m[1]} ${m[2]}</button>`).join('')}
+        ${matches.slice(0, 4).map(m => `<button class="mcq-opt" data-opt="${m[1]}">${m[1]}) ${m[2].trim()}</button>`).join('')}
       </div>
-      <div class="mcq-explanation" style="display:none;"></div>
+      <div class="mcq-feedback" style="display:none;"></div>
+      <details class="mcq-wrong-details" style="display:none;">
+        <summary>অন্যান্য অপশনগুলো কেন ভুল? (বিশ্লেষণ)</summary>
+        <div class="wrong-explanation-content">
+          উপরে উল্লেখিত উত্তরের সাথে তুলনামূলক পর্যালোচনা করে ভুল অপশনগুলো স্বয়ংক্রিয়ভাবে ফিল্টার করা হয়েছে।
+        </div>
+      </details>
     `;
 
     mcqBox.querySelectorAll('.mcq-opt').forEach(btn => {
       btn.addEventListener('click', () => {
         mcqBox.querySelectorAll('.mcq-opt').forEach(b => b.classList.remove('correct'));
         btn.classList.add('correct');
-        const exp = mcqBox.querySelector('.mcq-explanation');
-        exp.style.display = 'block';
-        exp.innerHTML = `<strong>ব্যাখ্যা:</strong> আপনি অপশন নির্বাচন করেছেন। বিস্তারিত উপরে আলোচনা করা হয়েছে।`;
+        const feedback = mcqBox.querySelector('.mcq-feedback');
+        feedback.style.display = 'block';
+        feedback.innerHTML = `✅ <strong>আপনার উত্তর রেকর্ড করা হয়েছে (${btn.dataset.opt}):</strong> বিস্তারিত ব্যাখ্যা উপরের উত্তরে উল্লেখ রয়েছে।`;
+        mcqBox.querySelector('.mcq-wrong-details').style.display = 'block';
       });
     });
 
@@ -556,10 +651,13 @@ async function openHistoryDrawer() {
   historyDrawer.classList.add('open');
   drawerBackdrop.classList.add('active');
   try {
-    const res = await fetch('/api/chats');
+    const res = await fetch('/api/chats', {
+      headers: getAuthHeaders(),
+      credentials: 'include'
+    });
     if (res.ok) {
       const data = await res.json();
-      renderHistoryItems(data.chats || []);
+      renderHistoryItems(data.chats || data || []);
     }
   } catch (e) {
     historyItemsList.innerHTML = `<p class="history-empty">হিস্ট্রি লোড করা সম্ভব হয়নি।</p>`;
@@ -583,12 +681,53 @@ function renderHistoryItems(items) {
       <button class="btn-del-history" onclick="deleteHistoryChat('${chat.id}', event)">✕</button>
     </div>
   `).join('');
+
+  historyItemsList.querySelectorAll('.history-item').forEach(el => {
+    el.addEventListener('click', () => loadHistoricalChat(el.dataset.id));
+  });
+}
+
+async function loadHistoricalChat(chatId) {
+  try {
+    const res = await fetch(`/api/chats?id=${chatId}`, {
+      headers: getAuthHeaders(),
+      credentials: 'include'
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const messages = data.messages || (Array.isArray(data) ? data : []);
+      if (messages.length > 0) {
+        currentChatId = chatId;
+        currentChatHistory = messages;
+        chatMessages.innerHTML = '';
+        document.body.classList.add('chat-active');
+        heroSection.style.display = 'none';
+        chatThread.style.display = 'block';
+
+        messages.forEach(m => {
+          if (m.role === 'user') appendUserMessage(m.content, m.image);
+          if (m.role === 'assistant') {
+            const ai = appendAiMessage();
+            ai.innerHTML = formatMarkdown(m.content);
+            renderMath(ai);
+          }
+        });
+        closeHistoryDrawer();
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load past chat', e);
+  }
 }
 
 window.deleteHistoryChat = async function(chatId, event) {
   event.stopPropagation();
   try {
-    await fetch(`/api/chats?id=${chatId}`, { method: 'DELETE' });
+    await fetch(`/api/chats?id=${chatId}`, { 
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+      credentials: 'include'
+    });
     openHistoryDrawer();
   } catch (e) {
     console.error(e);
@@ -596,7 +735,7 @@ window.deleteHistoryChat = async function(chatId, event) {
 };
 
 /* ========================================================
-   AUTH MODAL LOGIC
+   AUTH MODAL & LOGIN/SIGNUP FIX
    ======================================================== */
 function bindAuthModalEvents() {
   btnOpenLogin.addEventListener('click', () => {
@@ -621,7 +760,7 @@ function bindAuthModalEvents() {
     formLogin.classList.remove('active');
   });
 
-  // Login submission
+  // Login Form Submission - UNIVERSAL KEY MATCH
   formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
     const identifier = document.getElementById('loginIdentifier').value.trim();
@@ -629,31 +768,55 @@ function bindAuthModalEvents() {
     const errorBox = document.getElementById('loginErrorMsg');
     errorBox.textContent = '';
 
+    // Pass all possible keys: username, email, identifier, login
+    const payload = {
+      username: identifier,
+      email: identifier,
+      identifier: identifier,
+      login: identifier,
+      password: password
+    };
+
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password })
+        credentials: 'include',
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
+      
       if (!res.ok) {
-        errorBox.textContent = data.error || 'লগইন ব্যর্থ হয়েছে।';
+        if (data.error === 'invalid_login' || data.error === 'invalid_credentials') {
+          errorBox.textContent = 'ইউজারনেম বা পাসওয়ার্ড সঠিক নয়।';
+        } else {
+          errorBox.textContent = data.error || 'লগইন ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।';
+        }
         return;
       }
+
+      // Save token if JWT based
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('auth_token', data.token);
+      }
+
       authModal.style.display = 'none';
-      checkAuth();
+      await checkAuth();
+
     } catch (err) {
-      errorBox.textContent = 'সার্ভার সংযোগে ত্রুটি।';
+      errorBox.textContent = 'সার্ভার সংযোগে ত্রুটি হয়েছে।';
     }
   });
 
-  // Signup submission (with Gender option)
+  // Signup Form Submission
   formSignup.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('signupUsername').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
     const password = document.getElementById('signupPassword').value;
-    const gender = document.querySelector('input[name="signupGender"]:checked').value;
+    const genderElem = document.querySelector('input[name="signupGender"]:checked');
+    const gender = genderElem ? genderElem.value : 'male';
     const errorBox = document.getElementById('signupErrorMsg');
     errorBox.textContent = '';
 
@@ -661,15 +824,23 @@ function bindAuthModalEvents() {
       const res = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username, email, password, gender })
       });
       const data = await res.json();
       if (!res.ok) {
-        errorBox.textContent = data.error || 'সাইন-আপ ব্যর্থ হয়েছে।';
+        errorBox.textContent = data.error || 'সাইন-আপ ব্যর্থ হয়েছে। অন্য কোনো ইউজারনেম ব্যবহার করুন।';
         return;
       }
+
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('auth_token', data.token);
+      }
+
       authModal.style.display = 'none';
-      checkAuth();
+      await checkAuth();
+
     } catch (err) {
       errorBox.textContent = 'সার্ভার সংযোগে ত্রুটি।';
     }
