@@ -8,9 +8,10 @@ const MAX_CHARS_PER_MESSAGE = 3000;
 
 const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const MAX_IMAGE_BASE64_CHARS = 5500000;
-const MAX_IMAGES_PER_REQUEST = 2;       
-const DEFAULT_IMAGE_THINKING_LEVEL = "medium"; 
-const DEFAULT_MEDIA_RESOLUTION = "high";       
+// OPTIMIZATION: Only send the active current image to save Gemini free tier TPM quota
+const MAX_IMAGES_PER_REQUEST = 1;       
+const DEFAULT_IMAGE_THINKING_LEVEL = "low"; 
+const DEFAULT_MEDIA_RESOLUTION = "medium";       
 const DEFAULT_IMAGE_QUESTION = {
   bn: "এই ছবিতে কী আছে মনোযোগ দিয়ে দেখে বুঝিয়ে দাও। প্রশ্ন থাকলে সমাধান করে দাও।",
   en: "Look carefully at this image and explain it. If it contains a question, solve it.",
@@ -179,6 +180,7 @@ export async function onRequestPost(context) {
 
   if (badImage) return json({ error: "bad_image" }, 400);
 
+  // Keep only the most recent image in context to save tokens and prevent 429
   let imagesLeft = MAX_IMAGES_PER_REQUEST;
   for (let i = cleaned.length - 1; i >= 0; i--) {
     if (!cleaned[i].image) continue;
@@ -204,7 +206,7 @@ export async function onRequestPost(context) {
   if (hasImage) {
     thinkingLevel = env.GEMINI_THINKING_LEVEL_IMAGE || DEFAULT_IMAGE_THINKING_LEVEL;
   } else if (isAdvancedLevel) {
-    thinkingLevel = "medium";
+    thinkingLevel = "low";
   } else if (env.GEMINI_THINKING_LEVEL) {
     thinkingLevel = env.GEMINI_THINKING_LEVEL;
   }
@@ -243,12 +245,21 @@ export async function onRequestPost(context) {
   let upstream;
   try {
     upstream = await callGemini(true);
-    if (upstream.status === 400) upstream = await callGemini(false);
+    if (upstream.status === 400) {
+      upstream = await callGemini(false);
+    }
+    // AUTO-RETRY ON 429: If Gemini bursts, wait 2 seconds and retry with lighter config
+    if (upstream.status === 429) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      upstream = await callGemini(false);
+    }
   } catch (_err) {
     return json({ error: "network" }, 502);
   }
 
-  if (upstream.status === 429) return json({ error: "rate_limited" }, 429);
+  if (upstream.status === 429) {
+    return json({ error: "rate_limited" }, 429);
+  }
   
   if (!upstream.ok || !upstream.body) {
     const errorDetails = await upstream.text();
