@@ -157,13 +157,15 @@
         </div>
       </div>
 
-      <!-- Quick Subject Chips -->
+      <!-- Class + Subject selection (locked once a chat has started) -->
+      <div class="ctx-badge" id="ctxBadge" style="display: none;"></div>
       <div class="subject-chips" id="subjectChips">
-        <button class="chip-btn chip-math" data-subject="গণিত">🧮 গণিত</button>
-        <button class="chip-btn chip-physics" data-subject="পদার্থবিজ্ঞান">⚛️ পদার্থবিজ্ঞান</button>
-        <button class="chip-btn chip-chemistry" data-subject="রসায়ন">🧪 রসায়ন</button>
-        <button class="chip-btn chip-biology" data-subject="জীববিজ্ঞান">🌿 জীববিজ্ঞান</button>
-        <button class="chip-btn chip-ict" data-subject="ICT">🖥️ ICT</button>
+        <select class="class-select" id="classSelect" aria-label="শ্রেণি"></select>
+        <button type="button" class="chip-btn chip-math" data-subject="math">🧮 <span class="chip-label">গণিত</span></button>
+        <button type="button" class="chip-btn chip-physics" data-subject="physics">⚛️ <span class="chip-label">পদার্থবিজ্ঞান</span></button>
+        <button type="button" class="chip-btn chip-chemistry" data-subject="chemistry">🧪 <span class="chip-label">রসায়ন</span></button>
+        <button type="button" class="chip-btn chip-biology" data-subject="biology">🌿 <span class="chip-label">জীববিজ্ঞান</span></button>
+        <button type="button" class="chip-btn chip-ict" data-subject="ict">🖥️ <span class="chip-label">ICT</span></button>
       </div>
     </div>
 
