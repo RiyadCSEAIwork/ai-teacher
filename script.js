@@ -138,7 +138,7 @@ const TEXT = {
       unauthorized: 'প্রশ্ন করতে আগে লগইন করুন।',
       daily_limit: 'আজকের প্রশ্ন করার কোটা শেষ হয়েছে। আগামীকাল আবার চেষ্টা করুন।',
       global_limit: 'আজ পুরো সাইটের প্রশ্নের সীমা শেষ হয়ে গেছে। আগামীকাল আবার চেষ্টা করুন।',
-      rate_limited: 'এখন অনেকে একসাথে প্রশ্ন করছে। এক মিনিট পরে আবার চেষ্টা করুন।',
+      rate_limited: 'এখন অনেকে একসাথে প্রশ্ন করছে। কয়েক সেকেন্ড পর আবার চেষ্টা করুন।',
       server_not_configured: 'সার্ভারের সেটিং অসম্পূর্ণ আছে (GEMINI_API_KEY / লগইন সেটিং দেখুন)।',
       bad_image: 'ছবিটি পাঠানো গেল না। অন্য একটি ছবি দিয়ে চেষ্টা করুন।',
       empty_reply: 'AI এবার কোনো উত্তর দেয়নি। আবার চেষ্টা করুন।',
@@ -184,7 +184,7 @@ const TEXT = {
       unauthorized: 'Please log in first to ask a question.',
       daily_limit: "You have used today's question quota. Please try again tomorrow.",
       global_limit: "The site's daily question limit is used up. Please try again tomorrow.",
-      rate_limited: 'Many people are asking right now. Please try again in a minute.',
+      rate_limited: 'Many people are asking right now. Please try again in a moment.',
       server_not_configured: 'Server settings are incomplete (check GEMINI_API_KEY / login settings).',
       bad_image: 'The image could not be sent. Try a different one.',
       empty_reply: 'The AI gave no answer this time. Please try again.',
@@ -742,7 +742,7 @@ function renderTextBlocks(text) {
     const isSep = rows.length > 1 && rows[1].every((c) => /^:?-{2,}:?$/.test(c));
     let html = '<div class="table-wrap"><table>';
     rows.forEach((cells, idx) => {
-      if (isSep && idx === 1) return;
+      if (isSep && idx === 0) return;
       const tag = isSep && idx === 0 ? 'th' : 'td';
       html += '<tr>' + cells.map((c) => '<' + tag + '>' + inline(c) + '</' + tag + '>').join('') + '</tr>';
     });
@@ -798,7 +798,7 @@ function codeBlockHtml(lang, code, final) {
     '<span class="code-actions">' + buttons + '</span></div><pre><code>' + escapeHtml(code) + '</code></pre></div>';
 }
 
-/* ---- MCQ answer card (with compact math lines and separate multi-cards) ---- */
+/* ---- MCQ answer card (compact math & separate cards) ---- */
 function buildMcqHtml(question, options, explanation, whyWrong, trick, qNum) {
   const cleanQ = question.replace(/```(?:mcq)?/gi, '').replace(/^MCQ\s*/i, '').trim();
   let html = '<div class="mcq-card-ui" style="' + (qNum ? 'margin-bottom:1.25rem;' : '') + '">';
@@ -824,7 +824,6 @@ function buildMcqHtml(question, options, explanation, whyWrong, trick, qNum) {
     html += '</div>';
   }
   if (explanation.length) {
-    // Filter out redundant empty lines to compress vertical spacing
     const cleanExp = explanation
       .map(l => l.trim())
       .filter((l, idx, arr) => !(l === '' && arr[idx - 1] === ''))
@@ -906,7 +905,6 @@ function parseNaturalMcq(text) {
 
   if (!mcqs.length) return null;
 
-  // Split multiple MCQs if bundled inside a single group
   const finalMcqs = [];
   mcqs.forEach((item) => {
     if (item.options.length > 4 && item.options.length % 4 === 0) {
@@ -1135,7 +1133,7 @@ function resetChatSession() {
 }
 
 /* ========================================================
-   QUESTION SUBMIT & SSE STREAMING
+   QUESTION SUBMIT & SSE STREAMING (WITH AUTO RETRY ON 429)
    ======================================================== */
 function handleQuestionSubmit() {
   const query = userQuestionInput.value.trim();
@@ -1145,7 +1143,7 @@ function handleQuestionSubmit() {
 
 function buildMessages() {
   const list = chatLog.filter((m) => !m.skip);
-  let imagesLeft = 2;
+  let imagesLeft = 1; // Send only the latest picture to preserve token rate limit
   const out = [];
   for (let i = list.length - 1; i >= 0; i--) {
     const m = list[i];
@@ -1194,7 +1192,7 @@ async function submitQuestion(rawText, imageObj) {
   let lastPaint = 0;
 
   try {
-    const res = await fetch('/api/chat', {
+    const fetchPayload = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
@@ -1204,13 +1202,21 @@ async function submitQuestion(rawText, imageObj) {
         cls: selectedClass !== '' ? Number(selectedClass) : null,
         messages: buildMessages()
       })
-    });
+    };
+
+    let res = await fetch('/api/chat', fetchPayload);
+
+    // Auto-retry once on 429 Rate Limit after a short delay
+    if (res.status === 429) {
+      await new Promise(r => setTimeout(r, 2200));
+      res = await fetch('/api/chat', fetchPayload);
+    }
 
     const contentType = res.headers.get('Content-Type') || '';
     if (!res.ok || contentType.indexOf('text/event-stream') === -1) {
       let errData = null;
-      try { errData = await res.json(); } catch (err) { /* ignore */ }
-      throw { api: true, code: (errData && errData.error) || (res.status === 401 ? 'unauthorized' : 'generic'), detail: errData && errData.detail };
+      try { errData = await res.json(); } catch (err) { /* not json */ }
+      throw { api: true, code: (errData && errData.error) || (res.status === 401 ? 'unauthorized' : (res.status === 429 ? 'rate_limited' : 'generic')), detail: errData && errData.detail };
     }
 
     const reader = res.body.getReader();
