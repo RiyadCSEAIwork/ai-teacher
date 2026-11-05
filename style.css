@@ -1,6 +1,6 @@
 /* ========================================================
    AI Teacher - Standard & Professional Stylesheet
-   ========================================================*/
+   ======================================================== */
 
 :root {
   --primary: #2563eb;
@@ -142,7 +142,6 @@ body {
   height: 17px;
 }
 
-/* Primary CTA Button */
 .nav-btn-primary {
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: #ffffff;
@@ -537,6 +536,9 @@ body.chat-active .subject-chips {
   display: none;
 }
 
+/* ========================================================
+   SUBJECT CHIPS & CLASS SELECTOR (PERFECTLY ALIGNED)
+   ======================================================== */
 .subject-chips {
   display: flex;
   flex-wrap: wrap;
@@ -546,16 +548,62 @@ body.chat-active .subject-chips {
   margin-top: 1.25rem;
 }
 
+/* Beautiful Rounded Class Selector Dropdown */
+#classSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  padding: 0 2.2rem 0 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-main);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 14px;
+  height: 38px;
+  box-shadow: var(--shadow-sm);
+}
+
+#classSelect:hover {
+  border-color: #bfdbfe;
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+#classSelect:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+#classSelect:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f1f5f9;
+}
+
 .chip-btn {
   background: #ffffff;
   border: 1px solid var(--border-color);
-  padding: 0.45rem 0.9rem;
+  padding: 0 0.95rem;
   border-radius: var(--radius-full);
   font-size: 0.88rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.15s;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .chip-btn:hover {
@@ -563,6 +611,13 @@ body.chat-active .subject-chips {
   border-color: #bfdbfe;
   color: var(--primary);
   transform: translateY(-1px);
+}
+
+.chip-btn.active {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
 }
 
 /* ========================================================
@@ -768,7 +823,6 @@ body.chat-active .subject-chips {
   margin: 0.25rem 0 !important;
 }
 
-/* Remove bloated empty line breaks between formulas */
 .mcq-exp-body br + br,
 .msg-bubble br + br {
   display: none !important;
