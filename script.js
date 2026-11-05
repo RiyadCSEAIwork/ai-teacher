@@ -120,9 +120,15 @@ async function checkAuth() {
     });
     if (res.ok) {
       const data = await res.json();
-      const user = data.user || data;
-      if (user && (user.username || user.email || user.id)) {
-        currentUser = user;
+      // /api/me answers { ok, user: "riyad", gender, used, limit }
+      const username = typeof data.user === 'string' ? data.user : (data.user && (data.user.username || data.user.name)) || data.username;
+      if (username) {
+        currentUser = {
+          username,
+          gender: data.gender || 'male',
+          used: data.used || 0,
+          daily_limit: data.limit || 30
+        };
         renderUserNav(currentUser);
         return;
       }
@@ -737,6 +743,26 @@ window.deleteHistoryChat = async function(chatId, event) {
 /* ========================================================
    AUTH MODAL & LOGIN/SIGNUP FIX
    ======================================================== */
+// Turns the server's error codes into Bengali messages.
+function authErrorText(code, fallback) {
+  const map = {
+    invalid_login: 'ইউজারনেম/ইমেইল বা পাসওয়ার্ড সঠিক নয়।',
+    invalid_invite: 'গোপন কোডটি সঠিক নয়।',
+    signup_closed: 'এখন নতুন সাইন-আপ বন্ধ আছে।',
+    signup_full: 'সাইন-আপের জন্য নির্ধারিত আইডির সংখ্যা পূর্ণ হয়ে গেছে।',
+    name_taken: 'এই ইউজারনেমটি আগেই নেওয়া হয়েছে। অন্য একটি দিন।',
+    email_taken: 'এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে।',
+    bad_name: 'ইউজারনেম ৩-২০ অক্ষরের হতে হবে (শুধু a-z, 0-9, _ এবং -)।',
+    bad_email: 'সঠিক ইমেইল ঠিকানা দিন।',
+    weak_password: 'পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।',
+    too_many_attempts: 'অনেকবার ভুল চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।',
+    server_not_configured: 'সার্ভারের সেটিং অসম্পূর্ণ আছে।',
+    history_not_configured: 'ডাটাবেস (D1) যুক্ত করা নেই।',
+    history_failed: 'অ্যাকাউন্ট সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'
+  };
+  return map[code] || fallback;
+}
+
 function bindAuthModalEvents() {
   btnOpenLogin.addEventListener('click', () => {
     authModal.style.display = 'flex';
@@ -768,14 +794,8 @@ function bindAuthModalEvents() {
     const errorBox = document.getElementById('loginErrorMsg');
     errorBox.textContent = '';
 
-    // Pass all possible keys: username, email, identifier, login
-    const payload = {
-      username: identifier,
-      email: identifier,
-      identifier: identifier,
-      login: identifier,
-      password: password
-    };
+    // The server reads { identifier, password }. identifier can be a username or an email.
+    const payload = { identifier, password };
 
     try {
       const res = await fetch('/api/login', {
@@ -784,28 +804,19 @@ function bindAuthModalEvents() {
         credentials: 'include',
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
-      
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        if (data.error === 'invalid_login' || data.error === 'invalid_credentials') {
-          errorBox.textContent = 'ইউজারনেম বা পাসওয়ার্ড সঠিক নয়।';
-        } else {
-          errorBox.textContent = data.error || 'লগইন ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।';
-        }
+        errorBox.textContent = authErrorText(data.error, 'লগইন ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
         return;
       }
 
-      // Save token if JWT based
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('auth_token', data.token);
-      }
-
+      formLogin.reset();
       authModal.style.display = 'none';
       await checkAuth();
 
     } catch (err) {
-      errorBox.textContent = 'সার্ভার সংযোগে ত্রুটি হয়েছে।';
+      errorBox.textContent = 'সার্ভার সংযোগে ত্রুটি হয়েছে।';
     }
   });
 
@@ -815,6 +826,7 @@ function bindAuthModalEvents() {
     const username = document.getElementById('signupUsername').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
     const password = document.getElementById('signupPassword').value;
+    const invite = document.getElementById('signupInvite').value.trim();
     const genderElem = document.querySelector('input[name="signupGender"]:checked');
     const gender = genderElem ? genderElem.value : 'male';
     const errorBox = document.getElementById('signupErrorMsg');
@@ -825,19 +837,15 @@ function bindAuthModalEvents() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ username, email, password, gender })
+        body: JSON.stringify({ username, email, password, gender, invite })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        errorBox.textContent = data.error || 'সাইন-আপ ব্যর্থ হয়েছে। অন্য কোনো ইউজারনেম ব্যবহার করুন।';
+        errorBox.textContent = authErrorText(data.error, 'সাইন-আপ ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
         return;
       }
 
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('auth_token', data.token);
-      }
-
+      formSignup.reset();
       authModal.style.display = 'none';
       await checkAuth();
 
