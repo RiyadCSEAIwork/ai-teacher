@@ -804,11 +804,16 @@ function codeBlockHtml(lang, code, final) {
 }
 
 /* ---- MCQ answer card: the AI replies in a ```mcq block with [QUESTION] [OPTIONS] ... tags ---- */
-function buildMcqHtml(question, options, explanation, whyWrong, trick) {
+function buildMcqHtml(question, options, explanation, whyWrong, trick, qNum) {
   const cleanQ = question.replace(/```(?:mcq)?/gi, '').replace(/^MCQ\s*/i, '').trim();
-  let html = '<div class="mcq-card-ui">';
+  let html = '<div class="mcq-card-ui" style="' + (qNum ? 'margin-bottom:1.5rem;' : '') + '">';
   if (cleanQ) {
-    html += '<div class="mcq-header"><span class="mcq-badge">MCQ</span><h4 class="mcq-q-title">' + formatRichText(cleanQ) + '</h4></div>';
+    let badgeText = 'MCQ';
+    if (qNum) {
+      const bnDigits = ['১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯', '১০'];
+      badgeText = 'MCQ ' + (currentLanguage === 'en' ? qNum : (bnDigits[qNum - 1] || qNum));
+    }
+    html += '<div class="mcq-header"><span class="mcq-badge">' + badgeText + '</span><h4 class="mcq-q-title">' + formatRichText(cleanQ) + '</h4></div>';
   }
   if (options.length) {
     html += '<div class="mcq-grid">';
@@ -844,15 +849,26 @@ function buildMcqHtml(question, options, explanation, whyWrong, trick) {
 function parseNaturalMcq(text) {
   if (!/\[OPTIONS\]|```mcq/i.test(text)) return null;
   const lines = text.split(/\r?\n/);
-  let question = '';
-  const options = [], explanation = [], whyWrong = [], trick = [];
+  const mcqs = [];
+  let current = { question: '', options: [], explanation: [], whyWrong: [], trick: [] };
   let section = 'q';
+
+  function pushCurrent() {
+    if (current.options.length >= 2 || current.question.trim()) {
+      mcqs.push(current);
+      current = { question: '', options: [], explanation: [], whyWrong: [], trick: [] };
+    }
+  }
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line || line === 'MCQ' || line === '```mcq' || line === '```') continue;
 
-    if (/^\[QUESTION\]/i.test(line)) { section = 'q'; continue; }
+    if (/^\[QUESTION\]/i.test(line)) {
+      if (current.options.length >= 2) pushCurrent();
+      section = 'q';
+      continue;
+    }
     if (/^\[OPTIONS\]/i.test(line)) { section = 'o'; continue; }
     if (/^\[EXPLANATION\]/i.test(line)) { section = 'e'; continue; }
     if (/^\[WHY_WRONG\]/i.test(line)) { section = 'w'; continue; }
@@ -864,20 +880,67 @@ function parseNaturalMcq(text) {
         const isCorrect = optMatch[1].indexOf('*') !== -1 || /[✓✔]|\(সঠিক\)/.test(line);
         const keyLabel = optMatch[2] + ')';
         const optText = optMatch[3].replace(/[✓✔]/g, '').replace(/\(সঠিক\)/g, '').replace(/```/g, '').trim();
-        options.push({ key: keyLabel, text: optText, correct: isCorrect });
+
+        if (current.options.length >= 4 && (keyLabel.startsWith('ক') || keyLabel.startsWith('A') || keyLabel.startsWith('a') || keyLabel.startsWith('1'))) {
+          if (current.explanation.length || current.whyWrong.length || current.trick.length) {
+            pushCurrent();
+            section = 'o';
+          }
+        }
+
+        current.options.push({ key: keyLabel, text: optText, correct: isCorrect });
         continue;
       }
     }
 
-    if (section === 'q') question += (question ? ' ' : '') + line;
-    else if (section === 'e') explanation.push(line);
-    else if (section === 'w') whyWrong.push(line.replace(/^[-*•▶\s]+/, ''));
-    else if (section === 't') trick.push(line.replace(/^(💡|🧠)\s*/, ''));
-    else if (section === 'o' && options.length) options[options.length - 1].text += ' ' + line;
+    if (section === 'q') current.question += (current.question ? ' ' : '') + line;
+    else if (section === 'e') current.explanation.push(line);
+    else if (section === 'w') current.whyWrong.push(line.replace(/^[-*•▶\s]+/, ''));
+    else if (section === 't') current.trick.push(line.replace(/^(💡|🧠)\s*/, ''));
+    else if (section === 'o' && current.options.length) current.options[current.options.length - 1].text += ' ' + line;
   }
+  pushCurrent();
 
-  if (options.length >= 2) return buildMcqHtml(question, options, explanation, whyWrong, trick);
-  return null;
+  if (!mcqs.length) return null;
+
+  // Split multiple MCQs if bundled inside a single group
+  const finalMcqs = [];
+  mcqs.forEach((item) => {
+    if (item.options.length > 4 && item.options.length % 4 === 0) {
+      const count = item.options.length / 4;
+      const cleanQ = item.question.replace(/হ্যালো![^।]+।/g, '').replace(/সবকটি বহুর্নির্বাচনি প্রশ্নের উত্তর নিচে দেওয়া হলো:?/g, '').trim();
+      let qList = cleanQ.match(/([^<>\n?]+(?:\?|ঃ|:))/g);
+      if (!qList || qList.length < count) {
+        qList = cleanQ.split(/(?<=\?|\n)/).map(s => s.trim()).filter(s => s.length > 5);
+      }
+
+      let expList = [];
+      if (item.explanation.length) {
+        const fullExp = item.explanation.join('\n');
+        expList = fullExp.split(/(?:\n\s*\n|(?=\b[১-৬]\.))/g).map(s => s.trim()).filter(Boolean);
+      }
+
+      for (let k = 0; k < count; k++) {
+        const qText = (qList && qList[k]) ? qList[k].trim() : ((qList && qList.length === 1 && k === 0) ? qList[0] : `প্রশ্ন ${(k + 1)}`);
+        const subOpts = item.options.slice(k * 4, (k + 1) * 4);
+        const subExp = (expList && expList[k]) ? [expList[k]] : (item.explanation.length ? item.explanation : []);
+        finalMcqs.push({
+          question: qText,
+          options: subOpts,
+          explanation: subExp,
+          whyWrong: k === count - 1 ? item.whyWrong : [],
+          trick: k === count - 1 ? item.trick : []
+        });
+      }
+    } else {
+      finalMcqs.push(item);
+    }
+  });
+
+  const valid = finalMcqs.filter(m => m.options.length >= 2);
+  if (!valid.length) return null;
+
+  return valid.map((m, idx) => buildMcqHtml(m.question, m.options, m.explanation, m.whyWrong, m.trick, valid.length > 1 ? idx + 1 : null)).join('');
 }
 
 function renderRich(raw, final) {
