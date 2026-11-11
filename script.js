@@ -742,7 +742,7 @@ function renderTextBlocks(text) {
     const isSep = rows.length > 1 && rows[1].every((c) => /^:?-{2,}:?$/.test(c));
     let html = '<div class="table-wrap"><table>';
     rows.forEach((cells, idx) => {
-      if (isSep && idx === 0) return;
+      if (isSep && idx === 1) return;
       const tag = isSep && idx === 0 ? 'th' : 'td';
       html += '<tr>' + cells.map((c) => '<' + tag + '>' + inline(c) + '</' + tag + '>').join('') + '</tr>';
     });
@@ -832,7 +832,7 @@ function buildMcqHtml(question, options, explanation, whyWrong, trick, qNum) {
       .trim();
 
     html += '<div class="mcq-exp-box"><div class="mcq-exp-head">' + (currentLanguage === 'en' ? 'Explanation' : 'ব্যাখ্যা') + '</div>';
-    html += '<div class="mcq-exp-body">' + formatRichText(cleanExp) + '</div></div>';
+    html += '<div class="mcq-exp-body">' + formatRichText(cleanExp).replace(/<br>/g, '<br><i class="ln-gap"></i>') + '</div></div>';
   }
   if (whyWrong.length) {
     html += '<details class="mcq-wrong-details"><summary class="mcq-wrong-summary"><span>' +
@@ -1046,9 +1046,12 @@ function appendUserMessage(entry) {
 
   card.innerHTML =
     '<div class="msg-avatar">' + avatarFor(currentUser) + '</div>' +
+    '<div class="msg-col">' +
+    '<div class="msg-meta"><span class="msg-name">Me</span>' +
+    '<span class="msg-time">' + escapeHtml(timeLabel(entry.ts)) + '</span></div>' +
     '<div class="msg-bubble">' + imgHtml +
     (entry.text ? '<p>' + escapeHtml(entry.text) + '</p>' : '') +
-    '<div class="msg-time">' + escapeHtml(timeLabel(entry.ts)) + '</div></div>';
+    '</div></div>';
   chatMessages.appendChild(card);
   scrollToBottom(true);
 }
@@ -1058,9 +1061,11 @@ function appendAiMessage(showTyping) {
   card.className = 'message-card ai-msg';
   card.innerHTML =
     '<div class="msg-avatar"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18C5 19.94 8.13 22 12 22C15.87 22 19 19.94 19 17.18V13.18L12 17L5 13.18Z"/></svg></div>' +
-    '<div class="ai-col"><div class="msg-bubble"><div class="ai-body">' +
+    '<div class="ai-col">' +
+    '<div class="msg-meta"><span class="msg-name">AI Teacher</span><span class="msg-time"></span></div>' +
+    '<div class="msg-bubble"><div class="ai-body">' +
     (showTyping ? '<div class="typing-indicator">' + escapeHtml(tx().thinking) + '</div>' : '') +
-    '</div><div class="msg-time"></div></div></div>';
+    '</div></div></div>';
   chatMessages.appendChild(card);
   scrollToBottom(true);
   return {
