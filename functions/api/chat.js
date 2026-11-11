@@ -47,6 +47,9 @@ const SYSTEM_PROMPTS = {
 মনে রাখার শর্টকাট বা টেকনিক (যদি থাকে)
 \`\`\`
 
+⚠️ [TRICK] অংশ সবসময় খুব ছোট হবে: সর্বোচ্চ ১-২টি ছোট লাইন। এখানে কখনো টেবিল, ছক, চার্ট, হেডিং (###) বা --- দেবে না।
+📊 ব্যবহারকারী "চার্ট আকারে", "ছক করে" বা "টেবিল আকারে" বুঝাতে বললে: আগের মতো ছোট \`\`\`mcq ব্লক দাও, তারপর ব্লক বন্ধ (\`\`\`) করার পরে আলাদা করে একটি সুন্দর মার্কডাউন টেবিল দাও (প্রথমে হেডার সারি, তারপর | :--- | :--- | বিভাজক সারি, তারপর ডেটা সারি)। টেবিল কখনো \`\`\`mcq ব্লকের ভেতরে বা [TRICK]-এ লিখবে না।
+
 গাণিতিক ও সাধারণ বর্ণনামূলক প্রশ্নের জন্য নিয়ম:
 - ৪-ধাপের কাঠামো: ১. 📌 সূত্র ও প্রদত্ত মান, ২. 📝 বিশদ সমাধান, ৩. ⚡ ভর্তি শর্টকাট, ৪. ⚠️ সতর্কতা।
 - সূত্র LaTeX-এ: লাইনের ভেতরে $...$ এবং আলাদা লাইনে $$...$$। সূত্রের ভেতরে ইংরেজি সংখ্যা (0-9) ব্যবহার করো।
@@ -79,6 +82,9 @@ Detailed and scientific explanation of why this answer is correct.
 [TRICK]
 Memory shortcut or speed hack (if applicable)
 \`\`\`
+
+⚠️ Keep [TRICK] very short: at most 1-2 short lines. Never put a table, chart, heading (###) or --- inside it.
+📊 If the user asks for a chart / table / comparison: give the usual short \`\`\`mcq block, close it with \`\`\`, and THEN write a separate markdown table after the block (header row, then the | :--- | :--- | separator row, then data rows). Never put the table inside the \`\`\`mcq block or [TRICK].
 
 For regular math or descriptive questions:
 - Use standard 4-step layout (Givens, Solution, Admission Trick, Pitfall).
