@@ -854,6 +854,9 @@ function parseNaturalMcq(text) {
   const mcqs = [];
   let current = { question: '', options: [], explanation: [], whyWrong: [], trick: [] };
   let section = 'q';
+  // Anything written AFTER the mcq block (e.g. a chart/table) is kept here and drawn below the card(s)
+  const extra = [];
+  let closed = false;
 
   function pushCurrent() {
     if (current.options.length >= 2 || current.question.trim()) {
@@ -864,7 +867,23 @@ function parseNaturalMcq(text) {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (!line || line === 'MCQ' || line === '```mcq' || line === '```') continue;
+
+    if (line === '```') {
+      if (current.options.length >= 2) closed = true;
+      continue;
+    }
+    if (closed && /^\[QUESTION\]/i.test(line)) closed = false;
+    if (closed && line !== '```mcq') { extra.push(lines[i]); continue; }
+
+    if (!line || line === 'MCQ' || line === '```mcq') continue;
+
+    // a separator / heading / table inside WHY_WRONG or TRICK starts the extra part (chart etc.)
+    if ((section === 't' || section === 'w') &&
+        (/^(-{3,}|\*{3,}|_{3,})$/.test(line) || /^#{1,4}\s/.test(line) || line.charAt(0) === '|')) {
+      closed = true;
+      extra.push(lines[i]);
+      continue;
+    }
 
     if (/^\[QUESTION\]/i.test(line)) {
       if (current.options.length >= 2) pushCurrent();
@@ -941,7 +960,9 @@ function parseNaturalMcq(text) {
   const valid = finalMcqs.filter(m => m.options.length >= 2);
   if (!valid.length) return null;
 
-  return valid.map((m, idx) => buildMcqHtml(m.question, m.options, m.explanation, m.whyWrong, m.trick, valid.length > 1 ? idx + 1 : null)).join('');
+  const cards = valid.map((m, idx) => buildMcqHtml(m.question, m.options, m.explanation, m.whyWrong, m.trick, valid.length > 1 ? idx + 1 : null)).join('');
+  const extraText = extra.join('\n').replace(/^\s*(-{3,}|\*{3,}|_{3,})\s*$/gm, '').trim();
+  return cards + (extraText ? '<div class="mcq-extra">' + renderRich(extraText, true) + '</div>' : '');
 }
 
 function renderRich(raw, final) {
