@@ -1,0 +1,289 @@
+/* ========================================================
+   AI Teacher - UI update layer (loads AFTER style.css)
+   Only adds / overrides. Nothing from style.css is removed.
+   1. Name + time ABOVE every message  (Me / AI Teacher)
+   2. MCQ options: key and text sit together on the left
+   3. More line gap in explanations + wider page body
+   4. Nicer table / chart box
+   ======================================================== */
+
+/* ---------- 3a. Wider page body ---------- */
+.main-container {
+  max-width: 1200px;
+}
+
+body.chat-active .input-dock-wrapper {
+  max-width: 1200px;
+}
+
+/* ---------- 1. Name + time above the message ---------- */
+.message-card {
+  align-items: flex-start;
+}
+
+.msg-col,
+.ai-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.msg-col {
+  align-items: flex-end;
+  max-width: 78%;
+}
+
+.ai-col {
+  flex: 1;
+  align-items: stretch;
+}
+
+.msg-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0.35rem 0.4rem 0.35rem;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.user-msg .msg-meta {
+  justify-content: flex-end;
+}
+
+.msg-meta .msg-name {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.ai-msg .msg-meta .msg-name {
+  color: #1d4ed8;
+}
+
+.msg-meta .msg-time,
+.user-msg .msg-meta .msg-time,
+.ai-msg .msg-meta .msg-time {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  color: #64748b !important;
+  font-size: 0.78rem !important;
+  font-weight: 500;
+  opacity: 1 !important;
+}
+
+.msg-meta .msg-time:empty {
+  display: none !important;
+}
+
+.msg-meta .msg-time:not(:empty)::before {
+  content: "·";
+  margin-right: 0.5rem;
+  color: #94a3b8;
+}
+
+.user-msg .msg-bubble {
+  max-width: 100%;
+}
+
+.ai-msg .msg-bubble {
+  max-width: 100%;
+  padding: 1.15rem 1.5rem;
+}
+
+/* ---------- 2. MCQ options: no gap on the left ---------- */
+.mcq-grid .mcq-opt-item {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  gap: 0.55rem;
+}
+
+.mcq-grid .mcq-opt-key {
+  margin-right: 0 !important;
+  flex-shrink: 0;
+}
+
+.mcq-grid .mcq-opt-text {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.mcq-grid .mcq-check-icon {
+  margin-left: auto;
+}
+
+/* ---------- 3b. More gap between explanation lines ---------- */
+.mcq-exp-box {
+  padding: 1.05rem 1.3rem;
+}
+
+.mcq-exp-body {
+  line-height: 1.7 !important;
+}
+
+.mcq-exp-body .ln-gap {
+  display: block;
+  height: 0.2rem;
+}
+
+.mcq-exp-body p {
+  margin: 0.45rem 0 !important;
+}
+
+.mcq-exp-head {
+  margin-bottom: 0.5rem !important;
+}
+
+.mcq-trick-box {
+  line-height: 1.75 !important;
+  padding: 0.9rem 1.1rem !important;
+}
+
+.mcq-wrong-body li {
+  margin-bottom: 0.45rem;
+  line-height: 1.7;
+}
+
+/* normal (non-MCQ) answers */
+.ai-body {
+  line-height: 1.85;
+}
+
+.ai-body p {
+  margin: 0.2rem 0 0.8rem 0;
+}
+
+.ai-body h3,
+.ai-body h4,
+.ai-body h5 {
+  margin: 1.1rem 0 0.5rem 0;
+  line-height: 1.45;
+  color: #0f172a;
+}
+
+.ai-body h3 { font-size: 1.15rem; }
+.ai-body h4 { font-size: 1.07rem; }
+.ai-body h5 { font-size: 1rem; }
+
+.ai-body > :first-child {
+  margin-top: 0;
+}
+
+.ai-body ul,
+.ai-body ol {
+  margin: 0.4rem 0 0.9rem 0;
+  padding-left: 1.5rem;
+}
+
+.ai-body li {
+  margin-bottom: 0.4rem;
+}
+
+.ai-body hr {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.1rem 0;
+}
+
+/* ---------- 4. Nicer table box ---------- */
+.msg-bubble .table-wrap {
+  margin: 1rem 0 1.2rem 0;
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+}
+
+.msg-bubble .table-wrap table {
+  width: 100%;
+  min-width: 460px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.93rem;
+  line-height: 1.7;
+}
+
+.msg-bubble .table-wrap th {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  font-weight: 700;
+  text-align: left;
+  padding: 0.8rem 1rem;
+  letter-spacing: 0.1px;
+  border-right: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.msg-bubble .table-wrap th:last-child {
+  border-right: 0;
+}
+
+.msg-bubble .table-wrap td {
+  padding: 0.8rem 1rem;
+  vertical-align: top;
+  color: #1e293b;
+  border-top: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+}
+
+.msg-bubble .table-wrap td:last-child {
+  border-right: 0;
+}
+
+.msg-bubble .table-wrap td:first-child {
+  background: #eff6ff;
+  font-weight: 700;
+  color: #1d4ed8;
+  white-space: nowrap;
+}
+
+.msg-bubble .table-wrap tr:nth-child(even) td:not(:first-child) {
+  background: #f8fafc;
+}
+
+.msg-bubble .table-wrap tr:hover td:not(:first-child) {
+  background: #eff6ff;
+}
+
+.msg-bubble .table-wrap td strong {
+  color: #0f172a;
+}
+
+/* ---------- 4b. Nicer chart / diagram box ---------- */
+.msg-bubble .mermaid-box {
+  margin: 1rem 0 1.2rem 0;
+  padding: 1.2rem 1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1.5px solid #bfdbfe;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+  overflow-x: auto;
+  text-align: center;
+}
+
+.msg-bubble .mermaid-box .mermaid {
+  display: flex;
+  justify-content: center;
+}
+
+.msg-bubble .mermaid-box svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 820px) {
+  .msg-col {
+    max-width: 88%;
+  }
+
+  .ai-msg .msg-bubble {
+    padding: 1rem 1rem;
+  }
+
+  .msg-bubble .table-wrap td:first-child {
+    white-space: normal;
+  }
+}
