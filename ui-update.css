@@ -287,3 +287,8 @@ body.chat-active .input-dock-wrapper {
     white-space: normal;
   }
 }
+
+/* chart/table written after an MCQ card */
+.mcq-extra {
+  margin-top: 1rem;
+}
