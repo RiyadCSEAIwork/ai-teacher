@@ -114,8 +114,8 @@
     <!-- Hero / Welcome Section -->
     <section class="hero-section" id="heroSection">
       <div class="hero-content">
-        <h1 class="hero-title" id="txtHeroTitle">পড়াশোনা হোক আরও সহজ ও স্মার্ট</h1>
-        <p class="hero-subtitle" id="txtHeroSub">যে কোনো বিষয়ে আপনার প্রশ্ন করুন, AI দেবে সহজ ও নির্ভুল উত্তর।</p>
+        <h1 class="hero-title" id="txtHeroTitle">পড়াশোনা হোক আরও সহজ ও স্মার্ট</h1>
+        <p class="hero-subtitle" id="txtHeroSub">যে কোনো বিষয়ে আপনার প্রশ্ন করুন, AI দেবে সহজ ও নির্ভুল উত্তর।</p>
       </div>
       <div class="hero-media">
         <img src="hero.webp" alt="AI Teacher Hero" class="hero-img" onerror="this.style.display='none'">
@@ -138,12 +138,12 @@
             <img id="previewImg" src="" alt="আপলোডকৃত প্রশ্ন">
             <button class="btn-remove-preview" id="btnRemovePreview">&times;</button>
           </div>
-          <span class="preview-info" id="previewInfo">ছবি যুক্ত হয়েছে</span>
+          <span class="preview-info" id="previewInfo">ছবি যুক্ত হয়েছে</span>
         </div>
 
         <div class="input-main-row">
           <!-- Image upload button -->
-          <label class="btn-icon btn-upload-image" title="ছবি বা বইয়ের পাতার প্রশ্ন আপলোড করুন">
+          <label class="btn-icon btn-upload-image" title="ছবি বা বইয়ের পাতার প্রশ্ন আপলোড করুন">
             <input type="file" id="fileImageInput" accept="image/*" style="display: none;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           </label>
@@ -181,13 +181,13 @@
           <div class="modal-icon-badge">📑</div>
           <div>
             <h3 class="modal-heading">Smart Notes (টপিক সারসংক্ষেপ)</h3>
-            <p class="modal-subheading">যেকোনো বড় অধ্যায়, থিওরি বা প্যারাগ্রাফ পেস্ট করুন। AI প্রয়োজনীয় সূত্র ও বুলেট পয়েন্টে সারসংক্ষেপ বানিয়ে দেবে।</p>
+            <p class="modal-subheading">যেকোনো বড় অধ্যায়, থিওরি বা প্যারাগ্রাফ পেস্ট করুন। AI প্রয়োজনীয় সূত্র ও বুলেট পয়েন্টে সারসংক্ষেপ বানিয়ে দেবে।</p>
           </div>
         </div>
         <button class="btn-modal-close" id="btnCloseSmartNotes">&times;</button>
       </div>
       <div class="modal-body">
-        <textarea id="smartNotesContent" rows="6" placeholder="এখানে আপনার বইয়ের পাতার প্যারাগ্রাফ বা বড় বিষয়বস্তু পেস্ট করুন..."></textarea>
+        <textarea id="smartNotesContent" rows="6" placeholder="এখানে আপনার বইয়ের পাতার প্যারাগ্রাফ বা বড় বিষয়বস্তু পেস্ট করুন..."></textarea>
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" id="btnCancelSmartNotes">বাতিল</button>
@@ -209,7 +209,7 @@
       <button class="btn-drawer-close" id="btnCloseHistory">&times;</button>
     </div>
     <div class="drawer-content" id="historyItemsList">
-      <p class="history-empty">কোনো পূর্ববর্তী আলোচনা পাওয়া যায়নি।</p>
+      <p class="history-empty">কোনো পূর্ববর্তী আলোচনা পাওয়া যায়নি।</p>
     </div>
   </aside>
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
@@ -276,6 +276,8 @@
   </div>
 
   <script src="script.js"></script>
+  <!-- Add-ons: load after script.js -->
   <script src="voice.js"></script>
+  <script src="svg-diagram.js"></script>
 </body>
 </html>
