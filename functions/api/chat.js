@@ -9,8 +9,8 @@ const MAX_CHARS_PER_MESSAGE = 3000;
 const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const MAX_IMAGE_BASE64_CHARS = 5500000;
 // OPTIMIZATION: Only send the active current image to save Gemini free tier TPM quota
-const DEFAULT_FALLBACK_MODELS = "gemini-2.5-flash,gemini-2.5-flash-lite";
-const RETRY_STATUSES = [429, 500, 502, 503, 504];
+const DEFAULT_FALLBACK_MODELS = "gemini-3.8-flash,gemini-3.5-flash-lite";
+const RETRY_STATUSES = [404, 429, 500, 502, 503, 504];
 const THINKING_BUDGET = { minimal: 0, low: 1024, medium: 4096, high: 8192 }; // Gemini 2.5 এর জন্য
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
