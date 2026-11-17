@@ -24,9 +24,10 @@ const DEFAULT_IMAGE_QUESTION = {
 const OLD_IMAGE_NOTE = { bn: "(আগে একটি ছবি পাঠানো হয়েছিল)", en: "(an image was sent earlier)" };
 
 // DRAWING REQUESTS: when the student asks to draw / sketch / construct something,
-// the model thinks harder (more accurate coordinates) and gets the precision rules below.
+// the model gets the precision rules below (and optionally a higher thinking level).
 const DRAW_REGEX = /(আঁক|এঁক|আকো|আকুন|অঙ্কন|অংকন|চিত্র|ডায়াগ্রাম|নকশা|ছবি\s*(আঁক|এঁক|দাও|বানা)|draw|diagram|figure|sketch|construct)/i;
-const DEFAULT_DRAW_THINKING_LEVEL = "medium";
+// "low" keeps drawing fast on the free tier. Set GEMINI_THINKING_LEVEL_DRAW=medium in Cloudflare for more accuracy (slower).
+const DEFAULT_DRAW_THINKING_LEVEL = "low";
 const DRAW_MAX_OUTPUT_TOKENS = 8192;
 
 const SYSTEM_PROMPTS = {
@@ -108,7 +109,7 @@ const DIAGRAM_RULES = {
 🎨 চিত্র আঁকার নিয়ম:
 - ত্রিভুজ, চতুর্ভুজ, রম্বস, বৃত্ত, কোণ, সমান্তরাল রেখা, জ্যামিতিক অঙ্কন, বলের চিত্র, বর্তনী ও বিজ্ঞানের অন্যান্য চিত্র কখনো Mermaid দিয়ে আঁকবে না। এগুলোর জন্য শুধু \`\`\`svg কোড ব্লক ব্যবহার করবে।
 - Mermaid (\`\`\`mermaid, \`flowchart TD\`) শুধু ফ্লোচার্ট, প্রক্রিয়ার ধাপ বা শ্রেণিবিভাগের জন্য।
-- SVG-তে viewBox="0 0 400 300" ও xmlns="http://www.w3.org/2000/svg" দেবে। বিন্দুর নাম (A, B, C...) ও মাপ <text> দিয়ে লিখবে; সাধারণ টেক্সট ও ° চিহ্ন ব্যবহার করবে, LaTeX বা $ ব্যবহার করবে না। <script> বা বাইরের ছবি ব্যবহার করবে না।
+- SVG-তে viewBox="0 0 400 300" ও xmlns="http://www.w3.org/2000/svg" দেবে। বিন্দুর নাম (A, B, C...) ও মাপ <text> দিয়ে লিখবে; সাধারণ টেক্সট ও ° চিহ্ন ব্যবহার করবে, LaTeX বা $ ব্যবহার করবে না। <script> বা বাইরের ছবি ব্যবহার করবে না। SVG অবশ্যই </svg> দিয়ে শেষ করবে এবং টেক্সটে & চিহ্নের বদলে &amp; লিখবে।
 - চিত্রের আগে বা পরে সংক্ষেপে বৈশিষ্ট্যগুলো বুঝিয়ে লিখবে।`,
 
   en: `
@@ -116,7 +117,7 @@ const DIAGRAM_RULES = {
 🎨 Drawing rules:
 - Never draw triangles, quadrilaterals, rhombi, circles, angles, parallel lines, geometric constructions, force diagrams, circuits or other science figures with Mermaid. Use only a \`\`\`svg code block for them.
 - Use Mermaid (\`\`\`mermaid, \`flowchart TD\`) only for flowcharts, process steps or classifications.
-- In SVG use viewBox="0 0 400 300" and xmlns="http://www.w3.org/2000/svg". Write point names (A, B, C...) and measurements with <text> using plain text and the ° sign; no LaTeX or $. No <script> or external images.
+- In SVG use viewBox="0 0 400 300" and xmlns="http://www.w3.org/2000/svg". Write point names (A, B, C...) and measurements with <text> using plain text and the ° sign; no LaTeX or $. No <script> or external images. Always end the SVG with </svg> and write &amp; instead of & inside text.
 - Briefly explain the properties before or after the figure.`
 };
 
@@ -125,7 +126,7 @@ const DRAW_PRECISION = {
   bn: `
 
 📐 নির্ভুল চিত্রের নিয়ম (এই নিয়ম উত্তরে উল্লেখ করবে না):
-- SVG কোডের শুরুতে একটি <!-- --> মন্তব্যে (পাঠক দেখবে না) আগে হিসাব লিখে নেবে: প্রতিটি বিন্দুর স্থানাঙ্ক, কোন বিন্দু কোন রেখা বা বৃত্তের ওপর আছে, কোন বাহু বা কোণ সমান। মন্তব্যে দুটি হাইফেন পরপর (--) লিখবে না।
+- SVG কোডের শুরুতে একটি <!-- --> মন্তব্যে (পাঠক দেখবে না) আগে হিসাব লিখে নেবে: প্রতিটি বিন্দুর স্থানাঙ্ক, কোন বিন্দু কোন রেখা বা বৃত্তের ওপর আছে, কোন বাহু বা কোণ সমান। মন্তব্যটি ছোট রাখবে (সর্বোচ্চ ১২ লাইন) এবং তাতে দুটি হাইফেন পরপর (--) লিখবে না।
 - যে বিন্দু কোনো রেখার ওপর থাকবে (যেমন A রেখা BG-র ওপর, H হলো দুই রেখার ছেদবিন্দু), তার স্থানাঙ্ক আন্দাজে বসাবে না; P = B + t(G − B) বা দুই রেখার ছেদ বের করার সূত্রে হিসাব করবে।
 - ছবি বা বইয়ের পাতা দেখে আঁকলে ছবির প্রতিটি বিন্দু, রেখা, রশ্মি, চাপ (arc), সমান-চিহ্ন ও কোণ এক এক করে মিলিয়ে নেবে। কোনো বিন্দু বা রেখা বাদ দেবে না, কোণের মাপ ছবির মতো রাখবে, নামকরণ করা প্রতিটি বিন্দুতে ছোট গোল ডট দেবে।
 - লেখা যেন রেখা, চাপ বা বিন্দুর গায়ে না লাগে (৮-১২ একক দূরে বসাবে) এবং ছবি যেন পুরো ক্যানভাস জুড়ে আঁকা হয়।
@@ -134,7 +135,7 @@ const DRAW_PRECISION = {
   en: `
 
 📐 Accuracy rules for figures (do not mention these rules in the answer):
-- Start the SVG code with an <!-- --> comment (the reader will not see it) and first work out: the coordinates of every point, which point lies on which line or circle, which sides or angles are equal. Never write two hyphens in a row (--) inside the comment.
+- Start the SVG code with an <!-- --> comment (the reader will not see it) and first work out: the coordinates of every point, which point lies on which line or circle, which sides or angles are equal. Keep the comment short (at most 12 lines) and never write two hyphens in a row (--) inside it.
 - A point that lies on a line (for example A on line BG, or H as the intersection of two lines) must not be placed by guesswork; compute it with P = B + t(G − B) or by finding the intersection of the two lines.
 - When drawing from a picture or a textbook page, match every point, line, ray, arc, tick mark and angle one by one. Do not omit any point or line, keep angle sizes like the original, and put a small dot on every named point.
 - Keep labels clear of lines, arcs and points (8-12 units away) and let the figure fill the whole canvas.
@@ -256,10 +257,10 @@ export async function onRequestPost(context) {
   if (!lastMsg.text) lastMsg.text = DEFAULT_IMAGE_QUESTION[lang];
   const hasImage = cleaned.some((m) => m.image);
 
-const primaryModel = (env.GEMINI_MODEL || DEFAULT_MODEL).trim();
-const fallbackModels = (env.GEMINI_FALLBACK_MODELS || DEFAULT_FALLBACK_MODELS)
-  .split(",").map((s) => s.trim()).filter(Boolean);
-const MODEL_CHAIN = [primaryModel, ...fallbackModels.filter((m) => m !== primaryModel)];
+  const primaryModel = (env.GEMINI_MODEL || DEFAULT_MODEL).trim();
+  const fallbackModels = (env.GEMINI_FALLBACK_MODELS || DEFAULT_FALLBACK_MODELS)
+    .split(",").map((s) => s.trim()).filter(Boolean);
+  const MODEL_CHAIN = [primaryModel, ...fallbackModels.filter((m) => m !== primaryModel)];
 
   const isAdvancedLevel = classIdx === 5 || classIdx === 6 || classIdx === 7;
   let thinkingLevel = DEFAULT_THINKING_LEVEL;
@@ -270,7 +271,7 @@ const MODEL_CHAIN = [primaryModel, ...fallbackModels.filter((m) => m !== primary
   } else if (env.GEMINI_THINKING_LEVEL) {
     thinkingLevel = env.GEMINI_THINKING_LEVEL;
   }
-  // Drawing requests think harder so points land exactly on their lines
+  // Drawing requests can use their own thinking level
   if (askedToDraw) {
     thinkingLevel = env.GEMINI_THINKING_LEVEL_DRAW || DEFAULT_DRAW_THINKING_LEVEL;
   }
@@ -291,7 +292,7 @@ const MODEL_CHAIN = [primaryModel, ...fallbackModels.filter((m) => m !== primary
 
   const systemText = SYSTEM_PROMPTS[lang] + DIAGRAM_RULES[lang] + (askedToDraw ? DRAW_PRECISION[lang] : "") + matchGuard;
 
-    function callGemini(model, withExtras) {
+  function callGemini(model, withExtras) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
     const generationConfig = Object.assign({}, baseConfig);
     if (withExtras) {
