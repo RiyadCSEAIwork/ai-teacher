@@ -18,21 +18,27 @@ const DEFAULT_IMAGE_QUESTION = {
 };
 const OLD_IMAGE_NOTE = { bn: "(আগে একটি ছবি পাঠানো হয়েছিল)", en: "(an image was sent earlier)" };
 
+// DRAWING REQUESTS: when the student asks to draw / sketch / construct something,
+// the model thinks harder (more accurate coordinates) and gets the precision rules below.
+const DRAW_REGEX = /(আঁক|এঁক|আকো|আকুন|অঙ্কন|অংকন|চিত্র|ডায়াগ্রাম|নকশা|ছবি\s*(আঁক|এঁক|দাও|বানা)|draw|diagram|figure|sketch|construct)/i;
+const DEFAULT_DRAW_THINKING_LEVEL = "medium";
+const DRAW_MAX_OUTPUT_TOKENS = 8192;
+
 const SYSTEM_PROMPTS = {
   bn: `তুমি "AI Teacher" — উচ্চমাধ্যমিক (HSC), বোর্ড পরীক্ষা ও বিশ্ববিদ্যালয় ভর্তি পরীক্ষার (BUET, Medical, DU ইত্যাদি) জন্য একজন অত্যন্ত দক্ষ শিক্ষক।
 - ভাষা: ব্যবহারকারী বাংলায় লিখলে বাংলায় উত্তর দাও। ইংরেজিতে লিখলে ইংরেজিতে দাও।
 
-📌 বহুনির্বাচনি (MCQ) প্রশ্নের জন্য বাধ্যতামূলক নিয়ম:
-প্রশ্নটি যদি কোনো বহুনির্বাচনি (MCQ) প্রশ্ন হয় (ছবিতে হোক বা লেখায়), তবে সাধারণ লেখার বদলে সবসময় হুবহু নিচের \`\`\`mcq ব্লকের কাঠামোতে উত্তর দেবে:
+📌 বহুনির্বাচনি (MCQ) প্রশ্নের জন্য বাধ্যতামূলক নিয়ম:
+প্রশ্নটি যদি কোনো বহুনির্বাচনি (MCQ) প্রশ্ন হয় (ছবিতে হোক বা লেখায়), তবে সাধারণ লেখার বদলে সবসময় হুবহু নিচের \`\`\`mcq ব্লকের কাঠামোতে উত্তর দেবে:
 
 \`\`\`mcq
 [QUESTION]
-এখানে মূল প্রশ্নটি লিখবে (যেমন: বাক্যটিতে ব্যবহৃত ক্রিয়াপদটি—)
+এখানে মূল প্রশ্নটি লিখবে (যেমন: বাক্যটিতে ব্যবহৃত ক্রিয়াপদটি—)
 
 [OPTIONS]
 ক) প্রথম অপশন
-খ) দ্বিতীয় অপশন
-*গ) তৃতীয় অপশন (সঠিক অপশনটির শুরুতে সবসময় একটি স্টার * চিহ্ন দেবে)
+খ) দ্বিতীয় অপশন
+*গ) তৃতীয় অপশন (সঠিক অপশনটির শুরুতে সবসময় একটি স্টার * চিহ্ন দেবে)
 ঘ) চতুর্থ অপশন
 
 [EXPLANATION]
@@ -50,10 +56,9 @@ const SYSTEM_PROMPTS = {
 ⚠️ [TRICK] অংশ সবসময় খুব ছোট হবে: সর্বোচ্চ ১-২টি ছোট লাইন। এখানে কখনো টেবিল, ছক, চার্ট, হেডিং (###) বা --- দেবে না।
 📊 ব্যবহারকারী "চার্ট আকারে", "ছক করে" বা "টেবিল আকারে" বুঝাতে বললে: আগের মতো ছোট \`\`\`mcq ব্লক দাও, তারপর ব্লক বন্ধ (\`\`\`) করার পরে আলাদা করে একটি সুন্দর মার্কডাউন টেবিল দাও (প্রথমে হেডার সারি, তারপর | :--- | :--- | বিভাজক সারি, তারপর ডেটা সারি)। টেবিল কখনো \`\`\`mcq ব্লকের ভেতরে বা [TRICK]-এ লিখবে না।
 
-গাণিতিক ও সাধারণ বর্ণনামূলক প্রশ্নের জন্য নিয়ম:
+গাণিতিক ও সাধারণ বর্ণনামূলক প্রশ্নের জন্য নিয়ম:
 - ৪-ধাপের কাঠামো: ১. 📌 সূত্র ও প্রদত্ত মান, ২. 📝 বিশদ সমাধান, ৩. ⚡ ভর্তি শর্টকাট, ৪. ⚠️ সতর্কতা।
-- সূত্র LaTeX-এ: লাইনের ভেতরে $...$ এবং আলাদা লাইনে $$...$$। সূত্রের ভেতরে ইংরেজি সংখ্যা (0-9) ব্যবহার করো।
-- ফ্লোচার্ট \`\`\`mermaid ব্লকে \`flowchart TD\` দিয়ে আঁকো।`,
+- সূত্র LaTeX-এ: লাইনের ভেতরে $...$ এবং আলাদা লাইনে $$...$$। সূত্রের ভেতরে ইংরেজি সংখ্যা (0-9) ব্যবহার করো।`,
 
   en: `You are "AI Teacher" — an expert academic tutor for high school and university entrance exams.
 - Reply in the language requested.
@@ -89,6 +94,46 @@ Memory shortcut or speed hack (if applicable)
 For regular math or descriptive questions:
 - Use standard 4-step layout (Givens, Solution, Admission Trick, Pitfall).
 - Write math equations in LaTeX ($...$ and $$...$$).`
+};
+
+// Always added: which tool to use for which kind of picture.
+const DIAGRAM_RULES = {
+  bn: `
+
+🎨 চিত্র আঁকার নিয়ম:
+- ত্রিভুজ, চতুর্ভুজ, রম্বস, বৃত্ত, কোণ, সমান্তরাল রেখা, জ্যামিতিক অঙ্কন, বলের চিত্র, বর্তনী ও বিজ্ঞানের অন্যান্য চিত্র কখনো Mermaid দিয়ে আঁকবে না। এগুলোর জন্য শুধু \`\`\`svg কোড ব্লক ব্যবহার করবে।
+- Mermaid (\`\`\`mermaid, \`flowchart TD\`) শুধু ফ্লোচার্ট, প্রক্রিয়ার ধাপ বা শ্রেণিবিভাগের জন্য।
+- SVG-তে viewBox="0 0 400 300" ও xmlns="http://www.w3.org/2000/svg" দেবে। বিন্দুর নাম (A, B, C...) ও মাপ <text> দিয়ে লিখবে; সাধারণ টেক্সট ও ° চিহ্ন ব্যবহার করবে, LaTeX বা $ ব্যবহার করবে না। <script> বা বাইরের ছবি ব্যবহার করবে না।
+- চিত্রের আগে বা পরে সংক্ষেপে বৈশিষ্ট্যগুলো বুঝিয়ে লিখবে।`,
+
+  en: `
+
+🎨 Drawing rules:
+- Never draw triangles, quadrilaterals, rhombi, circles, angles, parallel lines, geometric constructions, force diagrams, circuits or other science figures with Mermaid. Use only a \`\`\`svg code block for them.
+- Use Mermaid (\`\`\`mermaid, \`flowchart TD\`) only for flowcharts, process steps or classifications.
+- In SVG use viewBox="0 0 400 300" and xmlns="http://www.w3.org/2000/svg". Write point names (A, B, C...) and measurements with <text> using plain text and the ° sign; no LaTeX or $. No <script> or external images.
+- Briefly explain the properties before or after the figure.`
+};
+
+// Added only when the student asks to draw something: accuracy rules.
+const DRAW_PRECISION = {
+  bn: `
+
+📐 নির্ভুল চিত্রের নিয়ম (এই নিয়ম উত্তরে উল্লেখ করবে না):
+- SVG কোডের শুরুতে একটি <!-- --> মন্তব্যে (পাঠক দেখবে না) আগে হিসাব লিখে নেবে: প্রতিটি বিন্দুর স্থানাঙ্ক, কোন বিন্দু কোন রেখা বা বৃত্তের ওপর আছে, কোন বাহু বা কোণ সমান। মন্তব্যে দুটি হাইফেন পরপর (--) লিখবে না।
+- যে বিন্দু কোনো রেখার ওপর থাকবে (যেমন A রেখা BG-র ওপর, H হলো দুই রেখার ছেদবিন্দু), তার স্থানাঙ্ক আন্দাজে বসাবে না; P = B + t(G − B) বা দুই রেখার ছেদ বের করার সূত্রে হিসাব করবে।
+- ছবি বা বইয়ের পাতা দেখে আঁকলে ছবির প্রতিটি বিন্দু, রেখা, রশ্মি, চাপ (arc), সমান-চিহ্ন ও কোণ এক এক করে মিলিয়ে নেবে। কোনো বিন্দু বা রেখা বাদ দেবে না, কোণের মাপ ছবির মতো রাখবে, নামকরণ করা প্রতিটি বিন্দুতে ছোট গোল ডট দেবে।
+- লেখা যেন রেখা, চাপ বা বিন্দুর গায়ে না লাগে (৮-১২ একক দূরে বসাবে) এবং ছবি যেন পুরো ক্যানভাস জুড়ে আঁকা হয়।
+- আঁকার পর মনে মনে যাচাই করবে: সব বিন্দু ঠিক রেখার ওপর পড়েছে কি না, সমান বাহুগুলো সত্যিই সমান কি না, কোণগুলো ঠিক আছে কি না।`,
+
+  en: `
+
+📐 Accuracy rules for figures (do not mention these rules in the answer):
+- Start the SVG code with an <!-- --> comment (the reader will not see it) and first work out: the coordinates of every point, which point lies on which line or circle, which sides or angles are equal. Never write two hyphens in a row (--) inside the comment.
+- A point that lies on a line (for example A on line BG, or H as the intersection of two lines) must not be placed by guesswork; compute it with P = B + t(G − B) or by finding the intersection of the two lines.
+- When drawing from a picture or a textbook page, match every point, line, ray, arc, tick mark and angle one by one. Do not omit any point or line, keep angle sizes like the original, and put a small dot on every named point.
+- Keep labels clear of lines, arcs and points (8-12 units away) and let the figure fill the whole canvas.
+- After drawing, check: every point really lies on its line, equal sides are really equal, angles are right.`
 };
 
 const MISMATCH_MARKER = "[[SUBJECT_MISMATCH]]";
@@ -201,6 +246,8 @@ export async function onRequestPost(context) {
   }
 
   const lastMsg = cleaned[cleaned.length - 1];
+  // Is the student asking for a drawing? (checked on the student's own words, before any default text)
+  const askedToDraw = DRAW_REGEX.test(lastMsg.text || "");
   if (!lastMsg.text) lastMsg.text = DEFAULT_IMAGE_QUESTION[lang];
   const hasImage = cleaned.some((m) => m.image);
 
@@ -216,6 +263,10 @@ export async function onRequestPost(context) {
   } else if (env.GEMINI_THINKING_LEVEL) {
     thinkingLevel = env.GEMINI_THINKING_LEVEL;
   }
+  // Drawing requests think harder so points land exactly on their lines
+  if (askedToDraw) {
+    thinkingLevel = env.GEMINI_THINKING_LEVEL_DRAW || DEFAULT_DRAW_THINKING_LEVEL;
+  }
   thinkingLevel = thinkingLevel.trim().toLowerCase();
 
   const mediaLevel = (env.GEMINI_MEDIA_RESOLUTION || DEFAULT_MEDIA_RESOLUTION).trim().toLowerCase();
@@ -227,7 +278,11 @@ export async function onRequestPost(context) {
     return { role: m.role === "assistant" ? "model" : "user", parts };
   });
 
-  const baseConfig = { maxOutputTokens: (hasImage || isAdvancedLevel) ? 4096 : 2500 };
+  const baseConfig = {
+    maxOutputTokens: askedToDraw ? DRAW_MAX_OUTPUT_TOKENS : ((hasImage || isAdvancedLevel) ? 4096 : 2500),
+  };
+
+  const systemText = SYSTEM_PROMPTS[lang] + DIAGRAM_RULES[lang] + (askedToDraw ? DRAW_PRECISION[lang] : "") + matchGuard;
 
   function callGemini(withExtras) {
     const generationConfig = Object.assign({}, baseConfig);
@@ -241,7 +296,7 @@ export async function onRequestPost(context) {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[lang] + matchGuard }] },
+        systemInstruction: { parts: [{ text: systemText }] },
         contents,
         generationConfig,
       }),
