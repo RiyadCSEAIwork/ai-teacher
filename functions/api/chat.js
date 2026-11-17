@@ -9,6 +9,11 @@ const MAX_CHARS_PER_MESSAGE = 3000;
 const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const MAX_IMAGE_BASE64_CHARS = 5500000;
 // OPTIMIZATION: Only send the active current image to save Gemini free tier TPM quota
+const DEFAULT_FALLBACK_MODELS = "gemini-2.5-flash,gemini-2.5-flash-lite";
+const RETRY_STATUSES = [429, 500, 502, 503, 504];
+const THINKING_BUDGET = { minimal: 0, low: 1024, medium: 4096, high: 8192 }; // Gemini 2.5 এর জন্য
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 const MAX_IMAGES_PER_REQUEST = 1;       
 const DEFAULT_IMAGE_THINKING_LEVEL = "low"; 
 const DEFAULT_MEDIA_RESOLUTION = "medium";       
@@ -251,8 +256,10 @@ export async function onRequestPost(context) {
   if (!lastMsg.text) lastMsg.text = DEFAULT_IMAGE_QUESTION[lang];
   const hasImage = cleaned.some((m) => m.image);
 
-  const model = (env.GEMINI_MODEL || DEFAULT_MODEL).trim();
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
+const primaryModel = (env.GEMINI_MODEL || DEFAULT_MODEL).trim();
+const fallbackModels = (env.GEMINI_FALLBACK_MODELS || DEFAULT_FALLBACK_MODELS)
+  .split(",").map((s) => s.trim()).filter(Boolean);
+const MODEL_CHAIN = [primaryModel, ...fallbackModels.filter((m) => m !== primaryModel)];
 
   const isAdvancedLevel = classIdx === 5 || classIdx === 6 || classIdx === 7;
   let thinkingLevel = DEFAULT_THINKING_LEVEL;
@@ -284,10 +291,17 @@ export async function onRequestPost(context) {
 
   const systemText = SYSTEM_PROMPTS[lang] + DIAGRAM_RULES[lang] + (askedToDraw ? DRAW_PRECISION[lang] : "") + matchGuard;
 
-  function callGemini(withExtras) {
+    function callGemini(model, withExtras) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
     const generationConfig = Object.assign({}, baseConfig);
     if (withExtras) {
-      if (thinkingLevel !== "off" && thinkingLevel !== "") generationConfig.thinkingConfig = { thinkingLevel };
+      if (thinkingLevel !== "off" && thinkingLevel !== "") {
+        if (/^gemini-3/.test(model)) {
+          generationConfig.thinkingConfig = { thinkingLevel };
+        } else if (THINKING_BUDGET[thinkingLevel] !== undefined) {
+          generationConfig.thinkingConfig = { thinkingBudget: THINKING_BUDGET[thinkingLevel] };
+        }
+      }
       if (hasImage && mediaLevel !== "off" && mediaLevel !== "") {
         generationConfig.mediaResolution = "MEDIA_RESOLUTION_" + mediaLevel.toUpperCase();
       }
@@ -303,16 +317,17 @@ export async function onRequestPost(context) {
     });
   }
 
-  let upstream;
+  let upstream = null;
   try {
-    upstream = await callGemini(true);
-    if (upstream.status === 400) {
-      upstream = await callGemini(false);
-    }
-    // AUTO-RETRY ON 429: If Gemini bursts, wait 2 seconds and retry with lighter config
-    if (upstream.status === 429) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      upstream = await callGemini(false);
+    outer:
+    for (const model of MODEL_CHAIN) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        upstream = await callGemini(model, true);
+        if (upstream.status === 400) upstream = await callGemini(model, false);
+        if (upstream.ok || !RETRY_STATUSES.includes(upstream.status)) break outer;
+        if (attempt === 0) await sleep(1200); // একই মডেলে একবার আবার চেষ্টা
+      }
+      // এই মডেল ব্যস্ত, লুপ পরের মডেলে যাবে
     }
   } catch (_err) {
     return json({ error: "network" }, 502);
@@ -320,6 +335,9 @@ export async function onRequestPost(context) {
 
   if (upstream.status === 429) {
     return json({ error: "rate_limited" }, 429);
+  }
+  if (RETRY_STATUSES.includes(upstream.status)) {
+    return json({ error: "busy" }, 503);
   }
   
   if (!upstream.ok || !upstream.body) {
