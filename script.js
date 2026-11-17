@@ -1233,8 +1233,15 @@ async function submitQuestion(rawText, imageObj) {
     let res = await fetch('/api/chat', fetchPayload);
 
     // Auto-retry once on 429 Rate Limit after a short delay
+      // 503 (সার্ভার ব্যস্ত) বা rate_limited হলে একবার অটো retry
+    let retryable = res.status === 503;
     if (res.status === 429) {
-      await new Promise(r => setTimeout(r, 2200));
+      try { retryable = (await res.clone().json()).error === 'rate_limited'; } catch (e) { retryable = false; }
+    }
+    if (retryable) {
+      ai.body.innerHTML = '<div class="typing-indicator">' +
+        escapeHtml(currentLanguage === 'en' ? 'Server is busy, trying again...' : 'সার্ভারে চাপ বেশি, আবার চেষ্টা করছি...') + '</div>';
+      await new Promise(r => setTimeout(r, 3000));
       res = await fetch('/api/chat', fetchPayload);
     }
 
