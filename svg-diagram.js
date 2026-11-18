@@ -12,6 +12,14 @@
 
   var NS = 'http://www.w3.org/2000/svg';
 
+  /* friendly message when the server answers "busy" (all AI models slow or overloaded) */
+  try {
+    if (typeof TEXT !== 'undefined') {
+      TEXT.bn.errors.busy = 'AI সার্ভার এখন ব্যস্ত বা উত্তর দিতে দেরি করছে। কিছুক্ষণ পরে আবার চেষ্টা করুন। ছবি বড় বা জটিল হলে প্রয়োজনীয় অংশ ক্রপ করে দিলে দ্রুত হবে।';
+      TEXT.en.errors.busy = 'The AI server is busy or slow right now. Please try again shortly. If the picture is large or complex, crop it to the part you need.';
+    }
+  } catch (e) { /* ignore */ }
+
   /* ---------- styles (injected) ---------- */
   var css = document.createElement('style');
   css.textContent =
