@@ -10,9 +10,14 @@ const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "i
 const MAX_IMAGE_BASE64_CHARS = 5500000;
 // OPTIMIZATION: Only send the active current image to save Gemini free tier TPM quota
 const DEFAULT_FALLBACK_MODELS = "gemini-3.8-flash,gemini-3.5-flash-lite";
-const RETRY_STATUSES = [404, 429, 500, 502, 503, 504];
+const RETRY_STATUSES = [404, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524]; // 52x = Cloudflare/Google timeout errors
 const THINKING_BUDGET = { minimal: 0, low: 1024, medium: 4096, high: 8192 }; // Gemini 2.5 এর জন্য
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// A request that sends nothing for ~100 s is cut by Cloudflare (error 524). So we wait at most
+// FIRST_BYTE_TIMEOUT_MS for Gemini to start answering, then try the next model, and stop
+// everything after TOTAL_BUDGET_MS so the student gets a clear message instead of a 524.
+const DEFAULT_FIRST_BYTE_TIMEOUT_MS = 40000;
+const TOTAL_BUDGET_MS = 88000;
 
 const MAX_IMAGES_PER_REQUEST = 1;       
 const DEFAULT_IMAGE_THINKING_LEVEL = "low"; 
@@ -130,7 +135,8 @@ const DRAW_PRECISION = {
 - যে বিন্দু কোনো রেখার ওপর থাকবে (যেমন A রেখা BG-র ওপর, H হলো দুই রেখার ছেদবিন্দু), তার স্থানাঙ্ক আন্দাজে বসাবে না; P = B + t(G − B) বা দুই রেখার ছেদ বের করার সূত্রে হিসাব করবে।
 - ছবি বা বইয়ের পাতা দেখে আঁকলে ছবির প্রতিটি বিন্দু, রেখা, রশ্মি, চাপ (arc), সমান-চিহ্ন ও কোণ এক এক করে মিলিয়ে নেবে। কোনো বিন্দু বা রেখা বাদ দেবে না, কোণের মাপ ছবির মতো রাখবে, নামকরণ করা প্রতিটি বিন্দুতে ছোট গোল ডট দেবে।
 - লেখা যেন রেখা, চাপ বা বিন্দুর গায়ে না লাগে (৮-১২ একক দূরে বসাবে) এবং ছবি যেন পুরো ক্যানভাস জুড়ে আঁকা হয়।
-- আঁকার পর মনে মনে যাচাই করবে: সব বিন্দু ঠিক রেখার ওপর পড়েছে কি না, সমান বাহুগুলো সত্যিই সমান কি না, কোণগুলো ঠিক আছে কি না।`,
+- আঁকার পর মনে মনে যাচাই করবে: সব বিন্দু ঠিক রেখার ওপর পড়েছে কি না, সমান বাহুগুলো সত্যিই সমান কি না, কোণগুলো ঠিক আছে কি না।
+- SVG কোড ছোট রাখবে: পূর্ণসংখ্যার স্থানাঙ্ক ব্যবহার করবে এবং একই স্টাইল বারবার না লিখে <g stroke="..."> দিয়ে একবারে দেবে, যাতে উত্তর দ্রুত আসে।`,
 
   en: `
 
@@ -139,7 +145,8 @@ const DRAW_PRECISION = {
 - A point that lies on a line (for example A on line BG, or H as the intersection of two lines) must not be placed by guesswork; compute it with P = B + t(G − B) or by finding the intersection of the two lines.
 - When drawing from a picture or a textbook page, match every point, line, ray, arc, tick mark and angle one by one. Do not omit any point or line, keep angle sizes like the original, and put a small dot on every named point.
 - Keep labels clear of lines, arcs and points (8-12 units away) and let the figure fill the whole canvas.
-- After drawing, check: every point really lies on its line, equal sides are really equal, angles are right.`
+- After drawing, check: every point really lies on its line, equal sides are really equal, angles are right.
+- Keep the SVG code short: use whole-number coordinates and set repeated styles once with <g stroke="..."> instead of on every element, so the answer arrives quickly.`
 };
 
 const MISMATCH_MARKER = "[[SUBJECT_MISMATCH]]";
@@ -292,7 +299,9 @@ export async function onRequestPost(context) {
 
   const systemText = SYSTEM_PROMPTS[lang] + DIAGRAM_RULES[lang] + (askedToDraw ? DRAW_PRECISION[lang] : "") + matchGuard;
 
-  function callGemini(model, withExtras) {
+  const FIRST_BYTE_TIMEOUT_MS = Number(env.GEMINI_FIRST_BYTE_TIMEOUT_MS) || DEFAULT_FIRST_BYTE_TIMEOUT_MS;
+
+  function callGemini(model, withExtras, timeoutMs) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
     const generationConfig = Object.assign({}, baseConfig);
     if (withExtras) {
@@ -307,6 +316,9 @@ export async function onRequestPost(context) {
         generationConfig.mediaResolution = "MEDIA_RESOLUTION_" + mediaLevel.toUpperCase();
       }
     }
+    // The timer only guards the wait for the first response; once Gemini starts, it is cleared.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
     return fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
@@ -315,17 +327,29 @@ export async function onRequestPost(context) {
         contents,
         generationConfig,
       }),
-    });
+      signal: ctrl.signal,
+    })
+      .catch((err) => {
+        if (ctrl.signal.aborted) return new Response("timeout", { status: 524 });
+        throw err;
+      })
+      .finally(() => clearTimeout(timer));
   }
 
-  let upstream = null;
+  const startedAt = Date.now();
+  const timeLeft = () => TOTAL_BUDGET_MS - (Date.now() - startedAt);
+  let upstream = new Response("timeout", { status: 524 });
   try {
     outer:
     for (const model of MODEL_CHAIN) {
       for (let attempt = 0; attempt < 2; attempt++) {
-        upstream = await callGemini(model, true);
-        if (upstream.status === 400) upstream = await callGemini(model, false);
+        if (timeLeft() < 6000) break outer; // not enough time left for another try
+        upstream = await callGemini(model, true, Math.min(FIRST_BYTE_TIMEOUT_MS, timeLeft() - 1500));
+        if (upstream.status === 400 && timeLeft() > 6000) {
+          upstream = await callGemini(model, false, Math.min(FIRST_BYTE_TIMEOUT_MS, timeLeft() - 1500));
+        }
         if (upstream.ok || !RETRY_STATUSES.includes(upstream.status)) break outer;
+        if (upstream.status === 524) break; // this model was too slow: go to the next model
         if (attempt === 0) await sleep(1200); // একই মডেলে একবার আবার চেষ্টা
       }
       // এই মডেল ব্যস্ত, লুপ পরের মডেলে যাবে
