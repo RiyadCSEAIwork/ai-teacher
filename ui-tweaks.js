@@ -33,3 +33,41 @@
     init();
   }
 })();
+
+/**
+ * Image-question cleanup: when the AI reads a question from a photo it sometimes
+ * writes an intro line before the real question, e.g.
+ * "ছবিটিতে ... একটি প্রশ্ন রয়েছে। নিচে প্রশ্নটির নিখুঁত সমাধান দেওয়া হলো: <আসল প্রশ্ন>"
+ * This wraps renderRich() so only the real question text is shown in the MCQ card.
+ * script.js is NOT changed; saved chats are cleaned the same way when opened.
+ */
+(function () {
+  if (typeof window.renderRich !== 'function') return;
+  var original = window.renderRich;
+
+  // up to "... সমাধান/উত্তর (নিচে) দেওয়া হলো:" -> remove
+  var INTRO_END = /^[\s\S]*?(?:সমাধান|উত্তর)\s+(?:নিচে\s+)?(?:দেওয়া|দেয়া)\s+হলো\s*[:：।]\s*/;
+  // a leading sentence that starts by talking about the picture -> remove
+  var INTRO_PIC = /^\s*(?:প্রদত্ত\s+)?ছবি(?:টি)?(?:তে|র)?[^।?:]*[।:]\s*/;
+  // same idea for English answers
+  var INTRO_EN = /^[\s\S]*?(?:solution|answer)\s+(?:is\s+)?(?:given|provided)\s+below\s*[:.]\s*/i;
+
+  function clean(inner) {
+    var out = inner;
+    var t = out.replace(INTRO_END, '');
+    if (t.trim()) out = t;
+    t = out.replace(INTRO_EN, '');
+    if (t.trim()) out = t;
+    t = out.replace(INTRO_PIC, '');
+    if (t.trim()) out = t;
+    return out;
+  }
+
+  window.renderRich = function (raw, final) {
+    var html = original(raw, final);
+    if (typeof html !== 'string' || html.indexOf('mcq-q-title') === -1) return html;
+    return html.replace(/(<h4 class="mcq-q-title">)([\s\S]*?)(<\/h4>)/g, function (m, a, inner, c) {
+      return a + clean(inner) + c;
+    });
+  };
+})();
