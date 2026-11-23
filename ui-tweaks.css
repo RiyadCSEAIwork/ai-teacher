@@ -1,0 +1,59 @@
+/* ========================================================
+   AI Teacher - small UI tweaks (loads AFTER ui-update.css)
+   Only adds. Nothing existing is edited.
+   1. Clearer time label (Me / AI Teacher)
+   2. MCQ badge and question text on one line
+   3. Image button sits at the right, next to the mic
+   ======================================================== */
+
+/* ---------- 1. Clearer time ---------- */
+.msg-meta {
+  gap: 0.55rem;
+}
+
+.msg-meta .msg-name {
+  font-size: 0.9rem;
+}
+
+.msg-meta .msg-time,
+.user-msg .msg-meta .msg-time,
+.ai-msg .msg-meta .msg-time {
+  font-size: 0.86rem !important;
+  font-weight: 600 !important;
+  color: #334155 !important;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+}
+
+.msg-meta .msg-time:not(:empty)::before {
+  color: #64748b;
+  font-weight: 700;
+}
+
+/* ---------- 2. MCQ badge + question on one line ---------- */
+.mcq-card-ui .mcq-header {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 0.65rem !important;
+}
+
+.mcq-card-ui .mcq-header .mcq-badge {
+  flex-shrink: 0;
+  margin: 0 !important;
+  align-self: baseline !important;
+  line-height: 1.4;
+}
+
+.mcq-card-ui .mcq-header .mcq-q-title {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.5 !important;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------- 3. Image button beside the mic ---------- */
+.input-main-row .btn-upload-image {
+  flex-shrink: 0;
+  cursor: pointer;
+}
