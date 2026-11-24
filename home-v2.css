@@ -159,3 +159,20 @@
   border-radius:14px;background:var(--card);border:1px solid var(--card-b);font-size:14px}
 .hv2-attach img{width:44px;height:44px;object-fit:cover;border-radius:8px}
 .hv2-attach button{border:0;background:rgba(255,80,80,.25);color:var(--text);width:26px;height:26px;border-radius:50%}
+
+/* ---------- additions for the real site ---------- */
+/* old popups must appear ABOVE the home overlay (login, Smart Notes, history drawer) */
+.modal-overlay{z-index:10050 !important}
+.history-drawer{z-index:10060 !important}
+.drawer-backdrop{z-index:10055 !important}
+#hv2:empty{display:block}
+.hv2-av{display:inline-flex;width:26px;height:26px}
+.hv2-av svg{width:26px;height:26px}
+.hv2-ctxrow{display:flex;align-items:center;gap:12px;margin:12px 0 4px;flex-wrap:wrap}
+.hv2-select{background:var(--card);color:var(--text);border:1px solid var(--card-b);border-radius:999px;padding:9px 14px;font:inherit;font-size:14px;max-width:100%}
+.hv2-select option{color:#111}
+.hv2-attach{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--card-b);border-radius:999px;padding:7px 8px 7px 14px;font-size:14px}
+.hv2-attach button{background:rgba(255,255,255,.15);border:0;color:inherit;border-radius:50%;width:22px;height:22px;line-height:1}
+.hv2-ic.rec{background:#e5384d;animation:hv2pulse 1s infinite}
+@keyframes hv2pulse{50%{box-shadow:0 0 0 8px rgba(229,56,77,.25)}}
+.hv2-sub.active{background:linear-gradient(135deg,rgba(47,123,255,.45),rgba(31,181,255,.25));box-shadow:0 0 0 2px var(--blue2),var(--glow)}
