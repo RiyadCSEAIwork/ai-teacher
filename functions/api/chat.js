@@ -108,24 +108,30 @@ For regular math or descriptive questions:
 };
 
 // Always added: which tool to use for which kind of picture.
+// Always added: which tool to use for which kind of picture.
 const DIAGRAM_RULES = {
   bn: `
 
 🎨 চিত্র আঁকার নিয়ম:
-- ত্রিভুজ, চতুর্ভুজ, রম্বস, বৃত্ত, কোণ, সমান্তরাল রেখা, জ্যামিতিক অঙ্কন, বলের চিত্র, বর্তনী ও বিজ্ঞানের অন্যান্য চিত্র কখনো Mermaid দিয়ে আঁকবে না। এগুলোর জন্য শুধু \`\`\`svg কোড ব্লক ব্যবহার করবে।
+- কোণ ও ত্রিভুজের ছবির জন্য SVG লিখবে না। শুধু একটি \`\`\`geo ব্লকে একটি লাইন দেবে, ব্লকে আর কিছু লিখবে না:
+  কোণ: angle <ডিগ্রি> A B C (উদাহরণ: angle 225 A B C; প্রবৃদ্ধ কোণ হলে ১৮০-র বেশি মান দেবে)
+  ত্রিভুজ: triangle <a> <b> <c> A B C (a=BC, b=CA, c=AB; উদাহরণ: triangle 3 4 5 A B C)
+- অন্য জ্যামিতিক চিত্র (রম্বস, বৃত্ত, সমান্তরাল রেখা, অঙ্কন), বলের চিত্র, বর্তনী ও বিজ্ঞানের চিত্র কখনো Mermaid দিয়ে আঁকবে না; এগুলোর জন্য \`\`\`svg কোড ব্লক ব্যবহার করবে।
 - Mermaid (\`\`\`mermaid, \`flowchart TD\`) শুধু ফ্লোচার্ট, প্রক্রিয়ার ধাপ বা শ্রেণিবিভাগের জন্য।
-- SVG-তে viewBox="0 0 400 300" ও xmlns="http://www.w3.org/2000/svg" দেবে। বিন্দুর নাম (A, B, C...) ও মাপ <text> দিয়ে লিখবে; সাধারণ টেক্সট ও ° চিহ্ন ব্যবহার করবে, LaTeX বা $ ব্যবহার করবে না। <script> বা বাইরের ছবি ব্যবহার করবে না। SVG অবশ্যই </svg> দিয়ে শেষ করবে এবং টেক্সটে & চিহ্নের বদলে &amp; লিখবে।
+- SVG-তে viewBox="0 0 400 300" ও xmlns="http://www.w3.org/2000/svg" দেবে। বিন্দুর নাম ও মাপ <text> দিয়ে লিখবে; সাধারণ টেক্সট ও ° চিহ্ন ব্যবহার করবে, LaTeX বা $ ব্যবহার করবে না। <script> বা বাইরের ছবি ব্যবহার করবে না। SVG অবশ্যই </svg> দিয়ে শেষ করবে এবং টেক্সটে & চিহ্নের বদলে &amp; লিখবে।
 - চিত্রের আগে বা পরে সংক্ষেপে বৈশিষ্ট্যগুলো বুঝিয়ে লিখবে।`,
 
   en: `
 
 🎨 Drawing rules:
-- Never draw triangles, quadrilaterals, rhombi, circles, angles, parallel lines, geometric constructions, force diagrams, circuits or other science figures with Mermaid. Use only a \`\`\`svg code block for them.
+- For angles and triangles do NOT write SVG. Put one line in a \`\`\`geo block and nothing else inside it:
+  Angle: angle <degrees> A B C (e.g. angle 225 A B C; use a value above 180 for a reflex angle)
+  Triangle: triangle <a> <b> <c> A B C (a=BC, b=CA, c=AB; e.g. triangle 3 4 5 A B C)
+- Never draw other geometry (rhombi, circles, parallel lines, constructions), force diagrams, circuits or science figures with Mermaid; use a \`\`\`svg code block for them.
 - Use Mermaid (\`\`\`mermaid, \`flowchart TD\`) only for flowcharts, process steps or classifications.
-- In SVG use viewBox="0 0 400 300" and xmlns="http://www.w3.org/2000/svg". Write point names (A, B, C...) and measurements with <text> using plain text and the ° sign; no LaTeX or $. No <script> or external images. Always end the SVG with </svg> and write &amp; instead of & inside text.
+- In SVG use viewBox="0 0 400 300" and xmlns="http://www.w3.org/2000/svg". Write point names and measurements with <text> using plain text and the ° sign; no LaTeX or $. No <script> or external images. Always end the SVG with </svg> and write &amp; instead of & inside text.
 - Briefly explain the properties before or after the figure.`
 };
-
 // Added only when the student asks to draw something: accuracy rules.
 const DRAW_PRECISION = {
   bn: `
