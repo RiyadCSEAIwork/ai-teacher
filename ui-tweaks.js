@@ -35,6 +35,40 @@
 })();
 
 /**
+ * Clear time label: Bengali digits at small size are hard to read
+ * (e.g. "১১:২৬" looks like "৬৬:২৬"), so the clock time is shown with
+ * normal digits: "11:26 AM". The "· 9.4 সেকেন্ড" part stays as it was.
+ * Wraps timeLabel() from script.js; script.js is NOT changed.
+ */
+(function () {
+  if (typeof window.timeLabel !== 'function') return;
+  // false: today's messages show only the time; older messages (old history) also show the date
+  // true : every message shows date + time
+  var ALWAYS_SHOW_DATE = false;
+
+  window.timeLabel = function (ts, dur) {
+    if (!ts) return '';
+    var label = '';
+    try {
+      var d = new Date(ts);
+      label = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      var now = new Date();
+      var sameDay = d.getFullYear() === now.getFullYear() &&
+                    d.getMonth() === now.getMonth() &&
+                    d.getDate() === now.getDate();
+      if (ALWAYS_SHOW_DATE || !sameDay) {
+        label = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + label;
+      }
+    } catch (e) { label = ''; }
+    if (dur && dur > 0) {
+      var en = (typeof currentLanguage !== 'undefined' && currentLanguage === 'en');
+      label += ' · ' + (dur / 1000).toFixed(1) + (en ? 's' : ' সেকেন্ড');
+    }
+    return label;
+  };
+})();
+
+/**
  * Image-question cleanup: when the AI reads a question from a photo it sometimes
  * writes an intro line before the real question, e.g.
  * "ছবিটিতে ... একটি প্রশ্ন রয়েছে। নিচে প্রশ্নটির নিখুঁত সমাধান দেওয়া হলো: <আসল প্রশ্ন>"
