@@ -18,10 +18,12 @@
 .msg-meta .msg-time,
 .user-msg .msg-meta .msg-time,
 .ai-msg .msg-meta .msg-time {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  font-variant-numeric: tabular-nums;
   font-size: 0.86rem !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   color: #334155 !important;
-  letter-spacing: 0.1px;
+  letter-spacing: 0.2px;
   white-space: nowrap;
 }
 
