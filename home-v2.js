@@ -225,19 +225,81 @@
       '<div class="hv2-note">ⓘ ' + t('ctaNote') + '</div></div></div>';
   }
   function userBody() {
-    var q = [['🗒️', 'q3', 'q3s', 'notes'], ['🏆', 'q4', 'q4s', 'adm']];
     var list = state.chats.slice(0, 3), last = state.chats[0];
-    return '<div class="hv2-quick">' + q.map(function (x) {
-      return '<button class="hv2-q" data-a="' + x[3] + '"><span class="e">' + x[0] + '</span><span><b>' + t(x[1]) + '</b><small>' + t(x[2]) + '</small></span><span class="a">→</span></button>';
-    }).join('') + '</div>' + subjectsHTML() +
+    return subjectsHTML() +
       '<div class="hv2-bottom"><div class="hv2-box"><div class="hv2-sec-h" style="margin:0"><h2>🕘 ' + t('recent') + '</h2><button data-a="old">' + t('more') + ' →</button></div>' +
       (list.length ? '<ul class="hv2-list">' + list.map(function (c) {
         return '<li><button data-a="chat" data-id="' + esc(c.id) + '"><span>📄</span><span class="t">' + esc(c.title || t('untitled')) + '</span><span class="m">🕒 ' + ago(c.updated) + '</span></button></li>';
       }).join('') + '</ul>' : '<div class="hv2-empty">' + t('noRecent') + '</div>') +
-      '</div><div class="hv2-box hv2-cta"><h3 style="font-size:26px;color:#fff">⭐ ' + t('cont') + '</h3><p style="font-size:16px">' + t('contS') + '</p>' +
+      '</div><div class="hv2-box hv2-cta hv2-cta-cont"><div class="hv2-cont-art" id="hv2cart"><img src="continue-v2.webp" alt=""></div><div class="hv2-cont-txt"><h3 style="font-size:26px;color:#fff">⭐ ' + t('cont') + '</h3><p style="font-size:16px">' + t('contS') + '</p>' +
       (last ? '<div class="hv2-cont">⚛️ <b>' + esc(last.title || t('untitled')) + '</b></div>' : '') +
-      '<div class="hv2-cta-btns"><button class="hv2-pill solid" data-a="' + (last ? 'chat' : 'ask') + '" data-id="' + esc(last ? last.id : '') + '">' + t('start') + ' →</button></div></div></div>';
+      '<div class="hv2-cta-btns"><button class="hv2-pill solid" data-a="' + (last ? 'chat' : 'ask') + '" data-id="' + esc(last ? last.id : '') + '">' + t('start') + ' →</button></div></div></div></div>';
   }
+
+  /* ---------- picture beside "Continue Learning": continue-v2.webp if present, else this drawing ---------- */
+  var CONT_SVG = '<svg viewBox="0 0 420 300" xmlns="http://www.w3.org/2000/svg"><defs>' +
+    '<radialGradient id="cg" cx="50%" cy="55%" r="55%"><stop offset="0" stop-color="#4aa3ff" stop-opacity=".75"/><stop offset="1" stop-color="#4aa3ff" stop-opacity="0"/></radialGradient>' +
+    '<linearGradient id="b1" x1="0" x2="1"><stop offset="0" stop-color="#1d5bff"/><stop offset="1" stop-color="#6a3dff"/></linearGradient>' +
+    '<linearGradient id="b2" x1="0" x2="1"><stop offset="0" stop-color="#0fb7a8"/><stop offset="1" stop-color="#1b86ff"/></linearGradient>' +
+    '<linearGradient id="b3" x1="0" x2="1"><stop offset="0" stop-color="#ff9f1c"/><stop offset="1" stop-color="#ff5d8f"/></linearGradient>' +
+    '<linearGradient id="cap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b3f9e"/><stop offset="1" stop-color="#0c1a5e"/></linearGradient></defs>' +
+    '<ellipse cx="215" cy="170" rx="200" ry="120" fill="url(#cg)"/>' +
+    '<g fill="#2fd16b" opacity=".95"><path d="M70 262c-6-44 18-74 58-84 4 44-14 76-58 84z"/><path d="M58 262c-24-34-20-72 6-96 14 36 10 72-6 96z" fill="#1fae55"/><path d="M360 262c6-44-18-74-58-84-4 44 14 76 58 84z"/><path d="M372 262c24-34 20-72-6-96-14 36-10 72 6 96z" fill="#1fae55"/></g>' +
+    '<g><rect x="95" y="212" width="230" height="38" rx="7" fill="url(#b1)"/><rect x="105" y="250" width="214" height="9" rx="3" fill="#eaf1ff"/><rect x="108" y="224" width="40" height="5" rx="2.5" fill="#fff" opacity=".55"/>' +
+    '<rect x="115" y="176" width="195" height="36" rx="7" fill="url(#b2)"/><rect x="123" y="205" width="180" height="7" rx="3" fill="#eaf1ff" opacity=".9"/><rect x="128" y="188" width="36" height="5" rx="2.5" fill="#fff" opacity=".55"/>' +
+    '<rect x="132" y="142" width="160" height="34" rx="7" fill="url(#b3)"/><rect x="140" y="170" width="146" height="6" rx="3" fill="#fff4e0" opacity=".9"/><rect x="146" y="153" width="32" height="5" rx="2.5" fill="#fff" opacity=".55"/></g>' +
+    '<g transform="translate(0,-22)"><path d="M212 62 328 104 212 146 96 104z" fill="url(#cap)" stroke="#6fb3ff" stroke-width="2.5"/><path d="M150 124v34c0 12 27 22 62 22s62-10 62-22v-34l-62 22z" fill="#0f2377" stroke="#6fb3ff" stroke-width="2"/>' +
+    '<path d="M212 104 306 118v38" fill="none" stroke="#ffd21f" stroke-width="3"/><circle cx="306" cy="160" r="6" fill="#ffd21f"/><path d="M300 164l-3 26M306 166v28M312 164l3 26" stroke="#ffd21f" stroke-width="3.2" stroke-linecap="round"/></g>' +
+    '<g fill="#ffe27a"><path d="M52 90l4 10 10 4-10 4-4 10-4-10-10-4 10-4z"/><path d="M372 60l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/><circle cx="92" cy="48" r="3"/><circle cx="338" cy="40" r="2.5"/></g></svg>';
+  function setupContArt() {
+    var wrap = root.querySelector('#hv2cart'); if (!wrap) return;
+    var im = wrap.querySelector('img');
+    im.onerror = function () { wrap.innerHTML = CONT_SVG; };
+  }
+
+  /* ---------- titles: never show a blank / generic title (also for photo-only questions) ---------- */
+  var GENERIC = ['ছবির প্রশ্ন', 'picture question', 'chat', 'পূর্ববর্তী প্রশ্ন', 'earlier question', '(ছবি)', '🖼️ (ছবি)', '🖼️ (image)'];
+  function isGeneric(s) { s = String(s || '').trim().toLowerCase(); return !s || GENERIC.indexOf(s) > -1; }
+  function titleFrom(text) {
+    var s = String(text || '').replace(/```[\s\S]*?```/g, ' ').replace(/\$\$[\s\S]*?\$\$/g, ' ').replace(/\$[^$\n]*\$/g, ' ');
+    var lines = s.split(/\n+/);
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i].replace(/^[\s#>*\-•·]+/, '').replace(/^\[[^\]]*\]\s*/, '').replace(/[*_`|]/g, '')
+        .replace(/^(উত্তর|প্রশ্ন|answer|question)\s*[\d০-৯]*\s*[:：.)]\s*/i, '').trim();
+      if (l.length >= 6) return l.length > 42 ? l.slice(0, 42).replace(/\s+\S*$/, '') + '…' : l;
+    }
+    return '';
+  }
+  var titleCache = {};
+  function resolveTitles() {                       // display-only: old chats saved with a generic title
+    var todo = state.chats.slice(0, 4).filter(function (c) { return isGeneric(c.title) && !titleCache[c.id]; });
+    if (!todo.length) return Promise.resolve();
+    return Promise.all(todo.map(function (c) {
+      return fetch('/api/chats?id=' + encodeURIComponent(c.id), { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          var m = (j && j.chat && j.chat.messages) || [], tt = '';
+          for (var i = 0; i < m.length && !tt; i++) if (m[i].role === 'user' && m[i].text) tt = titleFrom(m[i].text);
+          for (var k = 0; k < m.length && !tt; k++) if (m[k].role === 'assistant') tt = titleFrom(m[k].text);
+          if (tt) titleCache[c.id] = tt;
+        }).catch(function () {});
+    })).then(function () {
+      var changed = false;
+      state.chats.forEach(function (c) { if (isGeneric(c.title) && titleCache[c.id]) { c.title = titleCache[c.id]; changed = true; } });
+      if (changed) render();
+    });
+  }
+  function patchTitleMaker() {                     // new chats: photo-only question still gets a topic title
+    if (typeof generateTitle !== 'function') return;
+    var orig = generateTitle;
+    window.generateTitle = function (q, a) {
+      var qq = String(q || '').trim(), fb = titleFrom(a);
+      return Promise.resolve(orig.call(this, qq || fb || 'photo question', a)).then(function () {
+        try { if (isGeneric(currentChatTitle) && fb) { currentChatTitle = fb; return saveChat(); } } catch (e) {}
+      });
+    };
+  }
+
   function render() {
     var keep = inp() ? inp().value : '';
     root.setAttribute('data-theme', state.theme);
@@ -245,9 +307,9 @@
     inp().value = keep;
     var img = root.querySelector('#hv2hero'), n = 0;
     img.onerror = function () { n++; if (n < HERO.length) img.src = HERO[n]; else img.outerHTML = '<div class="hv2-fallback">🎓📖</div>'; };
-    paintSubjects(); paintAttach();
+    paintSubjects(); paintAttach(); setupContArt();
   }
-  function refresh() { return loadUser().then(loadChats).then(render); }
+  function refresh() { return loadUser().then(loadChats).then(render).then(resolveTitles); }
 
   function paintAttach() {
     var el = root.querySelector('#hv2att'); if (!el) return;
@@ -338,6 +400,7 @@
       var orig = checkAuth;
       window.checkAuth = function () { return Promise.resolve(orig.apply(this, arguments)).then(function () { refresh(); }); };
     }
+    patchTitleMaker();
     watchImage();
     syncVisibility();
     refresh();
