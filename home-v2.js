@@ -23,7 +23,7 @@
   ];
   var SUBJECTS = [
     ['physics', '⚛️', 'Physics'], ['chemistry', '🧪', 'Chemistry'], ['math', 'π', 'Math'],
-    ['biology', '🌿', 'Biology'], ['ict', '🖥️', 'ICT'], ['others', '•••', 'Others']
+    ['biology', '🌿', 'Biology'], ['ict', '🖥️', 'ICT']
   ];
 
   var T = {
