@@ -258,3 +258,15 @@
   .hv2-go{height:46px;padding:0 14px;font-size:15px}
   .hv2-hero>div{min-width:0}
 }
+
+/* ---------- v2.4 : bigger hero art (like the new mockup), 2 quick cards ---------- */
+.hv2-hero{grid-template-columns:1fr 1fr;gap:0;align-items:center;padding-top:14px}
+.hv2-hero > div:first-child{position:relative;z-index:3}
+.hv2-art{min-height:0;align-self:start;margin:-4px 0 0}
+.hv2-art img{width:104%;max-width:none;max-height:none;height:auto;margin-right:-4%}
+.hv2-ask{width:calc(100% + 70px)}            /* the search box slightly overlaps the picture, as in the mockup */
+.hv2-quick{grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}
+.hv2-q{padding:14px 18px}.hv2-q .e{font-size:34px}.hv2-q b{font-size:17px}
+@media(max-width:1100px){.hv2-ask{width:100%}.hv2-art img{width:100%;margin:0}}
+@media(max-width:860px){.hv2-hero{grid-template-columns:1fr}.hv2-ask{width:100%}}
+@media(max-width:560px){.hv2-quick{grid-template-columns:1fr}}
