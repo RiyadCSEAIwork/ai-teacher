@@ -121,6 +121,27 @@
     handleQuestionSubmit();        // guest -> login popup (question is kept); logged in -> chat starts
     if (state.user) inp().value = '';
   }
+  function doLogout() {            // independent of the old header button; verifies the session really ended
+    toast(lang() === 'en' ? 'Logging out…' : 'লগআউট হচ্ছে…');
+    var finished = false;
+    function finish() {
+      if (finished) return; finished = true;
+      try { localStorage.removeItem('token'); localStorage.removeItem('auth_token'); } catch (e) {}
+      try { document.cookie.split(';').forEach(function (c) { var n = c.split('=')[0].trim(); if (n) document.cookie = n + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'; }); } catch (e) {}
+      location.replace(location.pathname + '?lo=' + Date.now());
+    }
+    fetch('/api/logout', { method: 'POST', credentials: 'same-origin', cache: 'no-store' })
+      .catch(function () {})
+      .then(function () { return fetch('/api/me', { credentials: 'same-origin', cache: 'no-store' }); })
+      .then(function (r) {
+        if (!r.ok) return finish();                       // session gone -> reload as guest
+        // server still says logged in: try the old header button once, then report
+        try { $('btnLogout').click(); } catch (e) {}
+        toast(lang() === 'en' ? 'Logout did not complete — try again' : 'লগআউট সম্পূর্ণ হয়নি — আবার চেষ্টা করুন');
+        setTimeout(finish, 2500);
+      })
+      .catch(finish);
+  }
   function openLogin(signup) {
     resumeAfterAuth = false;
     openAuthModal();
@@ -129,7 +150,7 @@
 
   /* ---------- data ---------- */
   function loadUser() {
-    return fetch('/api/me', { credentials: 'same-origin' })
+    return fetch('/api/me', { credentials: 'same-origin', cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) {
         var name = j && j.ok && (j.username || (typeof j.user === 'string' ? j.user : ''));
@@ -138,7 +159,7 @@
   }
   function loadChats() {
     if (!state.user) { state.chats = []; return Promise.resolve(); }
-    return fetch('/api/chats', { credentials: 'same-origin' })
+    return fetch('/api/chats', { credentials: 'same-origin', cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) { state.chats = (j && j.ok && j.chats) ? j.chats.slice(0, 20) : []; })
       .catch(function () { state.chats = []; });
@@ -204,7 +225,7 @@
       '<div class="hv2-note">ⓘ ' + t('ctaNote') + '</div></div></div>';
   }
   function userBody() {
-    var q = [['📖', 'q1', 'q1s', 'concept'], ['📝', 'q2', 'q2s', 'mcq'], ['🗒️', 'q3', 'q3s', 'notes'], ['🏆', 'q4', 'q4s', 'adm']];
+    var q = [['🗒️', 'q3', 'q3s', 'notes'], ['🏆', 'q4', 'q4s', 'adm']];
     var list = state.chats.slice(0, 3), last = state.chats[0];
     return '<div class="hv2-quick">' + q.map(function (x) {
       return '<button class="hv2-q" data-a="' + x[3] + '"><span class="e">' + x[0] + '</span><span><b>' + t(x[1]) + '</b><small>' + t(x[2]) + '</small></span><span class="a">→</span></button>';
@@ -279,7 +300,7 @@
       case 'lang': setLanguage(lang() === 'bn' ? 'en' : 'bn'); render(); break;
       case 'umenu': if (menu) menu.classList.toggle('open'); break;
       case 'burger': nav.classList.toggle('open'); break;
-      case 'logout': $('btnLogout').click(); break;
+      case 'logout': doLogout(); break;
       case 'login': openLogin(false); break;
       case 'signup': openLogin(true); break;
       case 'subject': setSubject(b.dataset.s); inp().focus(); break;
