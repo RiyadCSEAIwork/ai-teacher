@@ -282,3 +282,22 @@
 .hv2-cta-cont{min-height:300px}
 .hv2-cont-art{width:62%;right:-18px;bottom:-14px}
 @media(max-width:860px){.hv2-cont-art{width:50%}}
+
+/* ---------- v2.6 : 5 subjects, bigger icons, smoother hero edge, roomier search text ---------- */
+.hv2-subjects{grid-template-columns:repeat(5,1fr);gap:14px}
+.hv2-sub{min-height:92px;padding:12px 14px;gap:12px}
+.hv2-sub .e{width:54px;height:54px}
+.hv2-sub b{font-size:17px}
+.hv2-sub small{font-size:12.5px}
+.hv2-sub[data-s=ict] small{font-size:11.5px;line-height:1.25}
+.hv2-sub .a{width:28px;height:28px}
+/* hero picture: fade the bottom (and top) edge so no horizontal band shows */
+.hv2-art img{
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 14%,#000 94%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 12%,#000 66%,transparent 97%);
+  mask-image:linear-gradient(to right,transparent 0,#000 14%,#000 94%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 12%,#000 66%,transparent 97%)}
+/* search box: whole placeholder visible */
+.hv2-ask{padding-left:22px;gap:10px}
+.hv2-ask input{font-size:18px;text-overflow:ellipsis}
+.hv2-ask input::placeholder{font-size:17px}
+@media(max-width:1100px){.hv2-subjects{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.hv2-subjects{grid-template-columns:repeat(2,1fr)}.hv2-sub .e{width:42px;height:42px}.hv2-ask input::placeholder{font-size:14px}}
