@@ -151,6 +151,8 @@
     });
   }
   function init() {
+    var ta = $('userQuestionInput');
+    if (ta) { ta.setAttribute('data-gramm', 'false'); ta.setAttribute('data-gramm_editor', 'false'); ta.setAttribute('data-enable-grammarly', 'false'); ta.setAttribute('spellcheck', 'false'); }
     build(); render(); refresh();
     var cm = $('chatMessages');
     if (cm) { new MutationObserver(trimKeys).observe(cm, { childList: true, subtree: true }); trimKeys(); }
