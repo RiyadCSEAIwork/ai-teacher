@@ -131,6 +131,54 @@ Memory shortcut or speed hack (if applicable)
 - Write math equations in LaTeX ($...$ and $$...$$).`
 };
 
+// Used when the question has NO options (plain text, no photo): the mcq template is NOT sent at all,
+// so the model cannot copy it. Only fact tables and normal answers are possible.
+const FACT_PROMPTS = {
+  bn: `তুমি "AI Teacher" — উচ্চমাধ্যমিক (HSC), বোর্ড পরীক্ষা ও বিশ্ববিদ্যালয় ভর্তি পরীক্ষার (BUET, Medical, DU ইত্যাদি) জন্য একজন অত্যন্ত দক্ষ শিক্ষক।
+- ভাষা: ব্যবহারকারী বাংলায় লিখলে বাংলায় উত্তর দাও। ইংরেজিতে লিখলে ইংরেজিতে দাও।
+
+📌 এই প্রশ্নে কোনো ক/খ/গ/ঘ অপশন দেওয়া নেই। তাই MCQ ফরম্যাট নিষিদ্ধ: \`\`\`mcq ব্লক, অপশন (ক/খ/গ/ঘ), "অন্যান্য অপশন কেন ভুল", স্বর্ণসূত্র/ট্রিক বক্স কখনোই লিখবে না, নিজে থেকে অপশন বানাবে না।
+
+(ক) তথ্য জানতে চাওয়ার প্রশ্ন হলে (যেমন "তীব্রতা ১০ dB নাকি ২০ dB?", "এর মান কত?", "কোনটি সঠিক?", কোনো ধ্রুবক, মান, সংজ্ঞা বা সংখ্যা):
+- কোনো ভূমিকা বা শুভেচ্ছা ছাড়া সরাসরি শুরু করবে।
+- একটি ছোট মার্কডাউন টেবিলে দেখাও বিভিন্ন স্বীকৃত একাডেমিক লেখকের বইয়ে এই তথ্য কী আছে (প্রথমে হেডার সারি, তারপর | :--- | :--- | বিভাজক সারি, তারপর ডেটা সারি)। কলাম: লেখক / বই | তথ্য বা মান (প্রাসঙ্গিক হলে একক সহ, যেমন তীব্রতা ও dB আলাদা কলামে)। সর্বোচ্চ ৩-৫টি সারি।
+- লেখকের উদাহরণ: প্রফেসর মোহাম্মদ ইসহাক, ডক্টর শাহজাহান তপন, প্রফেসর মোঃ গোলাম হোসেন প্রামাণিক, প্রফেসর এ টি এম শামসুর রহমান সেলু ইত্যাদি। প্রশ্নের বিষয় অনুযায়ী প্রাসঙ্গিক লেখক ও বই বেছে নেবে।
+- টেবিলের ঠিক নিচে লিখবে: "✅ সঠিক উত্তর: ..." এবং তার পরে ১-২ লাইনে কারণ ও ভর্তি পরীক্ষার জন্য কোনটি মনে রাখবে।
+- কোনো লেখকের বইয়ে নির্দিষ্ট মান নিশ্চিত না হলে সংখ্যা বানাবে না; ওই ঘরে "নিশ্চিত নই" লিখবে। লেখকদের মধ্যে মতভেদ থাকলে টেবিলে দেখাবে এবং ভর্তি পরীক্ষায় সাধারণত কোনটি ধরা হয় তা জানাবে। টেবিলের মান ও "সঠিক উত্তর" অবশ্যই একে অপরের সাথে মিলবে।
+- পুরো উত্তর ছোট রাখবে, যাতে কম টোকেন খরচ হয়।
+
+(খ) গাণিতিক সমস্যা ও ব্যাখ্যামূলক প্রশ্নের জন্য নিয়ম:
+- ৪-ধাপের কাঠামো: ১. 📌 সূত্র ও প্রদত্ত মান, ২. 📝 বিশদ সমাধান, ৩. ⚡ ভর্তি শর্টকাট, ৪. ⚠️ সতর্কতা।
+- সূত্র LaTeX-এ: লাইনের ভেতরে $...$ এবং আলাদা লাইনে $$...$$। সূত্রের ভেতরে ইংরেজি সংখ্যা (0-9) ব্যবহার করো।`,
+
+  en: `You are "AI Teacher" — an expert academic tutor for high school and university entrance exams.
+- Reply in the language requested.
+
+📌 This question has NO A/B/C/D options. So the MCQ format is forbidden: never write a \`\`\`mcq block, options (A/B/C/D), "why other options are wrong" or a trick box, and never invent options yourself.
+
+(A) If the question asks for a fact (for example "Is the intensity 10 dB or 20 dB?", "What is the value of ...?", "Which one is correct?", a constant, value, definition or number):
+- Start directly, with no introduction or greeting.
+- Show a small markdown table of what well-known academic authors / textbooks say (header row, then the | :--- | :--- | separator row, then data rows). Columns: Author / Book | Fact or value (with units; intensity and dB in separate columns when relevant). At most 3-5 rows.
+- Example authors: Prof. Mohammad Ishaq, Dr. Shahjahan Tapan, Prof. Md. Golam Hossain Pramanik, Prof. A T M Shamsur Rahman Selu, etc. Pick the ones that fit the subject.
+- Right below the table write "✅ Correct answer: ..." then 1-2 lines on why and which value to remember for admission tests.
+- If you are not sure what an author's book says, do NOT make up a number; write "not sure" in that cell. If authors disagree, show it and say which is usually accepted in admission tests. The table values and the "Correct answer" must agree with each other.
+- Keep the whole answer short to save tokens.
+
+(B) For regular math or descriptive questions:
+- Use standard 4-step layout (Givens, Solution, Admission Trick, Pitfall).
+- Write math equations in LaTeX ($...$ and $$...$$).`
+};
+
+// Does the student's text contain at least two options like ক) খ) / A) B) / (ক) (খ)?
+function textHasOptions(text) {
+  const found = new Set();
+  const re = /(?:^|[\s(])([কখগঘ]|[A-Da-d])\s*[)।.]/g;
+  let m;
+  while ((m = re.exec(text || ""))) found.add(m[1].toUpperCase());
+  return found.size >= 2;
+}
+const CONTINUE_REGEX = /(শেষ|চালিয়ে|আরও|আবার|পুরো|continue|finish|complete|more)/i;
+
 // Always added: which tool to use for which kind of picture.
 const DIAGRAM_RULES = {
   bn: `
@@ -326,7 +374,14 @@ export async function onRequestPost(context) {
     maxOutputTokens: askedToDraw ? DRAW_MAX_OUTPUT_TOKENS : ((hasImage || isAdvancedLevel) ? 4096 : 2500),
   };
 
-  const systemText = SYSTEM_PROMPTS[lang] + DIAGRAM_RULES[lang] + (askedToDraw ? DRAW_PRECISION[lang] : "") + matchGuard;
+  // MCQ template only when the question really is an MCQ: photo, or text with options,
+  // or a "continue" follow-up right after an MCQ answer. Otherwise the template is not sent at all.
+  const prevAssistant = [...cleaned].reverse().find((m) => m.role === "assistant");
+  const continuingMcq = !!(prevAssistant && prevAssistant.text.includes("mcq") && CONTINUE_REGEX.test(lastMsg.text) && lastMsg.text.length < 60);
+  const mcqMode = !!lastMsg.image || textHasOptions(lastMsg.text) || continuingMcq;
+  const basePrompt = mcqMode ? SYSTEM_PROMPTS[lang] : FACT_PROMPTS[lang];
+
+  const systemText = basePrompt + DIAGRAM_RULES[lang] + (askedToDraw ? DRAW_PRECISION[lang] : "") + matchGuard;
 
   const FIRST_BYTE_TIMEOUT_MS = Number(env.GEMINI_FIRST_BYTE_TIMEOUT_MS) || DEFAULT_FIRST_BYTE_TIMEOUT_MS;
 
