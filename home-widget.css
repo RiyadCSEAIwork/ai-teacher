@@ -20,8 +20,17 @@
 
 /* ---------- 3-column bottom row ---------- */
 #hv2 .hv2-bottom.hvw-3{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
-#hv2 .hvw-3 .hv2-cta-cont .hv2-cont-txt{max-width:62%}
-#hv2 .hvw-3 .hv2-cta-cont .hv2-cont-art{width:50%}
+/* lists must never push the card wider than its grid column (long titles get "…") */
+#hv2 .hv2-box{min-width:0}
+#hv2 .hv2-list{grid-template-columns:minmax(0,1fr)}
+#hv2 .hv2-list li,#hv2 .hv2-list li button,#hv2 .hv2-list .t{min-width:0}
+/* Continue Learning: text uses the full width, picture sits small at the bottom-right */
+#hv2 .hvw-3 .hv2-cta-cont{align-items:flex-start;padding-top:22px}
+#hv2 .hvw-3 .hv2-cta-cont .hv2-cont-txt{max-width:100%;width:100%}
+#hv2 .hvw-3 .hv2-cta-cont .hv2-cont-art{top:auto;height:42%;width:46%;right:-6px;bottom:-8px}
+#hv2 .hvw-3 .hv2-cta-cont .hv2-cont-art img,#hv2 .hvw-3 .hv2-cta-cont .hv2-cont-art svg{height:100%;width:auto;max-width:100%}
+#hv2 .hvw-3 .hv2-cta-cont h3{white-space:nowrap}
+#hv2 .hvw-3 .hv2-cont{font-size:15px;padding:10px 16px}
 #hv2 .hvw-3 .hv2-cta-cont h3{font-size:22px !important}
 #hv2 .hvw-3 .hv2-cta-cont p{font-size:14.5px !important}
 #hv2 .hvw-3 .hv2-cta h3{font-size:26px}
@@ -75,11 +84,9 @@
 @media(max-width:1100px){
   #hv2 .hv2-bottom.hvw-3{grid-template-columns:repeat(2,minmax(0,1fr))}
   #hv2 .hv2-bottom.hvw-3 .hvw{grid-column:1 / -1}
-  #hv2 .hvw-3 .hv2-cta-cont .hv2-cont-txt{max-width:60%}
 }
 @media(max-width:860px){
-  #hv2 .hv2-bottom.hvw-3{grid-template-columns:1fr}
-  #hv2 .hvw-3 .hv2-cta-cont .hv2-cont-art{width:46%}
+  #hv2 .hv2-bottom.hvw-3{grid-template-columns:minmax(0,1fr)}
 }
 @media(max-width:560px){
   #hv2 .hvw-time{font-size:28px}
