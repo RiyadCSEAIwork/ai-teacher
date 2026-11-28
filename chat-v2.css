@@ -246,3 +246,13 @@ body.chat-active .cs-list::-webkit-scrollbar-track{background:transparent}
 body.chat-active .cs-list::-webkit-scrollbar-thumb{background:rgba(120,160,255,.35);border-radius:4px}
 body.chat-active .cs-list::-webkit-scrollbar-thumb:hover{background:rgba(120,160,255,.65)}
 body.chat-active .cs-list::-webkit-scrollbar-button{display:none;width:0;height:0}
+
+/* ---- v1.2: compact Smart Notes card (short, horizontal) + room for 10 history items ---- */
+body.chat-active .cs-side{gap:12px}
+body.chat-active .cs-promo{display:grid;grid-template-columns:84px minmax(0,1fr);column-gap:10px;align-items:center;
+  text-align:left;padding:10px 12px;border-radius:20px}
+body.chat-active .cs-promo #csArt{grid-row:1 / span 3;grid-column:1}
+body.chat-active .cs-promo svg{max-width:84px;margin:0;filter:drop-shadow(0 0 12px rgba(80,160,255,.55))}
+body.chat-active .cs-promo b{grid-column:2;font-size:.98rem;line-height:1.25}
+body.chat-active .cs-promo span{grid-column:2;font-size:.9rem;margin-bottom:6px;line-height:1.25}
+body.chat-active .cs-promo button{grid-column:2;justify-self:start;padding:6px 14px;font-size:.82rem}
