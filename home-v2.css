@@ -301,3 +301,38 @@
 .hv2-ask input::placeholder{font-size:17px}
 @media(max-width:1100px){.hv2-subjects{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:560px){.hv2-subjects{grid-template-columns:repeat(2,1fr)}.hv2-sub .e{width:42px;height:42px}.hv2-ask input::placeholder{font-size:14px}}
+
+
+/* ---------- v2.7 : clear selected-subject state + subject chip beside class select ---------- */
+
+/* when a subject is chosen, the other cards calm down a little */
+.hv2-subjects.has-sel .hv2-sub:not(.active){opacity:.62;filter:saturate(.7)}
+.hv2-subjects.has-sel .hv2-sub:not(.active):hover{opacity:1;filter:brightness(1.1)}
+
+/* the selected card: brighter, different colour, white ring, ✓ badge */
+.hv2-sub.active{opacity:1;filter:none;transform:translateY(-3px) scale(1.03);
+  box-shadow:0 0 0 2.5px #fff,0 10px 30px rgba(0,0,0,.45),0 0 28px var(--selc,rgba(120,180,255,.75));z-index:2}
+.hv2-sub.active b{color:#fff}
+.hv2-sub.active small{color:#fff}
+.hv2-sub.active .a{background:#fff !important;color:#0b1a55;font-weight:800;font-size:15px;box-shadow:0 0 12px rgba(255,255,255,.6)}
+
+.hv2-sub[data-s=physics].active{--selc:rgba(61,139,255,.85);background:linear-gradient(135deg,#2f86ff,#1237c8);border-color:#fff}
+.hv2-sub[data-s=chemistry].active{--selc:rgba(154,91,255,.85);background:linear-gradient(135deg,#a864ff,#4a1fc0);border-color:#fff}
+.hv2-sub[data-s=math].active{--selc:rgba(255,163,31,.85);background:linear-gradient(135deg,#ffb52e,#c25a00);border-color:#fff}
+.hv2-sub[data-s=biology].active{--selc:rgba(47,201,90,.85);background:linear-gradient(135deg,#34d667,#0b7a3c);border-color:#fff}
+.hv2-sub[data-s=ict].active{--selc:rgba(31,198,230,.85);background:linear-gradient(135deg,#25d3f0,#0a6fa8);border-color:#fff}
+
+/* "বিষয়: Physics" chip, shown next to the class select */
+.hv2-subchip{align-items:center;gap:8px;padding:6px 8px 6px 12px;border-radius:999px;font-size:14px;font-weight:600;color:#fff;
+  border:1.5px solid rgba(255,255,255,.55);background:linear-gradient(135deg,#2f86ff,#1237c8);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.hv2-subchip .e{width:20px;height:20px;display:inline-grid;place-items:center;font-size:15px}
+.hv2-subchip b{font-weight:800}
+.hv2-subchip button{border:0;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:12px;line-height:1;padding:0}
+.hv2-subchip button:hover{background:rgba(255,255,255,.45)}
+.hv2-subchip[data-s=chemistry]{background:linear-gradient(135deg,#a864ff,#4a1fc0)}
+.hv2-subchip[data-s=math]{background:linear-gradient(135deg,#ffb52e,#c25a00)}
+.hv2-subchip[data-s=biology]{background:linear-gradient(135deg,#34d667,#0b7a3c)}
+.hv2-subchip[data-s=ict]{background:linear-gradient(135deg,#25d3f0,#0a6fa8)}
+
+/* 5 recent questions: slightly tighter rows so the card stays balanced */
+.hv2-bottom .hv2-list li button{padding:11px 14px}
