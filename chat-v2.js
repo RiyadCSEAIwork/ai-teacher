@@ -17,6 +17,7 @@
           del: 'Delete', learn: 'Learn and move ahead', withAi: 'with AI Teacher', notes: 'Open Smart Notes →',
           quota: function (u, l) { return Math.max(0, l - u) + '/' + l + ' left'; } }
   };
+  var MAX_ITEMS = 10;                 // sidebar shows at most this many chats (older ones: search / history drawer)
   var state = { chats: [], q: '', authed: true, side: null };
 
   function lang() { try { return currentLanguage === 'en' ? 'en' : 'bn'; } catch (e) { return 'bn'; } }
@@ -88,7 +89,7 @@
     $('csLearn').textContent = t.learn; $('csWith').textContent = t.withAi; $('csNotes').textContent = t.notes;
     var box = $('csList');
     if (!state.authed) { box.innerHTML = '<div class="cs-empty">' + esc(t.guest) + '</div>'; return; }
-    var list = state.chats.filter(function (c) { return !state.q || String(c.title || t.untitled).toLowerCase().indexOf(state.q) > -1; });
+    var list = state.chats.filter(function (c) { return !state.q || String(c.title || t.untitled).toLowerCase().indexOf(state.q) > -1; }).slice(0, MAX_ITEMS);
     if (!list.length) { box.innerHTML = '<div class="cs-empty">' + esc(state.chats.length ? t.none : t.empty) + '</div>'; return; }
     var cur = curId();
     box.innerHTML = list.map(function (c) {
@@ -96,6 +97,11 @@
         '<span class="cs-txt"><b>' + esc(c.title || t.untitled) + '</b><small>' + esc(when(c.updated)) + '</small></span>' +
         '<span class="cs-go">›</span><button type="button" class="cs-del" title="' + esc(t.del) + '">✕</button></div>';
     }).join('');
+  }
+  /* top menu button: same "চ্যাট হিস্ট্রি" wording as the sidebar title */
+  function setHistBtn() {
+    var b = $('btnHistory'); if (!b) return;
+    var s = b.querySelector('.btn-text'); if (s && s.textContent !== T().hist) s.textContent = T().hist;
   }
   function markActive() {
     var cur = curId();
@@ -105,8 +111,8 @@
   function refresh() {
     return fetch('/api/chats', { credentials: 'same-origin', cache: 'no-store' })
       .then(function (r) { if (r.status === 401) { state.authed = false; state.chats = []; return null; } return r.ok ? r.json() : null; })
-      .then(function (j) { if (j && j.ok) { state.authed = true; state.chats = j.chats || []; } render(); })
-      .catch(function () { render(); });
+      .then(function (j) { if (j && j.ok) { state.authed = true; state.chats = j.chats || []; } render(); setHistBtn(); })
+      .catch(function () { render(); setHistBtn(); });
   }
 
   function removeChat(id) {
@@ -134,9 +140,9 @@
   wrap('openChat', markActive);
   wrap('resetChatSession', markActive);
   wrap('renderUserNav', refresh);     // login / logout
-  wrap('setLanguage', function () { render(); try { updateQuota(); } catch (e) {} });
+  wrap('setLanguage', function () { render(); setHistBtn(); try { updateQuota(); } catch (e) {} });
 
-  // desktop: "পূর্ববর্তী হিস্ট্রি" focuses the sidebar search instead of opening the old drawer
+  // desktop: the "চ্যাট হিস্ট্রি" menu button focuses the sidebar search instead of opening the old drawer
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('#btnHistory'); if (!b) return;
     if (document.body.classList.contains('chat-active') && window.innerWidth > 1100 && $('csSearch')) {
@@ -153,7 +159,7 @@
   function init() {
     var ta = $('userQuestionInput');
     if (ta) { ta.setAttribute('data-gramm', 'false'); ta.setAttribute('data-gramm_editor', 'false'); ta.setAttribute('data-enable-grammarly', 'false'); ta.setAttribute('spellcheck', 'false'); }
-    build(); render(); refresh();
+    build(); render(); refresh(); setHistBtn(); setTimeout(setHistBtn, 700);
     var cm = $('chatMessages');
     if (cm) { new MutationObserver(trimKeys).observe(cm, { childList: true, subtree: true }); trimKeys(); }
   }
