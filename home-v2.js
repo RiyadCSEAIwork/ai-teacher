@@ -6,11 +6,15 @@
      - history  -> openHistoryDrawer() / openChat(id)
      - login    -> openAuthModal(),  logout -> #btnLogout
    When a chat starts, script.js adds body.chat-active -> overlay hides.
-   "নতুন চ্যাট"/logo in the old header removes it -> overlay comes back.            */
+   "নতুন চ্যাট"/logo in the old header removes it -> overlay comes back.
+
+   v8: clear selected-subject state (✓ + colour), selected subject chip beside the class select,
+       5 recent questions instead of 3.                                                    */
 (function () {
   'use strict';
 
   var HERO = ['hero-v2.webp', 'hero.webp'];       // tried in this order, emoji if both missing
+  var RECENT_COUNT = 5;                           // how many recent questions the home page shows
   var EXAMPLES = [
     { q: 'নিউটনের তৃতীয় সূত্রটি লিখ।', s: 'physics', c: 'Physics' },
     { q: 'H₂O এর মোলার ভর কত?', s: 'chemistry', c: 'Chemistry' },
@@ -32,7 +36,7 @@
       mcq: 'MCQ প্র্যাকটিস', adm: 'অ্যাডমিশন গাইড', login: 'লগইন', logout: 'লগআউট',
       welcome: 'Welcome to AI Teacher', h1a: 'পড়াশোনা হোক', h1b: 'আরও সহজ ও স্মার্ট',
       sub: 'যেকোনো প্রশ্ন করুন, AI দেবে সহজ ও নির্ভুল উত্তর!', ph: 'আপনার প্রশ্ন লিখুন বা ছবি যুক্ত করুন...',
-      ask: 'প্রশ্ন করুন', pickSub: 'বিষয় নির্বাচন করুন', allSub: 'সকল বিষয় দেখুন', cls: 'শ্রেণি নির্বাচন',
+      ask: 'প্রশ্ন করুন', pickSub: 'বিষয় নির্বাচন করুন', allSub: 'সকল বিষয় দেখুন', cls: 'শ্রেণি নির্বাচন', subj: 'বিষয়: ',
       physics: 'পদার্থবিজ্ঞান', chemistry: 'রসায়ন', math: 'গণিত', biology: 'জীববিজ্ঞান', ict: 'তথ্য ও যোগাযোগ প্রযুক্তি', others: 'অন্যান্য',
       f1: 'Instant Answer', f1s: 'দ্রুত উত্তর পান', f2: 'Smart Notes', f2s: 'গুরুত্বপূর্ণ নোট তৈরি করুন',
       f3: 'MCQ Practice', f3s: 'নিজেকে যাচাই করুন', f4: 'Admission Guide', f4s: 'ভর্তি প্রস্তুতির সঠিক দিকনির্দেশনা',
@@ -51,7 +55,7 @@
       mcq: 'MCQ Practice', adm: 'Admission Guide', login: 'Login', logout: 'Logout',
       welcome: 'Welcome to AI Teacher', h1a: 'Make studying', h1b: 'easier & smarter',
       sub: 'Ask any question — AI gives simple, accurate answers!', ph: 'Type your question or attach a photo...',
-      ask: 'Ask', pickSub: 'Choose a subject', allSub: 'View all subjects', cls: 'Select class',
+      ask: 'Ask', pickSub: 'Choose a subject', allSub: 'View all subjects', cls: 'Select class', subj: 'Subject: ',
       physics: 'Physics', chemistry: 'Chemistry', math: 'Math', biology: 'Biology', ict: 'ICT', others: 'Others',
       f1: 'Instant Answer', f1s: 'Get quick answers', f2: 'Smart Notes', f2s: 'Create key notes',
       f3: 'MCQ Practice', f3s: 'Test yourself', f4: 'Admission Guide', f4s: 'Right guidance for admission prep',
@@ -94,12 +98,15 @@
   function curClass() { try { return selectedClass === undefined ? '' : String(selectedClass); } catch (e) { return ''; } }
 
   /* ---------- bridge to the existing app ---------- */
-  function setSubject(id) {                      // uses the real chip buttons, so all existing logic runs
+  // toggle = true  -> clicking the already-selected subject un-selects it (subject cards, ✕ on the chip)
+  // toggle = false -> only make sure the subject is selected (example questions)
+  function setSubject(id, toggle) {              // uses the real chip buttons, so all existing logic runs
     if (locked()) return;
     var cur = curSubject();
     if (id === 'others' || !id) { if (cur) { var c0 = document.querySelector('.chip-btn[data-subject="' + cur + '"]'); if (c0) c0.click(); } }
-    else if (cur !== id) { var b = document.querySelector('.chip-btn[data-subject="' + id + '"]'); if (b) b.click(); }
+    else if (cur !== id || toggle) { var b = document.querySelector('.chip-btn[data-subject="' + id + '"]'); if (b) b.click(); }
     paintSubjects();
+    setTimeout(paintSubjects, 80);               // in case the old code updates its state a moment later
   }
   function setClass(v) {
     if (locked()) return;
@@ -108,7 +115,31 @@
   }
   function paintSubjects() {
     var cur = curSubject();
-    [].forEach.call(root.querySelectorAll('.hv2-sub'), function (b) { b.classList.toggle('active', b.dataset.s === cur); });
+    if (!cur) {                                   // fallback: read the old chip buttons
+      var ac = document.querySelector('.chip-btn.active, .chip-btn.selected');
+      if (ac) cur = ac.getAttribute('data-subject') || '';
+    }
+    var info = null;
+    SUBJECTS.forEach(function (s) { if (s[0] === cur) info = s; });
+    var any = !!info;
+
+    [].forEach.call(root.querySelectorAll('.hv2-sub'), function (b) {
+      var on = any && b.dataset.s === cur;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      var a = b.querySelector('.a'); if (a) a.textContent = on ? '✓' : '→';
+    });
+    var box = root.querySelector('.hv2-subjects'); if (box) box.classList.toggle('has-sel', any);
+
+    var chip = root.querySelector('#hv2subchip');   // "বিষয়: Physics" beside the class select
+    if (chip) {
+      if (any) {
+        chip.setAttribute('data-s', cur);
+        chip.innerHTML = '<span class="e">' + info[1] + '</span><span class="tx">' + esc(t('subj')) + '<b>' + esc(t(cur)) + '</b></span>' +
+          (locked() ? '' : '<button type="button" data-a="rmsub" title="✕">✕</button>');
+        chip.style.display = 'inline-flex';
+      } else { chip.style.display = 'none'; chip.innerHTML = ''; }
+    }
     var sel = root.querySelector('#hv2cls'); if (sel) sel.value = curClass();
   }
   function ask(text) {
@@ -203,6 +234,7 @@
         '<button type="button" class="hv2-ic" data-a="img" title="Image">🖼️</button>' +
         '<button type="submit" class="hv2-go">▶ ' + t('ask') + '</button></form>' +
       '<div class="hv2-ctxrow"><select id="hv2cls" class="hv2-select">' + classOptions() + '</select>' +
+        '<span class="hv2-subchip" id="hv2subchip" style="display:none"></span>' +
         '<span class="hv2-attach" id="hv2att" style="display:none">🖼️ ' + t('img') + ' <button type="button" data-a="rmimg">✕</button></span></div>' +
       left + '</div>' +
       '<div class="hv2-art"><img id="hv2hero" alt="" src="' + HERO[0] + '"><div class="hv2-tag"><i>Learn</i><i>Grow</i><i>Achieve</i></div></div></section>';
@@ -210,7 +242,7 @@
   function subjectsHTML() {
     return '<div class="hv2-sec-h"><h2>🟦 ' + t('pickSub') + '</h2><button data-a="allsub">' + t('allSub') + ' →</button></div><div class="hv2-subjects">' +
       SUBJECTS.map(function (s) {
-        return '<button class="hv2-sub" data-a="subject" data-s="' + s[0] + '"><span class="e">' + s[1] + '</span><span><b>' + s[2] + '</b><small>' + t(s[0]) + '</small></span><span class="a">→</span></button>';
+        return '<button class="hv2-sub" data-a="subject" data-s="' + s[0] + '" aria-pressed="false"><span class="e">' + s[1] + '</span><span><b>' + s[2] + '</b><small>' + t(s[0]) + '</small></span><span class="a">→</span></button>';
       }).join('') + '</div>';
   }
   function guestBody() {
@@ -225,7 +257,7 @@
       '<div class="hv2-note">ⓘ ' + t('ctaNote') + '</div></div></div>';
   }
   function userBody() {
-    var list = state.chats.slice(0, 3), last = state.chats[0];
+    var list = state.chats.slice(0, RECENT_COUNT), last = state.chats[0];
     return subjectsHTML() +
       '<div class="hv2-bottom"><div class="hv2-box"><div class="hv2-sec-h" style="margin:0"><h2>🕘 ' + t('recent') + '</h2><button data-a="old">' + t('more') + ' →</button></div>' +
       (list.length ? '<ul class="hv2-list">' + list.map(function (c) {
@@ -272,7 +304,7 @@
   }
   var titleCache = {};
   function resolveTitles() {                       // display-only: old chats saved with a generic title
-    var todo = state.chats.slice(0, 4).filter(function (c) { return isGeneric(c.title) && !titleCache[c.id]; });
+    var todo = state.chats.slice(0, RECENT_COUNT).filter(function (c) { return isGeneric(c.title) && !titleCache[c.id]; });
     if (!todo.length) return Promise.resolve();
     return Promise.all(todo.map(function (c) {
       return fetch('/api/chats?id=' + encodeURIComponent(c.id), { credentials: 'same-origin' })
@@ -365,8 +397,9 @@
       case 'logout': doLogout(); break;
       case 'login': openLogin(false); break;
       case 'signup': openLogin(true); break;
-      case 'subject': setSubject(b.dataset.s); inp().focus(); break;
-      case 'ex': var ex = (lang() === 'en' ? EXAMPLES_EN : EXAMPLES)[+b.dataset.i]; setSubject(ex.s); ask(ex.q); break;
+      case 'subject': setSubject(b.dataset.s, true); inp().focus(); break;
+      case 'rmsub': setSubject('others', true); break;
+      case 'ex': var ex = (lang() === 'en' ? EXAMPLES_EN : EXAMPLES)[+b.dataset.i]; setSubject(ex.s, false); ask(ex.q); break;
       case 'chat': var id = b.dataset.id; if (id) openChat(id); else inp().focus(); break;
       case 'mic': toggleMic(); break;
       case 'img': var f = $('fileImageInput'); if (f) f.click(); break;
