@@ -1,0 +1,27 @@
+/* ============ Smart Notes — ছবি থেকে লেখা (smart-ocr.js) ============ */
+.so-wrap{margin:0 0 10px}
+.so-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.so-btn{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:999px;padding:9px 16px;font:inherit;font-size:.92rem;font-weight:600;
+  color:#fff;background:linear-gradient(135deg,#1e8bff,#2f5bff);box-shadow:0 4px 14px rgba(47,91,255,.35);cursor:pointer}
+.so-btn:hover{filter:brightness(1.08)}
+.so-btn:disabled{opacity:.6;cursor:progress}
+.so-ic{font-size:1.05rem;line-height:1}
+.so-sel{font:inherit;font-size:.86rem;padding:8px 10px;border-radius:999px;border:1px solid #c9d6f3;background:#f4f7ff;color:#1c2a55;max-width:100%}
+.so-chk{display:inline-flex;align-items:center;gap:6px;font-size:.84rem;color:#41507d;cursor:pointer;user-select:none}
+.so-chk input{width:15px;height:15px;accent-color:#2f5bff}
+.so-cancel{border:1px solid #f0b4b4;background:#fff3f3;color:#c0392b;border-radius:999px;padding:7px 12px;font:inherit;font-size:.84rem;cursor:pointer}
+.so-wrap [hidden]{display:none !important}
+.so-prog{height:5px;border-radius:5px;background:#e3eafb;overflow:hidden;margin-top:9px}
+.so-prog i{display:block;height:100%;width:3%;border-radius:5px;background:linear-gradient(90deg,#1e8bff,#2f5bff);transition:width .25s}
+.so-msg{min-height:0;font-size:.85rem;color:#41507d;margin-top:7px;line-height:1.5}
+.so-msg:empty{display:none}
+.so-msg.ok{color:#15803d}
+.so-msg.err{color:#c0392b}
+.so-hint{font-size:.78rem;color:#7684ad;margin-top:6px;line-height:1.5}
+.so-foot{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:6px;font-size:.78rem;color:#7684ad}
+.so-free{color:#15803d}
+.so-drop{display:none;position:absolute;inset:0;z-index:5;border:2px dashed #2f5bff;border-radius:14px;background:rgba(235,242,255,.92);
+  align-items:center;justify-content:center;font-weight:700;color:#2f5bff;font-size:1rem;pointer-events:none}
+.so-over .so-drop{display:flex}
+.so-busy #smartNotesContent{opacity:.8}
+@media(max-width:520px){.so-btn{width:100%;justify-content:center}.so-sel{flex:1}.so-foot{flex-direction:column;align-items:flex-start;gap:2px}}
